@@ -106,6 +106,9 @@ The kit was designed for a sample game, **"Merge Cats Defender"**. Its screens d
 | Waves per level | 4–6 | "Wave 3 / 10" | 4–6 early, up to 10 late. |
 | Bosses | 5 | 7 available | Use Boss 6–7 in later levels or as Full Alley extras. |
 
+**Decision (2026-11-19):** the suggestions above are adopted in PLAN.md milestone 2, and AWIs are added to every screen
+(cat defender AWIs on the Cats screen, a new add-on kind of AWI on the Add-ons screen).
+
 ## Files to watch out for
 
 - `Logo.png` says "MERGE CATS DEFENDER". Our menu draws its own title, so don't use it.
