@@ -40,7 +40,7 @@ So an AWI says: which cat, its attack, its rarity, and the stats **damage, fire 
 
 - **Guests** get three free Common cats, one per family and attack (Ginger · Blast, Smokey · Venom, Snowy · Rapid).
 - **NFT holders** bring up to 5 cards (the tray holds 5): their best NFTs, then guest cats to fill.
-- **Collection bonus** (milestone 2): 2+ cards from one NFT collection: +10% damage for those cats; 3+: also +10% fire rate.
+- **Collection bonus** (milestone 3): 2+ cards from one NFT collection: +10% damage for those cats; 3+: also +10% fire rate.
   TheoSwap test NFTs share the zero-address contract, which counts as no collection (same rule as Arena).
 
 ### Balance (`npm run sim`)
@@ -56,7 +56,7 @@ A bot plays whole runs headless (`src/game/bot.ts`, the same code as `?bot` in t
 | `?nft` sample deck | 100% | win, wall 90 | 159 s |
 
 That is the pitch: guests get far and see every area but rarely win; NFTs make the difference. A human may play worse
-than the bot, so check on a phone with real players in milestone 3 (and maybe give guests a little more).
+than the bot, so check on a phone with real players in milestone 4 (and maybe give guests a little more).
 
 ## Code map
 
@@ -78,11 +78,11 @@ than the bot, so check on a phone with real players in milestone 3 (and maybe gi
   one fixed scale per character, sheets wrapped into rows to stay ≤ 4096 px.
 - Memory: only the deck's cats are loaded; streets and bosses load one area ahead and are released after.
   Real art is 9.9 MB on disk for all 94 sheets (placeholders 4.4 MB).
-- Not used yet: Cat Guardian and CatBoxing (melee cats: candidates for Legendary-only AWIs), Boss 6–7, most UI screens.
+- Not used yet: Cat Guardian and CatBoxing (planned as add-ons in milestone 2), Boss 6–7, most UI screens (milestone 2).
 
 ## Milestones
 
-### 1. Core loop on a phone ✅ (this commit)
+### 1. Core loop on a phone ✅
 - Kit art via `assets:import`, committed placeholders with the same names/sizes, ASSETS.md, check-assets + CI.
 - 5 lanes, place/upgrade cats, 8 zombie kinds, 5 areas with bosses, Blast/Rapid/Venom, win/lose, best run, pause, ×2.
 - Guest deck; `?nft` sample NFT deck; `?bot` autoplay; `?seed=N`; `?debug` FPS meter.
@@ -92,7 +92,43 @@ than the bot, so check on a phone with real players in milestone 3 (and maybe gi
   2.5 ms median, 3.0 ms p95 per frame; landscape: well under that). The pane throttles rendering, so **60 FPS on a
   real phone is not measured yet**.
 
-### 2. TheoSwap
+### 2. Level select, upgrades and add-ons
+Gives players a reason to come back between runs. All the art is in the kit's `Png/Ui` folder (not used in milestone 1).
+
+**Level select** (`LevelMap.png`, `LevelMap_Bg_Screen.png`, `GreenLevel` / `OrangeLvl` / `LockedLevel` markers)
+- 15 levels, 3 per area (Main Street 1–3 … Park Lane 13–15), on the kit's long winding road map, which scrolls sideways
+  with a drag. The map is 7782×785, so it is split into two sheets to stay ≤ 4096 px.
+- A level is a short fight on that area's street: 4–6 waves, health growing with the level number. The 3rd level of each
+  area ends with that area's boss.
+- Markers: green = cleared (shows 1–3 stars), orange = next to play, grey with a lock = locked. Clearing a level unlocks the next.
+- Stars from the wall's health left: any = ★, ≥ 50% = ★★, 100% = ★★★.
+- The milestone 1 run (all 5 areas in a row) stays as **Full Alley**, which unlocks after level 15, with its own best score.
+
+**Gems** (`GemsIcon`, `GemsBarBg`, `WinBonus`, `DaillyIcon`)
+- The one currency kept between levels; in-level coins stay as they are and reset each level.
+- Earned by clearing levels (more for more stars, a bonus the first time), plus a daily reward.
+- **No real-money purchases.** The kit's coin/gem pack icons (`ShopIcon1–7`) are not sold for money; this is a demo game.
+
+**Upgrades** (`CatUpgradeScreen.png`, `Up0–3` rank chevrons, `WallIcon`)
+- Permanent, bought with gems, 3 ranks each: damage for each cat family (Bazooka, Blaster, Rifle), wall health,
+  starting coins and coin income.
+- They stack on top of an AWI's stats, so NFT cats get them too. Capped (e.g. +30% damage at rank 3) so rarity still matters most.
+
+**Add-ons, the "extras"** (`AddonScreen.png`, `AddonIcon1–8`, `AddOnSlotBtn`)
+- One-use power-ups bought with gems. Take up to 2 into a level; each is a button in the HUD, tap then tap a lane where needed.
+- The kit's 8 icons: rocket strike (one lane), coins ×2 for 30 s, bomb (whole street), time bomb (lane, after 3 s),
+  Cat Guardian (blocks a lane for a while), TNT crate (lane trap), Boxer Cat (melee cat for a while), spike trap (slows and hurts).
+- Cat Guardian and Boxer Cat use the kit's `Cat Guardian` and `CatBoxing` animations. They were earlier ideas for
+  Legendary-only AWIs, so they could be both later.
+
+**Code and checks**
+- New scenes: `MapScene` (level select), `UpgradeScene`, `AddonScene`; the menu gets Map / Upgrades / Add-ons buttons.
+- `src/game/progress.ts`: stars, gems, upgrade ranks and add-on counts, saved in localStorage (and on TheoSwap later if wanted).
+- The sim learns levels, upgrade ranks and add-ons. Targets: guests clear levels 1–9 with no upgrades and need some
+  upgrades for 10–15; NFT decks need fewer. Re-check that Full Alley keeps "NFTs make the difference".
+- The new UI art goes into the manifest with placeholders of the same names and sizes, as before.
+
+### 3. TheoSwap
 - **Ask first:** create the hidden game "Defend the Alley" and its config with the theoswap MCP (dry run → approval).
 - Config tree "Defend the Alley Cat Defenders": leaves `cat_c1` … `cat_c15`, each with attack and rarity weights,
   so an NFT's seed picks e.g. `{ itemId: 'cat_c9', attack: 'blast', Rarity: 'Epic' }`; stats come from `makeDefender`
@@ -103,7 +139,7 @@ than the bot, so check on a phone with real players in milestone 3 (and maybe gi
 - Remember the Arena lesson: test codes only return items once the config is **published**, which is a live change
   that needs the user's explicit OK.
 
-### 3. Polish and deploy
+### 4. Polish and deploy
 - Fill wide phones (19.5:9) instead of letterboxing (Phaser `Scale.EXPAND`, extend the street art to the sides).
 - Measure FPS and memory on a real Android phone and an iPhone; trim texture sizes if needed.
 - Hit/death juice, coin fly-to-HUD, tutorial hint on the first run, music per area.

@@ -70,7 +70,7 @@ export const GUEST_DECK: Defender[] = [
   makeDefender(11, 'rapid', 'Common'),
 ];
 
-/** ?nft: a deck like a collector's, to try rarities before TheoSwap sign-in exists (milestone 2). */
+/** ?nft: a deck like a collector's, to try rarities before TheoSwap sign-in exists (milestone 3). */
 export const SAMPLE_DECK: Defender[] = [
   makeDefender(9, 'blast', 'Legendary', { source: 'nft', name: 'Top Hat #172' }),
   makeDefender(14, 'rapid', 'Epic', { source: 'nft', name: 'Viking #21' }),

@@ -36,7 +36,7 @@ export class MenuScene extends Phaser.Scene {
     button(this, GAME_W / 2, 570, 'PLAY', () => this.play(), 'ui.btn-green', 0.9, 56);
     const best = loadBest();
     if (best) text(this, GAME_W / 2, 650, best.won ? `Best: cleared all 5 areas in ${Math.round(best.time)} s` : `Best: wave ${best.wave} of 15`, 28, COLORS.dim, 5).setOrigin(0.5);
-    text(this, GAME_W / 2, 694, 'TheoSwap sign-in: your NFTs become cat AWIs (coming in milestone 2)', 20, COLORS.dim, 4).setOrigin(0.5);
+    text(this, GAME_W / 2, 694, 'TheoSwap sign-in: your NFTs become cat AWIs (coming in milestone 3)', 20, COLORS.dim, 4).setOrigin(0.5);
 
     muteButton(this, GAME_W - 50, 50);
     this.appButtons();
