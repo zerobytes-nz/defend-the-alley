@@ -199,7 +199,89 @@ sample data in this milestone; live TheoSwap sign-in follows in milestone 3.
 ### 4. Polish and deploy
 - Fill wide phones (19.5:9) instead of letterboxing (Phaser `Scale.EXPAND`, extend the street art to the sides).
 - Measure FPS and memory on a real Android phone and an iPhone; trim texture sizes if needed.
-- Hit/death juice, coin fly-to-HUD, tutorial hint on the first run, music per area.
-- Balance with real players; Cat Guardian / CatBoxing AWIs.
+- Hit/death juice, coin fly-to-HUD, music per area.
+- Balance with real players.
 - **Ask first:** GitHub repo (zerobytes-nz/defend-the-alley), Jira epic (THEOS), push; then deploy to
   `games.theoswap.io/defend-the-alley` with the nginx key proxy (same as Arena).
+
+### 5. Gameplay depth: a full game
+It stays a **free web game**: nothing to buy, no ads. This milestone adds what a full game needs on top of the demo:
+a tutorial, steady unlocks, more decisions in each fight, and reasons to keep playing after level 15. It reuses the
+kit's art; no new art is needed. Everything new goes into the simulation first, so `npm run sim` and the bot can
+balance it.
+
+**Tutorial: level 1**
+- A short guided level on Main Street: one cat card (Ginger), 3 of the 5 lanes open, 3 small waves, no boss.
+- A pointing hand and short tips walk through it one step at a time: pick the card, tap a square, watch it shoot, earn
+  coins, place a second cat, upgrade one. The next step only shows once the player has done the last one.
+- It can't be lost: the wall can't drop below 1 in the tutorial. It can be replayed from the map.
+- Repair and add-ons get their own short tip the first time they unlock (see below), not in level 1.
+
+**Unlocks: something new after every level**
+- The player starts with **one cat**. Each level cleared unlocks something new, revealed on the "You Win" screen with a
+  card ("New cat: Smokey · Venom slows zombies"). Then the next level is built to use it.
+- New zombie types get a card too, the first time they show up ("New zombie: Traffic Cone, takes less damage from the
+  front"). An **Almanac** tab lists every cat, add-on and zombie seen so far.
+- The unlock order (a first draft, to tune with `npm run sim -- --campaign`):
+
+  | Clear | Unlocks |
+  |---|---|
+  | 1 (tutorial) | Smokey (C6, Venom) |
+  | 2 | Repair Wall |
+  | 3 | Snowy (C11, Rapid), and the **Cats** screen (upgrades) |
+  | 4 | Rocket Strike, and the **Add-ons** screen |
+  | 5 | C2 |
+  | 6 | Merging cats (see below) |
+  | 7 | C7, Big Bomb |
+  | 8 | C12, TNT Crate |
+  | 9 | C3, Cat Guardian |
+  | 10 | C8, Time Bomb |
+  | 11 | C13, Spike Trap |
+  | 12 | C4, Coins ×2 |
+  | 13 | C9, Boxer Cat |
+  | 14 | C14 |
+  | 15 | C5, C10, C15, Full Alley, Hard mode |
+
+- Locked add-ons and loadout slots can't be bought until they unlock. Gems still buy upgrades and add-on stock.
+- **AWIs (Altered World Items) skip the queue:** owning an AWI of a cat or add-on unlocks it at once, as in milestone 2.
+
+**More decisions in each fight**
+- **A role for each cat family**, on top of its attack (Blast, Rapid, Venom):
+  - **Bazooka tabbies** (C1–5): knock zombies back a little.
+  - **Blaster greys** (C6–10): every 3rd shot also hits the lane above or below.
+  - **Rifle whites** (C11–15): shots go through the first zombie.
+- **Merging:** drag a cat onto a matching cat (same card) to make one cat a level higher. The upgrade button stays, so
+  merging is a cheaper but slower path that frees a square.
+- **Move and sell:** drag a placed cat to another free square (a short cooldown), or sell it for half its cost.
+- **Synergies:** zombies slowed by Venom take +20% damage from Blast.
+
+**Zombies that need different answers** (the kit's 8 zombie types each get one behaviour)
+- Shield (front hits do little until something reaches it or it is hit from another lane), jumper (hops over the first
+  trap or unit), healer (heals zombies near it), splitter (two small zombies when it dies), lane switcher, armoured
+  (only Blast hurts it properly), runner (fast, weak), and the plain zombie.
+- Bosses get one ability each, such as summoning zombies, a charge across the street, or an enrage at half health.
+
+**Levels that play differently**
+- Some levels get a rule: fog (zombies show only near the wall), double speed, no Repair, only 3 lanes, fewer coins,
+  or a fixed set of cats.
+- Each level has 3 star goals instead of stars from wall health alone. For example: win, keep 50% of the wall,
+  and one level goal ("use no add-ons", "4 cats or fewer").
+
+**After level 15**
+- **Hard mode:** the 15 levels again, with level rules and every zombie behaviour. Twice the content without new art.
+- **Daily challenge:** the same street, rules and seed for everyone that day. The simulation is already seeded and
+  repeatable. A best score is kept per day.
+- **Endless:** Full Alley turns into a survival run with a personal best (waves survived).
+- **Achievements** for things like 3 stars everywhere, or beating a boss without Repair.
+
+**Deeper progression**
+- A cat's 5th upgrade step unlocks a perk that changes how it plays, for example C1's knockback doubling, or C11
+  piercing two zombies.
+- Add-ons get upgrade steps too (gems), like the cats.
+- AWIs can roll a perk from the TheoSwap config (milestone 3 data), so NFTs feel special without being required.
+
+**Checks**
+- `npm run sim` learns the new roles, behaviours and rules. `--campaign` follows the unlock order, so each level stays
+  winnable with only what has been unlocked by then.
+- Play-test on real phones: the tutorial without help, and how many tries the late levels take.
+
