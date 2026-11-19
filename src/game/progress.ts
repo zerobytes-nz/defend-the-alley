@@ -189,5 +189,6 @@ export function fightSetup(s: Save, awis: AWI[], n: number): Omit<FightSetup, 's
     level: levelDef(n), deck: deckOf(s, awis), ...fightBonus(s),
     addons: featureUnlocked(s, awis, 'addons') ? equipped(s, awis) : [],
     repair: featureUnlocked(s, awis, 'repair'),
+    merge: featureUnlocked(s, awis, 'merge'),
   };
 }

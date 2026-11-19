@@ -1,6 +1,6 @@
 // The defense, as pure TypeScript: fixed 60 Hz steps, seeded, no Phaser. The scene sends commands
 // (place, upgrade, repair, add-ons) and draws what happened from `events`; `npm run sim` plays it with a bot.
-import { LEVEL_DMG, MAX_LEVEL, PLACE_COST, PLACE_STEP, SLOW_FACTOR, SLOW_TIME, SPLASH_R, SPLASH_SHARE, UPGRADE_COST, type Defender } from './cats.ts';
+import { CROSS_EVERY, KNOCKBACK, LEVEL_DMG, MAX_LEVEL, PIERCE, PLACE_COST, PLACE_STEP, SLOW_FACTOR, SLOW_TIME, SPLASH_R, SPLASH_SHARE, UPGRADE_COST, VENOM_BLAST, roleOf, type Defender } from './cats.ts';
 import { COLS, LANES, SLOT_X, SPAWN_X, STOP_X, U, slotLane } from './layout.ts';
 import { AREAS, makeWave, rng, waveHp, type EnemyType, type Spawn } from './waves.ts';
 import { ADDON_TUNING as T, type AddonId, type Equipped } from './addons.ts';
@@ -18,7 +18,19 @@ export const REPAIR_SHARE = 0.25, REPAIR_COST = 40, REPAIR_STEP = 25;
 /** Melee add-on cats: zombies stop this far in front of them to fight. */
 const UNIT_REACH = 70;
 
-export interface Placed { id: number; slot: number; def: Defender; level: number; cooldown: number }
+export interface Placed {
+  id: number; slot: number; def: Defender; level: number; cooldown: number;
+  /** Shots fired (Blaster cats send every 3rd one down the next lane too). */
+  shots: number;
+  /** Coins paid for it (placing + upgrades), for selling. */
+  spent: number;
+  /** It can be moved again from this time. */
+  moveAt: number;
+}
+/** Move a placed cat again after this many seconds. */
+export const MOVE_COOLDOWN = 3;
+/** Selling gives back this share of what a cat cost. */
+export const SELL_SHARE = 0.5;
 export interface Enemy {
   id: number; type: EnemyType; lane: number; x: number;
   hp: number; maxHp: number; slowUntil: number; hitTimer: number;
@@ -26,7 +38,7 @@ export interface Enemy {
   /** The melee add-on cat it is fighting (0 = the wall). */
   blockedBy: number;
 }
-export interface Bullet { id: number; lane: number; x: number; dmg: number; attack: Defender['attack']; from: number }
+export interface Bullet { id: number; lane: number; x: number; dmg: number; attack: Defender['attack']; from: number; pierce: number; hitIds: number[]; knock: boolean }
 /** A melee add-on cat (Cat Guardian, Boxer Cat) standing in a lane. */
 export interface Unit { id: number; kind: 'guard' | 'boxer'; lane: number; x: number; hp: number; maxHp: number; until: number; cooldown: number; dmg: number; every: number; fighting: boolean }
 /** A trap or bomb lying in a lane. */
@@ -42,6 +54,9 @@ export type SimEvent =
   | { t: 'wall'; enemy: Enemy; dmg: number }
   | { t: 'place'; cat: Placed }
   | { t: 'upgrade'; cat: Placed }
+  | { t: 'merge'; from: number; cat: Placed }
+  | { t: 'move'; from: number; cat: Placed }
+  | { t: 'sell'; slot: number; coins: number }
   | { t: 'repair'; hp: number }
   | { t: 'addon'; index: number; id: AddonId; lane: number }
   | { t: 'blast'; lane: number; x: number; r: number }
@@ -52,7 +67,7 @@ export type SimEvent =
   | { t: 'trapGone'; trap: Trap }
   | { t: 'end'; won: boolean };
 
-export interface Stats { kills: number; bossKills: number; coinsEarned: number; placed: number; upgrades: number; repairs: number; addonsUsed: number }
+export interface Stats { kills: number; bossKills: number; coinsEarned: number; placed: number; upgrades: number; repairs: number; addonsUsed: number; merges: number; sold: number }
 
 export interface FightSetup {
   deck: Defender[];
@@ -66,6 +81,8 @@ export interface FightSetup {
   addons?: Equipped[];
   /** Repair Wall unlocks after level 2 (default on). */
   repair?: boolean;
+  /** Merging cats unlocks after level 6 (default on). */
+  merge?: boolean;
 }
 
 export class Defense {
@@ -82,7 +99,7 @@ export class Defense {
   units: Unit[] = [];
   traps: Trap[] = [];
   events: SimEvent[] = [];
-  stats: Stats = { kills: 0, bossKills: 0, coinsEarned: 0, placed: 0, upgrades: 0, repairs: 0, addonsUsed: 0 };
+  stats: Stats = { kills: 0, bossKills: 0, coinsEarned: 0, placed: 0, upgrades: 0, repairs: 0, addonsUsed: 0, merges: 0, sold: 0 };
   /** How many copies of each card (by uid) are on the street. */
   copies = new Map<string, number>();
   /** Coins ×2 add-on: kill coins are doubled until this time. */
@@ -93,6 +110,7 @@ export class Defense {
   readonly addons: Equipped[];
   readonly seed: number;
   readonly canRepair: boolean;
+  readonly canMerge: boolean;
   private readonly incomePerS: number;
   private rand: () => number;
   private queue: Spawn[] = [];
@@ -112,6 +130,7 @@ export class Defense {
     this.addons = (setup.addons ?? []).map((a) => ({ ...a }));
     this.area = setup.level.waves[0].area;
     this.canRepair = setup.repair ?? true;
+    this.canMerge = setup.merge ?? true;
   }
 
   get totalWaves(): number { return this.level.waves.length; }
@@ -129,7 +148,7 @@ export class Defense {
     const cost = this.placeCost(def);
     if (this.state !== 'playing' || this.slots[slot] || this.coins < cost || !this.laneOpen(slotLane(slot))) return null;
     this.coins -= cost;
-    const p: Placed = { id: this.ids++, slot, def, level: 1, cooldown: 0.25 };
+    const p: Placed = { id: this.ids++, slot, def, level: 1, cooldown: 0.25, shots: 0, spent: cost, moveAt: 0 };
     this.slots[slot] = p;
     this.copies.set(def.uid, (this.copies.get(def.uid) ?? 0) + 1);
     this.stats.placed++;
@@ -143,9 +162,59 @@ export class Defense {
     if (this.state !== 'playing' || !p || cost === null || this.coins < cost) return false;
     this.coins -= cost;
     p.level++;
+    p.spent += cost;
     this.stats.upgrades++;
     this.events.push({ t: 'upgrade', cat: p });
     return true;
+  }
+
+  /** Two copies of the same card at the same level can merge (drag one onto the other): one cat, a level higher. */
+  canMergeInto(from: number, to: number): boolean {
+    const a = this.slots[from], b = this.slots[to];
+    return this.canMerge && from !== to && !!a && !!b && a.def.uid === b.def.uid && a.level === b.level && b.level < MAX_LEVEL;
+  }
+
+  merge(from: number, to: number): boolean {
+    if (this.state !== 'playing' || !this.canMergeInto(from, to)) return false;
+    const a = this.slots[from]!, b = this.slots[to]!;
+    this.drop(a);
+    b.level++;
+    b.spent += a.spent;
+    this.stats.merges++;
+    this.events.push({ t: 'merge', from, cat: b });
+    return true;
+  }
+
+  /** Drag a cat to a free square (in an open lane). It can't move again for MOVE_COOLDOWN seconds. */
+  move(from: number, to: number): boolean {
+    const p = this.slots[from];
+    if (this.state !== 'playing' || !p || this.slots[to] || from === to || !this.laneOpen(slotLane(to)) || this.time < p.moveAt) return false;
+    this.slots[from] = null;
+    this.slots[to] = p;
+    p.slot = to;
+    p.moveAt = this.time + MOVE_COOLDOWN;
+    p.cooldown = Math.max(p.cooldown, 0.4);
+    this.events.push({ t: 'move', from, cat: p });
+    return true;
+  }
+
+  sellValue(p: Placed): number { return Math.floor(p.spent * SELL_SHARE); }
+
+  sell(slot: number): boolean {
+    const p = this.slots[slot];
+    if (this.state !== 'playing' || !p) return false;
+    const coins = this.sellValue(p);
+    this.drop(p);
+    this.coins += coins;
+    this.stats.sold++;
+    this.events.push({ t: 'sell', slot, coins });
+    return true;
+  }
+
+  /** Take a cat off the street (merged or sold). */
+  private drop(p: Placed): void {
+    this.slots[p.slot] = null;
+    this.copies.set(p.def.uid, Math.max(0, (this.copies.get(p.def.uid) ?? 1) - 1));
   }
 
   repair(): boolean {
@@ -355,9 +424,18 @@ export class Defense {
       if (p.cooldown > 0) continue;
       if (!this.target(p)) { p.cooldown = 0; continue; }
       p.cooldown += 1 / p.def.rate;
-      const b: Bullet = { id: this.ids++, lane: slotLane(p.slot), x: SLOT_X[p.slot % COLS] + 25, dmg: this.dmgOf(p), attack: p.def.attack, from: p.slot };
+      p.shots++;
+      const role = roleOf(p.def.cat), lane = slotLane(p.slot);
+      const shot = (l: number): Bullet => ({ id: this.ids++, lane: l, x: SLOT_X[p.slot % COLS] + 25, dmg: this.dmgOf(p), attack: p.def.attack, from: p.slot, pierce: role === 'pierce' ? PIERCE : 0, hitIds: [], knock: role === 'knockback' });
+      const b = shot(lane);
       this.bullets.push(b);
       this.events.push({ t: 'shoot', slot: p.slot, bullet: b });
+      if (role === 'cross' && p.shots % CROSS_EVERY === 0) {
+        // Alternate between the lane below and above (whichever is open).
+        const tries = (p.shots / CROSS_EVERY) % 2 ? [lane + 1, lane - 1] : [lane - 1, lane + 1];
+        const l = tries.find((x) => x >= 0 && x < LANES && this.laneOpen(x));
+        if (l !== undefined) { const c = shot(l); this.bullets.push(c); this.events.push({ t: 'shoot', slot: p.slot, bullet: c }); }
+      }
     }
   }
 
@@ -365,18 +443,28 @@ export class Defense {
     const keep: Bullet[] = [];
     for (const b of this.bullets) {
       b.x += BULLET_SPEED * dt;
-      const hit = this.enemies.find((e) => e.lane === b.lane && e.state !== 'dead' && Math.abs(e.x - b.x) < 24);
-      if (hit) { this.hit(b, hit); continue; }
+      const hit = this.enemies.find((e) => e.lane === b.lane && e.state !== 'dead' && Math.abs(e.x - b.x) < 24 && !b.hitIds.includes(e.id));
+      if (hit) {
+        this.hit(b, hit);
+        if (b.pierce-- > 0) { b.hitIds.push(hit.id); keep.push(b); } // a Rifle shot goes on to the next zombie
+        continue;
+      }
       if (b.x < SPAWN_X + 40) keep.push(b);
     }
     this.bullets = keep;
   }
 
   private hit(b: Bullet, e: Enemy): void {
-    this.damage(e, b.dmg, b, false);
+    const venomed = (o: Enemy) => (b.attack === 'blast' && this.time < o.slowUntil ? VENOM_BLAST : 1);
+    this.damage(e, Math.round(b.dmg * venomed(e)), b, false);
     if (b.attack === 'venom') e.slowUntil = this.time + SLOW_TIME;
     if (b.attack === 'blast') {
-      for (const o of this.enemies) if (o !== e && o.lane === b.lane && o.state !== 'dead' && Math.abs(o.x - e.x) < SPLASH_R * U) this.damage(o, Math.round(b.dmg * SPLASH_SHARE), b, true);
+      for (const o of this.enemies) if (o !== e && o.lane === b.lane && o.state !== 'dead' && Math.abs(o.x - e.x) < SPLASH_R * U) this.damage(o, Math.round(b.dmg * SPLASH_SHARE * venomed(o)), b, true);
+    }
+    if (b.knock && e.state !== 'dead') {
+      // Bazooka hits shove the zombie back (bosses less); one fighting the wall has to walk up again.
+      e.x = Math.min(SPAWN_X - 60, e.x + KNOCKBACK * U * (e.type.boss ? 0.33 : 1));
+      if (e.state === 'attack' && !e.blockedBy) e.state = 'walk';
     }
   }
 

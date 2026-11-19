@@ -4,9 +4,9 @@ import Phaser from 'phaser';
 import { COLORS, DEBUG, GAME_H, GAME_W, SEED, TRAY_Y } from '../config.ts';
 import { addonArt, areaArt, asset, ensureLoaded, isAreaArt, release } from '../assets.ts';
 import { player } from '../save.ts';
-import { ATTACKS, MAX_LEVEL, RARITY_COLOR, catName, family, guestCat, muzzleOffset, type Defender } from '../game/cats.ts';
+import { ATTACKS, MAX_LEVEL, RARITY_COLOR, ROLE, catName, family, guestCat, muzzleOffset, roleOf, type Defender } from '../game/cats.ts';
 import { COLS, LANES, SLOT_SIZE, SLOT_X, STOP_X, WALL_BAR, WALL_X0, WALL_X1, LANE_H, LANE_TOP, laneCenter, laneFeet, slotIndex, slotLane } from '../game/layout.ts';
-import { Defense, STEP, type Enemy, type Placed, type SimEvent, type Trap, type Unit } from '../game/sim.ts';
+import { Defense, STEP, type Bullet, type Enemy, type Placed, type SimEvent, type Trap, type Unit } from '../game/sim.ts';
 import { AREAS } from '../game/waves.ts';
 import { FULL_ALLEY, LEVEL_COUNT, starsFor, type LevelDef } from '../game/levels.ts';
 import { ADDONS, type Equipped } from '../game/addons.ts';
@@ -68,6 +68,8 @@ export class DefenseScene extends Phaser.Scene {
   private laneZones: Phaser.GameObjects.Rectangle[] = [];
   private repairBtn: { c: Phaser.GameObjects.Container; cost: Phaser.GameObjects.Text; shown: string } | null = null;
   private coinsX2!: Phaser.GameObjects.Text;
+  /** A finger down on a square: a tap, or a drag of the cat on it (move / merge). */
+  private press: { slot: number; x: number; y: number; drag: boolean } | null = null;
   /** Level 1's guided steps (null on other levels or once done). */
   private tut: { step: number; hand: Phaser.GameObjects.Text; box: Phaser.GameObjects.Container; msg: Phaser.GameObjects.Text } | null = null;
 
@@ -81,7 +83,7 @@ export class DefenseScene extends Phaser.Scene {
     this.startAddons = f.addons.map((a) => ({ ...a }));
     this.sim = new Defense({ ...f, seed: SEED || Math.floor(Math.random() * 1e9) });
     this.acc = 0; this.speed = 1; this.paused = false; this.ended = false; this.armed = -1;
-    this.tut = null;
+    this.tut = null; this.press = null;
     this.enemies.clear(); this.cats.clear(); this.bullets.clear(); this.units.clear(); this.traps.clear();
     this.fxPool = []; this.cards = []; this.slotTiles = []; this.addonBtns = []; this.laneZones = []; this.bubble = null;
     this.shown = { coins: -1, wall: -1 };
@@ -101,6 +103,8 @@ export class DefenseScene extends Phaser.Scene {
     this.banner(this.def.n === FULL_ALLEY ? `Area 1 · ${AREAS[0].name}` : `${this.def.title} · ${AREAS[area].name}`, 'Place your cats!');
 
     this.input.on('pointerdown', (_p: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => { if (!over.length) this.closeBubble(); });
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => this.dragMove(p));
+    this.input.on('pointerup', (p: Phaser.Input.Pointer) => this.dragEnd(p));
     this.input.keyboard?.on('keydown-P', () => this.togglePause());
     this.input.keyboard?.on('keydown-ESC', () => this.togglePause());
     if (DEBUG) {
@@ -129,7 +133,10 @@ export class DefenseScene extends Phaser.Scene {
       case 'spawn': return this.spawnEnemy(e.enemy);
       case 'place': this.hideHint(); this.showCat(e.cat, true); return this.tutStep('place');
       case 'upgrade': this.showCat(e.cat, false); return this.tutStep('upgrade');
-      case 'shoot': return this.shoot(e.slot, e.bullet.id, e.bullet.attack);
+      case 'merge': return this.onMerge(e.from, e.cat);
+      case 'move': return this.onMove(e.from, e.cat);
+      case 'sell': return this.onSell(e.slot, e.coins);
+      case 'shoot': return this.shoot(e.slot, e.bullet);
       case 'hit': return this.onHit(e.enemy, e.bullet?.id ?? -1, e.bullet?.attack ?? null, e.splash);
       case 'kill': return this.onKill(e.enemy, e.coins);
       case 'wall': return this.onWallHit(e.enemy);
@@ -217,7 +224,7 @@ export class DefenseScene extends Phaser.Scene {
       const s = slotIndex(l, c);
       const tile = this.add.rectangle(SLOT_X[c], laneCenter(l), SLOT_SIZE + 10, LANE_H - 4, 0xffffff, 0)
         .setStrokeStyle(3, 0xffffff, 0).setDepth(D.slot).setInteractive({ useHandCursor: true });
-      tile.on('pointerup', () => this.tapSlot(s));
+      tile.on('pointerdown', (p: Phaser.Input.Pointer) => { this.press = { slot: s, x: p.x, y: p.y, drag: false }; });
       tile.setData('slot', s);
       this.slotTiles.push(tile);
     }
@@ -268,24 +275,109 @@ export class DefenseScene extends Phaser.Scene {
     if (p.level > 1) {
       v.badge?.destroy();
       v.badge = this.add.image(v.spr.x - 30, v.spr.y - 62, `ui.up${Math.min(3, p.level - 1)}`).setScale(0.42).setDepth(D.actors + 900);
-      this.tweens.add({ targets: v.spr, scaleY: v.spr.scaleY * 1.12, yoyo: true, duration: 120 });
+      const s = asset(`${key}.idle`).displayScale;
+      this.tweens.killTweensOf(v.spr);
+      v.spr.setScale(s);
+      this.tweens.add({ targets: v.spr, scaleY: s * 1.12, yoyo: true, duration: 120 });
       this.fx(v.spr.x, v.spr.y - 34, 0.35);
       sfx.buff();
     } else if (isNew) sfx.place();
   }
 
-  private shoot(slot: number, bulletId: number, attack: Defender['attack']): void {
+  private shoot(slot: number, bullet: Bullet): void {
     const p = this.sim.slots[slot], v = this.cats.get(slot);
     if (!p || !v) return;
-    const key = `cat.c${p.def.cat}`;
-    v.spr.play(`${key}.shoot`).chain(`${key}.idle`);
+    const key = `cat.c${p.def.cat}`, attack = bullet.attack, bulletId = bullet.id;
+    const cross = bullet.lane !== slotLane(slot);
+    if (!cross) v.spr.play(`${key}.shoot`).chain(`${key}.idle`);
     const [mx, my] = muzzleOffset(p.def.cat);
     const x = v.spr.x + mx, y = v.spr.y + my;
     const flash = this.fx(x, y, asset('fx.muzzle').displayScale, 'fx.muzzle');
     flash.setOrigin(0.1, 0.5);
     const b = this.add.image(x + 10, y, `bullet.${attack}`).setScale(asset(`bullet.${attack}`).displayScale).setDepth(D.fx);
+    if (cross) { flash.setVisible(false); this.tweens.add({ targets: b, y: y + (laneFeet(bullet.lane) - laneFeet(slotLane(slot))), duration: 140 }); } // a Blaster's second shot
     this.bullets.set(bulletId, b);
-    sfx.pew(attack);
+    if (!cross) sfx.pew(attack);
+  }
+
+  // ── Dragging cats: move to a free square, or drop on the same cat to merge ────────────────────────
+  private dragMove(p: Phaser.Input.Pointer): void {
+    const pr = this.press;
+    if (!pr || !p.isDown || this.ended || this.paused) return;
+    const v = this.cats.get(pr.slot);
+    if (!v) return;
+    if (!pr.drag && Math.hypot(p.x - pr.x, p.y - pr.y) > 18) { pr.drag = true; this.closeBubble(); v.spr.setAlpha(0.75).setDepth(D.bubble - 1); this.markDrops(pr.slot); }
+    if (pr.drag) { v.spr.setPosition(p.x, p.y + 40); v.badge?.setPosition(p.x - 30, p.y - 22); }
+  }
+
+  private dragEnd(p: Phaser.Input.Pointer): void {
+    const pr = this.press;
+    this.press = null;
+    if (!pr) return;
+    if (!pr.drag) { this.tapSlot(pr.slot); return; }
+    this.markDrops(-1);
+    const to = this.slotTiles.find((t) => t.getBounds().contains(p.x, p.y))?.getData('slot') as number | undefined;
+    const ok = to !== undefined && (this.sim.canMergeInto(pr.slot, to) ? this.sim.merge(pr.slot, to) : this.sim.move(pr.slot, to));
+    if (!ok) {
+      if (to !== undefined && to !== pr.slot) {
+        const a = this.sim.slots[pr.slot], b = this.sim.slots[to];
+        if (b && a && b.def.uid === a.def.uid && !this.sim.canMerge) this.flashHint('Merging unlocks after level 6');
+        else if (b && a && b.def.uid === a.def.uid && b.level !== a.level) this.flashHint('Only cats of the same level merge');
+        else if (b) this.flashHint('Drop on a free square, or on the same cat to merge');
+        else if (a && this.sim.time < a.moveAt) this.flashHint('Just moved: wait a moment');
+      }
+      this.placeCatSprite(pr.slot); // back where it was
+    }
+  }
+
+  /** Light up where the dragged cat can go: free squares (white), the same cat to merge with (yellow). */
+  private markDrops(from: number): void {
+    for (const t of this.slotTiles) {
+      const s = t.getData('slot') as number;
+      const merge = from >= 0 && this.sim.canMergeInto(from, s), free = from >= 0 && !this.sim.slots[s];
+      t.setStrokeStyle(4, merge ? 0xffee00 : 0xffffff, merge ? 0.95 : free ? 0.45 : 0);
+    }
+  }
+
+  /** Put a cat's sprite (and badge) on its square. */
+  private placeCatSprite(slot: number): void {
+    const v = this.cats.get(slot);
+    if (!v) return;
+    const lane = slotLane(slot);
+    this.tweens.killTweensOf(v.spr);
+    v.spr.setScale(asset(`cat.c${this.sim.slots[slot]?.def.cat ?? 1}.idle`).displayScale);
+    v.spr.setAlpha(1).setPosition(SLOT_X[slot % COLS], laneFeet(lane)).setDepth(D.actors + laneFeet(lane) - 1);
+    v.badge?.setPosition(v.spr.x - 30, v.spr.y - 62);
+  }
+
+  private onMove(from: number, p: Placed): void {
+    const v = this.cats.get(from);
+    if (!v) return;
+    this.cats.delete(from);
+    this.cats.set(p.slot, v);
+    this.placeCatSprite(p.slot);
+    sfx.place();
+  }
+
+  private onMerge(from: number, p: Placed): void {
+    const v = this.cats.get(from);
+    this.cats.delete(from);
+    if (v) { v.badge?.destroy(); v.spr.destroy(); }
+    this.placeCatSprite(p.slot);
+    this.showCat(p, false); // level badge, pop and sound
+    const t = text(this, SLOT_X[p.slot % COLS], laneFeet(slotLane(p.slot)) - 110, 'Merged!', 26, '#ffee00', 5).setOrigin(0.5).setDepth(D.fx + 5);
+    this.tweens.add({ targets: t, y: t.y - 40, alpha: 0, duration: 800, onComplete: () => t.destroy() });
+  }
+
+  private onSell(slot: number, coins: number): void {
+    const v = this.cats.get(slot);
+    if (!v) return;
+    this.cats.delete(slot);
+    v.badge?.destroy();
+    this.tweens.add({ targets: v.spr, alpha: 0, scale: v.spr.scale * 0.4, duration: 220, onComplete: () => v.spr.destroy() });
+    const t = text(this, v.spr.x, v.spr.y - 84, `+${coins}`, 26, '#ffd02a', 5).setOrigin(0.5).setDepth(D.fx + 5);
+    this.tweens.add({ targets: t, y: t.y - 50, alpha: 0, duration: 700, onComplete: () => t.destroy() });
+    sfx.coin();
   }
 
   // ── Enemies ──────────────────────────────────────────────────────────────────────────────────────
@@ -307,7 +399,7 @@ export class DefenseScene extends Phaser.Scene {
     if (v) v.flashUntil = this.sim.time + 0.06;
     if (splash) return;
     const b = this.bullets.get(bulletId);
-    if (b) { b.destroy(); this.bullets.delete(bulletId); }
+    if (b && !this.sim.bullets.some((x) => x.id === bulletId)) { b.destroy(); this.bullets.delete(bulletId); }
     if (attack === 'blast') { this.fx(e.x - 8, laneFeet(e.lane) - 34, 0.45); sfx.boom(); }
   }
 
@@ -415,23 +507,32 @@ export class DefenseScene extends Phaser.Scene {
     const v = this.cats.get(p.slot);
     if (!v) return;
     const cost = this.sim.upgradeCost(p);
-    const x = v.spr.x + 150, y = Math.max(70, v.spr.y - 70);
-    const bg = this.add.rectangle(0, 0, 270, 112, 0x16131d, 0.92).setStrokeStyle(3, RARITY_COLOR[p.def.rarity]);
-    const title = text(this, 0, -36, `${p.def.name} · Lv ${p.level}`, 26).setOrigin(0.5);
-    if (title.width > 250) title.setScale(250 / title.width);
-    const stats = text(this, 0, -6, `${this.sim.dmgOf(p)} dmg · ${p.def.rate}/s · ${ATTACKS[p.def.attack].name}`, 20, COLORS.dim, 3).setOrigin(0.5);
-    const items: Phaser.GameObjects.GameObject[] = [bg, title, stats];
+    const x = v.spr.x + 170, y = Math.max(86, v.spr.y - 70);
+    const role = ROLE[roleOf(p.def.cat)], sell = this.sim.sellValue(p);
+    const bg = this.add.rectangle(0, 0, 320, 150, 0x16131d, 0.92).setStrokeStyle(3, RARITY_COLOR[p.def.rarity]);
+    const title = text(this, 0, -52, `${p.def.name} · Lv ${p.level}`, 26).setOrigin(0.5);
+    if (title.width > 300) title.setScale(300 / title.width);
+    const stats = text(this, 0, -22, `${this.sim.dmgOf(p)} dmg · ${p.def.rate}/s · ${ATTACKS[p.def.attack].name}`, 20, COLORS.dim, 3).setOrigin(0.5);
+    const roleT = text(this, 0, 2, `${role.name}: ${role.blurb}`, 17, '#9fd8ff', 3).setOrigin(0.5);
+    if (roleT.width > 300) roleT.setScale(300 / roleT.width);
+    const items: Phaser.GameObjects.GameObject[] = [bg, title, stats, roleT];
+    const upX = -50, by = 44;
     if (cost !== null) {
       const ok = this.sim.coins >= cost;
-      const btn = this.add.rectangle(0, 32, 200, 40, ok ? COLORS.good : 0x666666).setStrokeStyle(3, 0x2b1d14);
-      const lbl = text(this, 0, 30, `⬆ Upgrade  ${cost}`, 24).setOrigin(0.5);
+      const btn = this.add.rectangle(upX, by, 196, 40, ok ? COLORS.good : 0x666666).setStrokeStyle(3, 0x2b1d14);
+      const lbl = text(this, upX, by - 2, `⬆ Upgrade  ${cost}`, 22).setOrigin(0.5);
       items.push(btn, lbl);
       btn.setInteractive({ useHandCursor: true }).on('pointerup', () => {
         if (this.sim.upgrade(p.slot)) this.closeBubble(); else this.flashHint(`Need ${cost} coins`);
       });
-    } else items.push(text(this, 0, 32, `Max level (${MAX_LEVEL})`, 22, '#ffd02a', 3).setOrigin(0.5));
-    this.bubble = this.add.container(x, y, items).setDepth(D.bubble).setSize(270, 112);
-    if (this.tut?.step === 6 && cost !== null) this.pointAt(x, y + 14);
+    } else items.push(text(this, upX, by, `Max level (${MAX_LEVEL})`, 22, '#ffd02a', 3).setOrigin(0.5));
+    if (!this.def.tutorial) {
+      const sb = this.add.rectangle(104, by, 96, 40, 0x8a4a2a).setStrokeStyle(3, 0x2b1d14);
+      items.push(sb, text(this, 104, by - 2, `Sell ${sell}`, 20).setOrigin(0.5));
+      sb.setInteractive({ useHandCursor: true }).on('pointerup', () => { this.sim.sell(p.slot); this.closeBubble(); });
+    }
+    this.bubble = this.add.container(x, y, items).setDepth(D.bubble).setSize(320, 150);
+    if (this.tut?.step === 6 && cost !== null) this.pointAt(x + upX, y + by - 18);
     bg.setInteractive(); // swallow taps on the bubble itself
     this.time.delayedCall(4000, () => { if (this.bubble?.getData('slot') === p.slot) this.closeBubble(); });
     this.bubble.setData('slot', p.slot);

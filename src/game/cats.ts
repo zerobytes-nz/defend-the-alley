@@ -87,3 +87,16 @@ export const PLACE_COST = 30, PLACE_STEP = 10;
 /** Upgrading a placed cat (tap it): level 2, 3, 4. Each level multiplies damage. */
 export const UPGRADE_COST = [35, 60, 95] as const;
 export const MAX_LEVEL = 4, LEVEL_DMG = 1.45;
+
+/** Family roles, on top of the attack. Bazooka: knockback (street units × U; bosses take a third). Blaster: every Nth shot
+ * also goes down the next lane. Rifle: shots go through this many extra zombies. */
+export const KNOCKBACK = 22, CROSS_EVERY = 3, PIERCE = 1;
+/** Venom + Blast: zombies slowed by Venom take this much more from Blast. */
+export const VENOM_BLAST = 1.2;
+export type Role = 'knockback' | 'cross' | 'pierce';
+export const ROLE: Record<Role, { name: string; blurb: string }> = {
+  knockback: { name: 'Knockback', blurb: 'hits push zombies back' },
+  cross: { name: 'Two lanes', blurb: 'every 3rd shot also hits the next lane' },
+  pierce: { name: 'Pierce', blurb: 'shots go through the first zombie' },
+};
+export const roleOf = (cat: number): Role => (['knockback', 'cross', 'pierce'] as const)[Math.floor((cat - 1) / 5)];

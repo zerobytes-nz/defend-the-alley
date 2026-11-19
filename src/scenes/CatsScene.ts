@@ -3,7 +3,7 @@
 import Phaser from 'phaser';
 import { COLORS } from '../config.ts';
 import { player } from '../save.ts';
-import { ATTACKS, CAT_STEPS, RARITY_COLOR, catName, guestCat, upgraded, type Defender } from '../game/cats.ts';
+import { ATTACKS, ROLE, roleOf, CAT_STEPS, RARITY_COLOR, catName, guestCat, upgraded, type Defender } from '../game/cats.ts';
 import { buyCatStep, buyIncome, buyWall, cards, catStepCost, catUnlocked, deckOf, fightBonus, rowStepCost, toggleDeck, DECK_MAX, WALL_PER_STEP, START_PER_STEP, INCOME_PER_STEP } from '../game/progress.ts';
 import { ensureLoaded, release } from '../assets.ts';
 import { CAT_ORDER, catLevel } from '../game/unlocks.ts';
@@ -132,7 +132,7 @@ export class CatsScene extends Phaser.Scene {
       locked = r.kind === 'cat' && !catUnlocked(s, awis, cat);
       steps = s.cat[cat - 1]; cost = catStepCost(s, cat); buy = () => buyCatStep(s, cat);
       title = r.kind === 'awi' ? def.name : catName(cat);
-      sub = locked ? `Clear level ${catLevel(cat)} to unlock` : `${def.rarity} · ${ATTACKS[def.attack].name} · ${def.dmg} dmg · ${def.rate}/s`;
+      sub = locked ? `Clear level ${catLevel(cat)} to unlock` : `${def.rarity} · ${ATTACKS[def.attack].name} · ${ROLE[roleOf(cat)].name} · ${def.dmg} dmg · ${def.rate}/s`;
     } else if (r.kind === 'wall') {
       steps = s.wall; cost = rowStepCost(s.wall); buy = () => buyWall(s);
       title = 'Wall'; sub = `+${WALL_PER_STEP} health a step · now ${fightBonus(s).wallMax}`;

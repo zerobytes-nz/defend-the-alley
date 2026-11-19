@@ -22,6 +22,12 @@ export function think(d: Defense): void {
     if (d.useAddon(i, ADDONS[d.addons[i].id].lane ? lanes[0] : -1)) return;
   }
 
+  // Every square full: merge two matching cats to free one (a free level up).
+  const open = d.slots.map((p, s) => s).filter((s) => d.laneOpen(Math.floor(s / COLS)));
+  if (d.canMerge && open.every((s) => d.slots[s])) {
+    for (const a of open) for (const b of open) if (d.canMergeInto(a, b)) { d.merge(a, b); return; }
+  }
+
   const best = [...d.deck].sort((a, b) => b.dmg * b.rate - a.dmg * a.rate);
   for (const l of lanes) {
     for (let c = COLS - 1; c >= 0; c--) {
