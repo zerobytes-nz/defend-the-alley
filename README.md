@@ -1,9 +1,11 @@
 # Defend the Alley
 
 A landscape lane-defense game for the phone browser (Phaser 3 + TypeScript + Vite), and TheoSwap showcase game #3.
-Cats hold a street against zombie waves across 5 areas, with a boss at the end of each. Players' NFTs become
+Cats hold a street against zombie waves: 15 levels across 5 areas on the kit's road map, then Full Alley (all 5 in a row).
+Gems from cleared levels buy cat upgrades and add-ons. Players' NFTs become
 **AWIs (Altered World Items)**: **cat defenders** with a cat (one of 15), an attack (Blast, Rapid or Venom), a rarity,
-and damage / fire rate / range. Guests play with three free cats. See [PLAN.md](PLAN.md) for the design and milestones.
+and damage / fire rate / range, or **add-ons** (power-ups with free uses each level). Guests start with three free cats
+and unlock more as they clear levels. See [PLAN.md](PLAN.md) for the design and milestones.
 
 The same NFTs are hero skins in [Altered Run](https://github.com/zerobytes-nz/altered-run) (game #1) and unit cards in
 [Altered Arena](https://github.com/zerobytes-nz/altered-arena) (game #2).
@@ -12,12 +14,14 @@ The same NFTs are hero skins in [Altered Run](https://github.com/zerobytes-nz/al
 npm install      # also installs the pre-commit hook
 npm run dev      # http://localhost:5182
 npm run build    # static site in dist/
-npm run sim      # balance check: a bot plays 100 runs per deck, no browser
+npm run sim      # balance check: win % per level for each demo player, no browser
+npm run sim -- --campaign   # guests playing through all 15 levels, upgrading as they go
 ```
 
-URL switches: `?nft` sample NFT deck · `?bot` the bot plays (hands-free demo) · `?seed=N` same waves · `?debug` FPS meter.
+URL switches: `?profile=guest|collector|whale` demo player (also picked on the title screen) · `?nft` = collector · `?bot` the bot plays (hands-free demo) · `?seed=N` same waves · `?debug` FPS meter.
 
-Controls: taps only. Tap a cat card, then a spot by the wall. Tap a placed cat to upgrade it. ⚙ pauses, ×1/×2 speeds up.
+Controls: taps only. Tap a cat card, then a spot by the wall. Tap a placed cat to upgrade it. Tap an add-on, then a
+lane (Big Bomb and Coins ×2 fire at once). The wall button repairs. ⚙ pauses, ×1/×2 speeds up.
 Keyboard: Space = Play, P / Esc = pause, M = mute.
 
 ## Art: read [ASSETS.md](ASSETS.md)

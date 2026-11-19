@@ -1,11 +1,27 @@
 // A simple player for `npm run sim` (balance) and ?bot (hands-free demo / soak test in the browser).
-// Call think() about twice a second: it fills the most threatened lane, else upgrades a cat there.
+// Call think() about twice a second: it repairs a weak wall, fires add-ons when things look bad, fills the most
+// threatened lane, else upgrades a cat there.
 import type { Defense } from './sim.ts';
+import { ADDONS } from './addons.ts';
 import { COLS, LANES, SPAWN_X, slotIndex } from './layout.ts';
 
 export function think(d: Defense): void {
   const threat = Array.from({ length: LANES }, (_, l) => d.enemies.filter((e) => e.lane === l).reduce((s, e) => s + e.hp + (SPAWN_X - e.x) / 2, 0));
   const lanes = [...Array(LANES).keys()].sort((a, b) => threat[b] - threat[a]);
+
+  // Wall below 40%: repair if there's money.
+  const repair = d.repairCost();
+  if (repair !== null && d.wallHp < d.wallMax * 0.4 && d.coins >= repair) { d.repair(); return; }
+
+  // Add-ons: when a boss is on the street, the wall is under 60%, or a lane is swamped. Coins ×2 early.
+  const boss = d.enemies.some((e) => e.type.boss && e.state !== 'dead');
+  const swamped = threat[lanes[0]] > 900;
+  const i = d.addons.findIndex((a) => a.uses > 0 && (a.id === 'coins' ? d.wave >= 0 && d.time > 8 : boss || swamped || d.wallHp < d.wallMax * 0.6));
+  if (i >= 0 && d.time >= nextAddon.get(d)!) {
+    nextAddon.set(d, d.time + 5);
+    if (d.useAddon(i, ADDONS[d.addons[i].id].lane ? lanes[0] : -1)) return;
+  }
+
   const best = [...d.deck].sort((a, b) => b.dmg * b.rate - a.dmg * a.rate);
   for (const l of lanes) {
     for (let c = COLS - 1; c >= 0; c--) {
@@ -19,3 +35,4 @@ export function think(d: Defense): void {
     if (up && cost !== null && cost <= d.coins && threat[l] > 0) { d.upgrade(up.slot); return; }
   }
 }
+const nextAddon = new (class extends WeakMap<Defense, number> { get(k: Defense) { return super.get(k) ?? 0; } })();

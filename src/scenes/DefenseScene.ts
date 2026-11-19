@@ -1,17 +1,19 @@
-// The run: draws the simulation (src/game/sim.ts) and turns taps into its commands.
+// A fight: draws the simulation (src/game/sim.ts) and turns taps into its commands.
 // The sim steps at a fixed 60 Hz; this scene only creates/destroys sprites from sim events and moves them.
 import Phaser from 'phaser';
 import { COLORS, DEBUG, GAME_H, GAME_W, SEED, TRAY_Y } from '../config.ts';
-import { areaArt, asset, ensureLoaded, release } from '../assets.ts';
-import { currentDeck } from '../deck.ts';
+import { addonArt, areaArt, asset, ensureLoaded, isAreaArt, release } from '../assets.ts';
+import { player } from '../save.ts';
 import { ATTACKS, MAX_LEVEL, RARITY_COLOR, muzzleOffset, type Defender } from '../game/cats.ts';
-import { COLS, LANES, SLOT_SIZE, SLOT_X, WALL_BAR, WALL_X0, WALL_X1, LANE_H, LANE_TOP, laneCenter, laneFeet, slotIndex, slotLane } from '../game/layout.ts';
-import { Defense, STEP, WALL_HP, type Enemy, type Placed, type SimEvent } from '../game/sim.ts';
-import { AREAS, TOTAL_WAVES } from '../game/waves.ts';
+import { COLS, LANES, SLOT_SIZE, SLOT_X, STOP_X, WALL_BAR, WALL_X0, WALL_X1, LANE_H, LANE_TOP, laneCenter, laneFeet, slotIndex, slotLane } from '../game/layout.ts';
+import { Defense, STEP, type Enemy, type Placed, type SimEvent, type Trap, type Unit } from '../game/sim.ts';
+import { AREAS } from '../game/waves.ts';
+import { FULL_ALLEY, LEVEL_COUNT, starsFor, type LevelDef } from '../game/levels.ts';
+import { ADDONS, type Equipped } from '../game/addons.ts';
+import { alleyGems, levelGems, spendAddons } from '../game/progress.ts';
 import { think } from '../game/bot.ts';
-import { button, muteButton, tappable, text } from '../ui.ts';
-import { sfx } from '../systems/audio.ts';
-import { loadBest, saveBest } from './MenuScene.ts';
+import { button, tappable, text } from '../ui.ts';
+import { buzz, isMuted, musicOn, sfx, soundOn, toggleMusic, toggleMute, toggleSound, toggleVibra, vibraOn } from '../systems/audio.ts';
 
 const BOT = new URLSearchParams(location.search).has('bot');
 const D = { bg: 0, slot: 10, wall: 20, actors: 100, fx: 900, hud: 1000, tray: 1100, bubble: 1200, overlay: 2000 };
@@ -19,6 +21,8 @@ const D = { bg: 0, slot: 10, wall: 20, actors: 100, fx: 900, hud: 1000, tray: 11
 interface EnemyView { spr: Phaser.GameObjects.Sprite; bar: Phaser.GameObjects.Rectangle; barBg: Phaser.GameObjects.Rectangle; state: Enemy['state']; flashUntil: number }
 interface CatView { spr: Phaser.GameObjects.Sprite; badge: Phaser.GameObjects.Image | null }
 interface CardView { def: Defender; c: Phaser.GameObjects.Container; cost: Phaser.GameObjects.Text; glow: Phaser.GameObjects.Rectangle; afford: boolean | null }
+interface UnitView { spr: Phaser.GameObjects.Sprite; bar: Phaser.GameObjects.Rectangle; fighting: boolean }
+interface AddonButton { c: Phaser.GameObjects.Container; count: Phaser.GameObjects.Text; glow: Phaser.GameObjects.Rectangle; shown: number }
 
 export class DefenseScene extends Phaser.Scene {
   private sim!: Defense;
@@ -50,25 +54,46 @@ export class DefenseScene extends Phaser.Scene {
   private fpsText: Phaser.GameObjects.Text | null = null;
   private shown = { coins: -1, wall: -1 };
 
+  private levelN = 0;
+  private def!: LevelDef;
+  /** The add-ons as they were at the start (to take used ones off the stock afterwards). */
+  private startAddons: Equipped[] = [];
+  private units = new Map<number, UnitView>();
+  private traps = new Map<number, Phaser.GameObjects.Image[]>();
+  private addonBtns: AddonButton[] = [];
+  /** An add-on waiting for a lane tap. */
+  private armed = -1;
+  private laneZones: Phaser.GameObjects.Rectangle[] = [];
+  private repairBtn!: { c: Phaser.GameObjects.Container; cost: Phaser.GameObjects.Text; shown: string };
+  private coinsX2!: Phaser.GameObjects.Text;
+
   constructor() { super('Defense'); }
 
+  init(data: { level?: number }): void { this.levelN = data?.level ?? 0; }
+
   create(): void {
-    const deck = currentDeck();
-    this.sim = new Defense(deck, SEED || Math.floor(Math.random() * 1e9));
-    this.acc = 0; this.speed = 1; this.paused = false; this.ended = false;
-    this.enemies.clear(); this.cats.clear(); this.bullets.clear(); this.fxPool = []; this.cards = []; this.slotTiles = []; this.bubble = null;
+    const f = player.fight(this.levelN);
+    this.def = f.level;
+    this.startAddons = f.addons.map((a) => ({ ...a }));
+    this.sim = new Defense({ deck: f.deck, level: f.level, seed: SEED || Math.floor(Math.random() * 1e9), ...f.bonus, addons: f.addons });
+    this.acc = 0; this.speed = 1; this.paused = false; this.ended = false; this.armed = -1;
+    this.enemies.clear(); this.cats.clear(); this.bullets.clear(); this.units.clear(); this.traps.clear();
+    this.fxPool = []; this.cards = []; this.slotTiles = []; this.addonBtns = []; this.laneZones = []; this.bubble = null;
     this.shown = { coins: -1, wall: -1 };
     this.loadingArea = false;
-    void ensureLoaded(this, areaArt(1));
+    const area = this.sim.area;
+    if (this.def.waves.some((w) => w.area > area)) void ensureLoaded(this, areaArt(this.def, area + 1));
 
     this.add.rectangle(0, 0, GAME_W, GAME_H, COLORS.bg).setOrigin(0).setDepth(-1);
-    this.bg = this.add.image(0, 0, AREAS[0].bg).setOrigin(0).setDepth(D.bg);
+    this.bg = this.add.image(0, 0, AREAS[area].bg).setOrigin(0).setDepth(D.bg);
     this.drawSlots();
+    this.drawLaneZones();
     this.drawWall();
     this.drawHud();
-    this.drawTray(deck);
-    this.selectCard(deck[0]);
-    this.banner(`Area 1 · ${AREAS[0].name}`, 'Place your cats!');
+    this.drawTray(f.deck);
+    this.drawAddons();
+    this.selectCard(f.deck[0]);
+    this.banner(this.def.n === FULL_ALLEY ? `Area 1 · ${AREAS[0].name}` : `${this.def.title} · ${AREAS[area].name}`, 'Place your cats!');
 
     this.input.on('pointerdown', (_p: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => { if (!over.length) this.closeBubble(); });
     this.input.keyboard?.on('keydown-P', () => this.togglePause());
@@ -100,15 +125,23 @@ export class DefenseScene extends Phaser.Scene {
       case 'place': this.hideHint(); return this.showCat(e.cat, true);
       case 'upgrade': return this.showCat(e.cat, false);
       case 'shoot': return this.shoot(e.slot, e.bullet.id, e.bullet.attack);
-      case 'hit': return this.onHit(e.enemy, e.bullet.id, e.bullet.attack, e.splash);
+      case 'hit': return this.onHit(e.enemy, e.bullet?.id ?? -1, e.bullet?.attack ?? null, e.splash);
       case 'kill': return this.onKill(e.enemy, e.coins);
       case 'wall': return this.onWallHit(e.enemy);
       case 'wave':
-        this.waveText.setText(`Wave ${e.wave + 1}/${TOTAL_WAVES}`);
+        this.waveText.setText(`Wave ${e.wave + 1}/${e.total}`);
         if (e.boss) { this.banner('BOSS!', `${AREAS[e.area].name} boss incoming`); sfx.bossIn(); this.cameras.main.shake(300, 0.004); }
         return;
       case 'area': return this.changeArea(e.area);
       case 'end': return this.endRun(e.won);
+      case 'repair': return this.onRepair();
+      case 'addon': return this.onAddon(e.id);
+      case 'blast': return this.onBlast(e.lane, e.x, e.r);
+      case 'coins': this.coinsX2.setVisible(true); return;
+      case 'unit': return this.showUnit(e.unit);
+      case 'unitGone': return this.dropUnit(e.unit);
+      case 'trap': return this.showTrap(e.trap);
+      case 'trapGone': return this.dropTrap(e.trap);
     }
   }
 
@@ -140,9 +173,27 @@ export class DefenseScene extends Phaser.Scene {
         if (ok !== c.afford) { c.afford = ok; c.c.setAlpha(ok ? 1 : 0.55); c.cost.setColor(ok ? '#ffffff' : '#ff8a7a'); }
       }
     }
+    for (const u of this.sim.units) {
+      const v = this.units.get(u.id);
+      if (!v) continue;
+      if (u.fighting !== v.fighting) { v.fighting = u.fighting; v.spr.play(`addon.${u.kind}.${u.fighting ? 'attack' : 'idle'}`); }
+      v.bar.width = 56 * Math.max(0, u.hp / u.maxHp);
+    }
+    if (this.coinsX2.visible && now >= this.sim.coinsUntil) this.coinsX2.setVisible(false);
+    this.addonBtns.forEach((b, i) => {
+      const n = this.sim.addons[i].uses;
+      if (n !== b.shown) { b.shown = n; b.count.setText(String(n)); b.c.setAlpha(n > 0 ? 1 : 0.4); }
+    });
+    const rc = this.sim.repairCost();
+    const rs = rc === null ? 'full' : `${rc}`;
+    if (rs !== this.repairBtn.shown || (rc !== null && (this.sim.coins >= rc) !== (this.repairBtn.c.alpha === 1))) {
+      this.repairBtn.shown = rs;
+      this.repairBtn.cost.setText(rc === null ? 'Full' : String(rc));
+      this.repairBtn.c.setAlpha(rc !== null && this.sim.coins >= rc ? 1 : 0.5);
+    }
     if (this.sim.wallHp !== this.shown.wall) {
       this.shown.wall = this.sim.wallHp;
-      const f = this.sim.wallHp / WALL_HP;
+      const f = this.sim.wallHp / this.sim.wallMax;
       this.wallBar.height = (WALL_BAR.h - 4) * f; // the bar empties from the top, like the kit's
       this.wallBar.setFillStyle(f > 0.5 ? COLORS.good : f > 0.25 ? COLORS.gold : COLORS.bad);
       this.wallText.setText(`${this.sim.wallHp}`);
@@ -166,24 +217,25 @@ export class DefenseScene extends Phaser.Scene {
     const b = WALL_BAR;
     this.add.rectangle(b.x, b.y, b.w, b.h, 0x1d2628).setOrigin(0).setDepth(D.wall); // covers the art's own (static) fill
     this.wallBar = this.add.rectangle(b.x + 2, b.y + b.h - 2, b.w - 4, b.h - 4, COLORS.good).setOrigin(0, 1).setDepth(D.wall + 1);
-    this.wallText = text(this, b.x + b.w / 2, b.y + b.h + 34, '100', 22).setOrigin(0.5).setDepth(D.wall + 2);
+    this.wallText = text(this, b.x + b.w / 2, b.y + b.h + 34, String(this.sim.wallMax), 22).setOrigin(0.5).setDepth(D.wall + 2);
     this.wallFlash = this.add.rectangle(WALL_X0, LANE_TOP - 20, WALL_X1 - WALL_X0, LANE_H * LANES + 40, 0xff3020, 0).setOrigin(0).setDepth(D.wall + 3);
   }
 
   private changeArea(a: number): void {
-    const loaded = areaArt(a).every((k) => this.textures.exists(k));
+    const art = areaArt(this.def, a);
+    const loaded = art.every((k) => this.textures.exists(k));
     if (!loaded) { // slow connection: hold the run until this area's art is in
       this.loadingArea = true;
-      void ensureLoaded(this, areaArt(a)).then(() => { this.loadingArea = false; this.changeArea(a); });
+      void ensureLoaded(this, art).then(() => { this.loadingArea = false; this.changeArea(a); });
       return;
     }
-    if (a + 1 < AREAS.length) void ensureLoaded(this, areaArt(a + 1));
+    if (this.def.waves.some((w) => w.area > a)) void ensureLoaded(this, areaArt(this.def, a + 1));
     const next = this.add.image(0, 0, AREAS[a].bg).setOrigin(0).setDepth(D.bg + 1).setAlpha(0);
     const old = this.bg;
-    // Free the previous area's street and boss once its street is off screen (area 1 stays for the next run).
-    this.tweens.add({ targets: next, alpha: 1, duration: 700, onComplete: () => { old.destroy(); next.setDepth(D.bg); if (a - 1 >= 1) release(this, areaArt(a - 1)); } });
+    // Free the previous area's street and bosses once its street is off screen (area 1's street stays for the next run).
+    this.tweens.add({ targets: next, alpha: 1, duration: 700, onComplete: () => { old.destroy(); next.setDepth(D.bg); release(this, areaArt(this.def, a - 1).filter((k) => k !== 'bg.area1')); } });
     this.bg = next;
-    this.areaText.setText(`Area ${a + 1} · ${AREAS[a].name}`);
+    this.areaText.setText(`${this.def.n === FULL_ALLEY ? 'Full Alley' : this.def.title} · ${AREAS[a].name}`);
     this.banner(`Area ${a + 1} · ${AREAS[a].name}`, 'Here they come');
     sfx.finish();
   }
@@ -239,7 +291,7 @@ export class DefenseScene extends Phaser.Scene {
     if (e.type.boss) { spr.setAlpha(0); this.tweens.add({ targets: spr, alpha: 1, duration: 400 }); }
   }
 
-  private onHit(e: Enemy, bulletId: number, attack: Defender['attack'], splash: boolean): void {
+  private onHit(e: Enemy, bulletId: number, attack: Defender['attack'] | null, splash: boolean): void {
     const v = this.enemies.get(e.id);
     if (v) v.flashUntil = this.sim.time + 0.06;
     if (splash) return;
@@ -263,6 +315,7 @@ export class DefenseScene extends Phaser.Scene {
 
   private onWallHit(e: Enemy): void {
     sfx.thud();
+    buzz(e.type.boss ? 60 : 25);
     this.wallFlash.setFillStyle(0xff3020, 0.35);
     this.tweens.add({ targets: this.wallFlash, fillAlpha: 0, duration: 160 });
     if (e.type.boss) this.cameras.main.shake(120, 0.003);
@@ -282,14 +335,16 @@ export class DefenseScene extends Phaser.Scene {
     this.add.image(118, 46, 'ui.coinbar').setDepth(D.hud);
     this.add.image(44, 46, 'ui.coin').setScale(0.85).setDepth(D.hud + 1);
     this.coinText = text(this, 128, 44, '0', 34).setOrigin(0.5).setDepth(D.hud + 2);
-    this.areaText = text(this, 240, 46, `Area 1 · ${AREAS[0].name}`, 30).setOrigin(0, 0.5).setDepth(D.hud);
+    const where = this.def.n === FULL_ALLEY ? 'Full Alley' : this.def.title;
+    this.areaText = text(this, 240, 46, `${where} · ${AREAS[this.sim.area].name}`, 30).setOrigin(0, 0.5).setDepth(D.hud);
     this.add.image(GAME_W - 270, 46, 'ui.wavebar').setDepth(D.hud);
-    this.waveText = text(this, GAME_W - 250, 44, `Wave 0/${TOTAL_WAVES}`, 28).setOrigin(0.5).setDepth(D.hud + 1);
+    this.waveText = text(this, GAME_W - 250, 44, `Wave 0/${this.sim.totalWaves}`, 28).setOrigin(0.5).setDepth(D.hud + 1);
+    this.coinsX2 = text(this, 128, 96, 'Coins ×2', 24, '#ffd02a', 5).setOrigin(0.5).setDepth(D.hud + 2).setVisible(false);
     const spd = text(this, GAME_W - 132, 46, '×1', 34).setOrigin(0.5).setDepth(D.hud);
     tappable(spd, () => { this.speed = this.speed === 1 ? 2 : 1; spd.setText(`×${this.speed}`); });
     const pause = this.add.image(GAME_W - 52, 46, 'ui.settings').setScale(0.62).setDepth(D.hud);
     tappable(pause, () => this.togglePause());
-    this.hint = text(this, 30, TRAY_Y, 'Pick a cat card, then tap a square by the wall', 26, COLORS.text, 5).setOrigin(0, 0.5).setDepth(D.hud);
+    this.hint = text(this, GAME_W / 2, 104, 'Pick a cat card, then tap a square by the wall', 26, COLORS.text, 5).setOrigin(0.5).setDepth(D.hud);
   }
 
   private drawTray(deck: Defender[]): void {
@@ -321,6 +376,7 @@ export class DefenseScene extends Phaser.Scene {
 
   private tapSlot(slot: number): void {
     if (this.ended || this.paused) return;
+    this.disarm();
     const placed = this.sim.slots[slot];
     if (placed) { this.openBubble(placed); return; }
     this.closeBubble();
@@ -381,6 +437,147 @@ export class DefenseScene extends Phaser.Scene {
     this.tweens.add({ targets: all, alpha: 1, duration: 200, yoyo: true, hold: 1300, onComplete: () => all.forEach((o) => o.destroy()) });
   }
 
+  // ── Repair and add-ons ───────────────────────────────────────────────────────────────────────────
+  /** Bottom left, beside the cards: Repair Wall, then one button per equipped add-on. */
+  private drawAddons(): void {
+    const cost = text(this, 0, 40, '', 22).setOrigin(0.5);
+    const c = this.add.container(80, TRAY_Y, [
+      this.add.image(0, 0, 'ui.addon-slot').setScale(0.62),
+      this.add.image(0, -8, 'ui.wall').setScale(0.8),
+      this.add.image(-20, 40, 'ui.coin').setScale(0.28), cost,
+    ]).setSize(94, 94).setDepth(D.tray);
+    cost.setX(8);
+    this.repairBtn = { c, cost, shown: '' };
+    tappable(c, () => {
+      this.disarm();
+      const rc = this.sim.repairCost();
+      if (rc === null) { this.flashHint('The wall is fine'); return; }
+      if (!this.sim.repair()) this.flashHint(`Need ${rc} coins to repair`);
+    });
+    text(this, 80, TRAY_Y - 58, 'Repair', 18, COLORS.text, 4).setOrigin(0.5).setDepth(D.tray);
+
+    this.sim.addons.forEach((a, i) => {
+      const x = 196 + i * 108;
+      const glow = this.add.rectangle(0, 0, 100, 100, 0xffee00, 0.85).setVisible(false);
+      const count = text(this, 30, 32, String(a.uses), 26).setOrigin(0.5);
+      const items: Phaser.GameObjects.GameObject[] = [glow, this.add.image(0, 0, 'ui.addon-slot').setScale(0.62), this.add.image(0, -4, `ui.addon-${a.id}`).setScale(0.56), count];
+      if (a.awi) items.push(this.add.rectangle(0, -40, 56, 6, 0xffd02a), text(this, -26, 32, 'AWI', 16, '#ffd02a', 4).setOrigin(0.5));
+      const c = this.add.container(x, TRAY_Y, items).setSize(94, 94).setDepth(D.tray);
+      tappable(c, () => this.tapAddon(i));
+      this.addonBtns.push({ c, count, glow, shown: -1 });
+    });
+  }
+
+  private drawLaneZones(): void {
+    const x0 = STOP_X - 20;
+    for (let l = 0; l < LANES; l++) {
+      const z = this.add.rectangle(x0, laneCenter(l), GAME_W - x0, LANE_H - 6, 0xffee00, 0).setOrigin(0, 0.5)
+        .setStrokeStyle(3, 0xffee00, 0).setDepth(D.fx - 1);
+      z.on('pointerover', () => { if (this.armed >= 0) z.setFillStyle(0xffee00, 0.22); });
+      z.on('pointerout', () => { if (this.armed >= 0) z.setFillStyle(0xffee00, 0.08); });
+      z.on('pointerup', () => this.fireAddon(l));
+      this.laneZones.push(z);
+    }
+  }
+
+  private tapAddon(i: number): void {
+    if (this.ended || this.paused) return;
+    const a = this.sim.addons[i];
+    if (a.uses <= 0) { this.flashHint(`No ${ADDONS[a.id].name} left`); return; }
+    if (this.armed === i) { this.disarm(); return; }
+    this.closeBubble();
+    if (!ADDONS[a.id].lane) { this.sim.useAddon(i); return; }
+    this.disarm();
+    this.armed = i;
+    this.addonBtns[i].glow.setVisible(true);
+    for (const z of this.laneZones) z.setInteractive({ useHandCursor: true }).setFillStyle(0xffee00, 0.08).setStrokeStyle(3, 0xffee00, 0.6);
+    this.hint.setText(`${ADDONS[a.id].name}: tap a lane`).setVisible(true).setAlpha(1).setColor('#ffd02a');
+    this.tweens.killTweensOf(this.hint);
+  }
+
+  private fireAddon(lane: number): void {
+    const i = this.armed;
+    if (i < 0) return;
+    this.disarm();
+    this.sim.useAddon(i, lane);
+  }
+
+  private disarm(): void {
+    if (this.armed < 0) return;
+    this.addonBtns[this.armed]?.glow.setVisible(false);
+    this.armed = -1;
+    for (const z of this.laneZones) z.disableInteractive().setFillStyle(0xffee00, 0).setStrokeStyle(3, 0xffee00, 0);
+    this.hint.setVisible(false);
+  }
+
+  private onRepair(): void {
+    sfx.buff();
+    const g = this.add.rectangle(WALL_X0, LANE_TOP - 20, WALL_X1 - WALL_X0, LANE_H * LANES + 40, 0x6aff6a, 0.4).setOrigin(0).setDepth(D.wall + 3);
+    this.tweens.add({ targets: g, alpha: 0, duration: 450, onComplete: () => g.destroy() });
+    const t = text(this, WALL_BAR.x, LANE_TOP - 10, 'Repaired!', 28, '#8cff6a', 5).setOrigin(0.5).setDepth(D.fx + 5);
+    this.tweens.add({ targets: t, y: t.y - 40, alpha: 0, duration: 900, onComplete: () => t.destroy() });
+  }
+
+  private onAddon(id: Equipped['id']): void {
+    if (id === 'coins') { sfx.finish(); return; }
+    if (id === 'guard' || id === 'boxer') { sfx.place(); return; }
+    if (id === 'tnt' || id === 'spikes' || id === 'timebomb') sfx.place();
+  }
+
+  /** An explosion: a lane (x −1: the whole lane), the whole street (lane −1), or a radius round x. */
+  private onBlast(lane: number, x: number, r: number): void {
+    sfx.boom();
+    buzz(50);
+    if (lane < 0) {
+      for (let l = 0; l < LANES; l++) for (let bx = STOP_X + 80; bx < GAME_W; bx += 230) this.fx(bx + (l % 2) * 100, laneFeet(l) - 40, 0.7);
+      this.cameras.main.shake(350, 0.008);
+      this.cameras.main.flash(180, 255, 230, 160);
+    } else if (x < 0) {
+      for (let bx = STOP_X + 60; bx < GAME_W; bx += 120) this.time.delayedCall((bx - STOP_X) * 0.25, () => this.fx(bx, laneFeet(lane) - 40, 0.6));
+      this.cameras.main.shake(220, 0.005);
+    } else {
+      this.fx(x, laneFeet(lane) - 40, Math.max(0.7, r / 160));
+      this.cameras.main.shake(200, 0.005);
+    }
+  }
+
+  private showUnit(u: Unit): void {
+    const key = `addon.${u.kind}`, y = laneFeet(u.lane);
+    const spr = this.add.sprite(u.x, y + 4, `${key}.idle`).setOrigin(0.5, 1).setScale(asset(`${key}.idle`).displayScale)
+      .setDepth(D.actors + y + 0.2).play(`${key}.idle`);
+    if (u.kind === 'guard') spr.setFlipX(true); // the kit's Cat Guardian faces left
+    spr.setAlpha(0);
+    this.tweens.add({ targets: spr, alpha: 1, duration: 250 });
+    const bar = this.add.rectangle(u.x - 28, y - 118, 56, 6, 0x6ad0ff).setOrigin(0, 0.5).setDepth(D.fx + 2);
+    this.units.set(u.id, { spr, bar, fighting: false });
+  }
+
+  private dropUnit(u: Unit): void {
+    const v = this.units.get(u.id);
+    if (!v) return;
+    this.units.delete(u.id);
+    v.bar.destroy();
+    this.tweens.add({ targets: v.spr, alpha: 0, duration: 300, onComplete: () => v.spr.destroy() });
+  }
+
+  private showTrap(t: Trap): void {
+    const y = laneFeet(t.lane) - 22, icon = `ui.addon-${t.kind}`;
+    const imgs: Phaser.GameObjects.Image[] = [];
+    if (t.kind === 'spikes') for (let x = t.x; x <= t.x1; x += 64) imgs.push(this.add.image(x, y + 10, icon).setScale(0.42).setAlpha(0.9));
+    else imgs.push(this.add.image(t.x, y, icon).setScale(0.55));
+    for (const im of imgs) im.setDepth(D.actors + y - 40);
+    if (t.kind === 'timebomb') this.tweens.add({ targets: imgs, scale: 0.68, yoyo: true, repeat: -1, duration: 250 });
+    this.traps.set(t.id, imgs);
+  }
+
+  private dropTrap(t: Trap): void {
+    const imgs = this.traps.get(t.id);
+    if (!imgs) return;
+    this.traps.delete(t.id);
+    this.tweens.killTweensOf(imgs);
+    for (const im of imgs) im.destroy();
+  }
+
   // ── Pause / end ──────────────────────────────────────────────────────────────────────────────────
   private overlay: Phaser.GameObjects.Container | null = null;
 
@@ -388,40 +585,105 @@ export class DefenseScene extends Phaser.Scene {
     if (this.ended) return;
     if (this.paused) { this.paused = false; this.overlay?.destroy(); this.overlay = null; this.anims.resumeAll(); this.tweens.resumeAll(); return; }
     this.paused = true;
+    this.disarm();
     this.anims.pauseAll(); this.tweens.pauseAll();
-    const shade = this.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.6).setOrigin(0).setInteractive();
-    const t = text(this, GAME_W / 2, 150, 'Paused', 80).setOrigin(0.5);
-    const items = [shade, t,
-      button(this, GAME_W / 2, 310, 'Resume', () => this.togglePause(), 'ui.btn-green', 0.85),
-      button(this, GAME_W / 2 - 200, 450, 'Restart', () => this.scene.restart(), 'ui.btn-orange', 0.75),
-      button(this, GAME_W / 2 + 200, 450, 'Menu', () => this.scene.start('Menu'), 'ui.btn-orange', 0.75),
-      muteButton(this, GAME_W / 2, 580, 36)];
+    // The kit's pause screen: a ribbon, the music / sound / vibration bar, and Restart / Resume.
+    const cx = GAME_W / 2;
+    const items: Phaser.GameObjects.GameObject[] = [
+      this.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.6).setOrigin(0).setInteractive(),
+      this.add.image(cx, 120, 'ui.ribbon').setScale(0.9), text(this, cx, 106, 'PAUSED GAME', 46).setOrigin(0.5),
+      this.add.image(cx, 290, 'ui.pausebar').setScale(0.9),
+    ];
+    const toggles: [string, () => boolean, () => void][] = [['music', musicOn, toggleMusic], ['sound', soundOn, toggleSound], ['vibra', vibraOn, toggleVibra]];
+    toggles.forEach(([k, on, flip], i) => {
+      const img = this.add.image(cx - 200 + i * 200, 290, on() ? `ui.${k}` : `ui.${k}-off`).setScale(0.75);
+      tappable(img, () => { flip(); img.setTexture(on() ? `ui.${k}` : `ui.${k}-off`); });
+      items.push(img);
+    });
+    if (isMuted()) items.push(text(this, cx, 370, 'All sound is muted (M): tap to unmute', 22, COLORS.dim, 4).setOrigin(0.5).setInteractive({ useHandCursor: true }).on('pointerup', () => toggleMute()));
+    items.push(
+      button(this, cx - 210, 480, 'Restart', () => this.scene.restart({ level: this.levelN }), 'ui.btn-orange', 0.75),
+      button(this, cx + 210, 480, 'Resume', () => this.togglePause(), 'ui.btn-green', 0.75),
+      button(this, cx, 610, 'Map', () => this.leave(), 'ui.btn-orange', 0.6, 38),
+    );
     this.overlay = this.add.container(0, 0, items).setDepth(D.overlay);
+  }
+
+  /** Back to the map: free this fight's streets, bosses and add-on cats (area 1's street stays). */
+  private leave(): void {
+    const keys = Object.keys(this.textures.list).filter((k) => (isAreaArt(k) && k !== 'bg.area1') || k.startsWith('addon.'));
+    this.scene.start('Map');
+    release(this, keys);
   }
 
   private endRun(won: boolean): void {
     this.ended = true;
     this.closeBubble();
-    const st = this.sim.stats;
-    const wave = this.sim.wave + 1, time = this.sim.time;
-    const best = loadBest();
-    const better = !best || (won && (!best.won || time < best.time)) || (!won && !best.won && wave > best.wave);
-    if (better) saveBest({ won, wave, time });
+    this.disarm();
+    const st = this.sim.stats, s = player.save, n = this.def.n;
+    const cleared = won ? this.sim.totalWaves : this.sim.wave;
+    let gems = 0, stars = 0, first = false, better = false;
+    if (n === FULL_ALLEY) {
+      gems = alleyGems(cleared, won);
+      const best = s.alley, wave = this.sim.wave + 1, time = this.sim.time;
+      better = !best || (won && (!best.won || time < best.time)) || (!won && !best.won && wave > best.wave);
+      if (better) s.alley = { won, wave, time: Math.round(time * 10) / 10 };
+    } else if (won) {
+      stars = starsFor(this.sim.wallHp / this.sim.wallMax);
+      first = s.stars[n] === 0;
+      gems = levelGems(n, stars, first);
+      s.stars[n] = Math.max(s.stars[n], stars);
+    }
+    s.gems += gems;
+    spendAddons(s, this.startAddons, this.sim.addons);
+    player.persist();
     (won ? sfx.finish : sfx.die)();
+
     this.time.delayedCall(won ? 300 : 900, () => {
-      const shade = this.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.65).setOrigin(0).setInteractive();
-      const ban = this.add.image(GAME_W / 2, 170, won ? 'ui.win' : 'ui.lose').setScale(0.9);
-      const lines = [
-        won ? `All 5 areas cleared in ${Math.round(time)} s` : `Fell in Area ${this.sim.area + 1} · wave ${wave} of ${TOTAL_WAVES}`,
-        `${st.kills} zombies · ${st.bossKills} bosses · wall ${this.sim.wallHp}%`,
-        better ? 'New best!' : best ? (best.won ? `Best: cleared in ${Math.round(best.time)} s` : `Best: wave ${best.wave}`) : '',
+      const cx = GAME_W / 2;
+      const items: Phaser.GameObjects.GameObject[] = [
+        this.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.65).setOrigin(0).setInteractive(),
+        this.add.image(cx, 150, won ? 'ui.win' : 'ui.lose').setScale(0.8),
       ];
-      const ts = lines.map((l, i) => text(this, GAME_W / 2, 360 + i * 50, l, i === 2 ? 34 : 32, i === 2 ? '#ffd02a' : '#ffffff', 6).setOrigin(0.5));
-      const again = button(this, GAME_W / 2 - 200, 600, 'Play again', () => this.scene.restart(), 'ui.btn-green', 0.8);
-      const menu = button(this, GAME_W / 2 + 200, 600, 'Menu', () => this.scene.start('Menu'), 'ui.btn-orange', 0.8);
-      const c = this.add.container(0, 0, [shade, ban, ...ts, again, menu]).setDepth(D.overlay).setAlpha(0);
+      const line = (y: number, s2: string, size = 30, color = '#ffffff') => items.push(text(this, cx, y, s2, size, color, 6).setOrigin(0.5));
+      if (n === FULL_ALLEY) {
+        line(320, won ? `All 5 areas cleared in ${Math.round(this.sim.time)} s` : `Fell in Area ${this.sim.area + 1} · wave ${this.sim.wave + 1} of ${this.sim.totalWaves}`);
+        if (better) line(368, 'New best!', 32, '#ffd02a');
+      } else if (won) {
+        const row = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+        line(318, row, 64, '#ffd02a');
+        line(370, stars === 3 ? 'Perfect wall!' : stars === 2 ? 'Keep the wall above 99% for 3 stars' : 'Keep half the wall for 2 stars', 22, COLORS.dim);
+      } else line(320, `Wave ${this.sim.wave + 1} of ${this.sim.totalWaves}: upgrade your cats and try again`);
+      line(418, `${st.kills} zombies · ${st.bossKills} bosses · ${st.addonsUsed} add-ons`, 26, COLORS.dim);
+      if (gems) {
+        items.push(this.add.image(cx, 486, 'ui.winbonus').setScale(0.75), this.add.image(cx - 50, 486, 'ui.gem').setScale(0.7));
+        items.push(text(this, cx - 22, 484, `+${gems}${first ? ' first clear' : ''}`, 30).setOrigin(0, 0.5));
+      }
+      const nextOpen = won && n < LEVEL_COUNT - 1;
+      items.push(
+        button(this, cx - 200, 610, won ? 'Map' : 'Restart', () => (won ? this.leave() : this.scene.restart({ level: this.levelN })), 'ui.btn-orange', 0.7),
+        button(this, cx + 200, 610, nextOpen ? 'Next' : won ? 'Again' : 'Map', () => {
+          if (nextOpen) { this.leaveTo(n + 1); return; }
+          if (won) this.scene.restart({ level: this.levelN }); else this.leave();
+        }, 'ui.btn-green', 0.7),
+      );
+      const c = this.add.container(0, 0, items).setDepth(D.overlay).setAlpha(0);
       this.tweens.add({ targets: c, alpha: 1, duration: 300 });
-      if (BOT) this.time.delayedCall(4000, () => this.scene.restart());
+      if (BOT) this.time.delayedCall(4000, () => this.scene.restart({ level: this.levelN }));
+    });
+  }
+
+  /** Straight into another level: load its art, free what it doesn't need. */
+  private leaveTo(level: number): void {
+    const f = player.fight(level);
+    const want = new Set([...areaArt(f.level, f.level.waves[0].area), ...addonArt(f.addons.map((a) => a.id))]);
+    const shade = this.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.6).setOrigin(0).setDepth(D.overlay + 10).setInteractive();
+    text(this, GAME_W / 2, GAME_H / 2, 'Loading…', 44).setOrigin(0.5).setDepth(D.overlay + 11);
+    void ensureLoaded(this, [...want]).then(() => {
+      const drop = Object.keys(this.textures.list).filter((k) => ((isAreaArt(k) && k !== 'bg.area1') || k.startsWith('addon.')) && !want.has(k));
+      shade.disableInteractive();
+      this.scene.restart({ level });
+      release(this, drop);
     });
   }
 }

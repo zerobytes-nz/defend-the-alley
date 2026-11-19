@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import manifest from '../assets.manifest.json';
 import urls from 'virtual:asset-urls';
+import type { LevelDef } from './game/levels.ts';
 
 /**
  * All art comes from assets.manifest.json. Game code refers to assets by manifest key only
@@ -63,8 +64,17 @@ export function setupAssets(scene: Phaser.Scene): void {
 /** Seconds an animation lasts (one loop). */
 export const animSeconds = (key: string): number => { const a = asset(key); return a.frameCount / (a.animation?.frameRate || 10); };
 
-/** Art that belongs to one area (0–4): its street and its boss. Loaded one area ahead, released after. */
-export const areaArt = (a: number): string[] => [`bg.area${a + 1}`, ...['walk', 'attack', 'dead'].map((m) => `enemy.boss${a + 1}.${m}`)];
+/** Art one area (0–4) of a fight needs: its street and the bosses of its waves. Loaded ahead, released after. */
+export function areaArt(level: LevelDef, a: number): string[] {
+  const bosses = new Set(level.waves.filter((w) => w.area === a).flatMap((w) => w.bosses));
+  return [`bg.area${a + 1}`, ...[...bosses].flatMap((b) => ['walk', 'attack', 'dead'].map((m) => `enemy.boss${b}.${m}`))];
+}
+/** Every street and boss sheet (Boot leaves these out; fights load what they need). */
+export const isAreaArt = (key: string) => key.startsWith('bg.area') || key.startsWith('enemy.boss');
+/** The melee add-on cats' sheets, only loaded when the loadout has them. */
+export const addonArt = (ids: string[]): string[] => ids.flatMap((id) => (id === 'guard' || id === 'boxer' ? [`addon.${id}.idle`, `addon.${id}.attack`] : []));
+/** A deck's cat sheets. */
+export const catArt = (cats: number[]): string[] => cats.flatMap((c) => [`cat.c${c}.idle`, `cat.c${c}.shoot`]);
 
 /** Load these keys if they aren't loaded yet. Resolves when they are ready (animations included). */
 export function ensureLoaded(scene: Phaser.Scene, keys: string[]): Promise<void> {

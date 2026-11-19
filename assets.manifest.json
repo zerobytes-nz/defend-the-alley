@@ -1957,6 +1957,1259 @@
         "scale": 1,
         "align": "center"
       }
+    },
+    {
+      "key": "enemy.boss6.walk",
+      "type": "spritesheet",
+      "path": "enemies/boss6-walk.png",
+      "width": 3416,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
+      "frameCount": 14,
+      "displayScale": 0.83,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Boss 6 (late levels), walking left.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 6/Walk",
+        "scale": 0.6
+      }
+    },
+    {
+      "key": "enemy.boss6.attack",
+      "type": "spritesheet",
+      "path": "enemies/boss6-attack.png",
+      "width": 2928,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
+      "frameCount": 12,
+      "displayScale": 0.83,
+      "animation": {
+        "frameRate": 14,
+        "repeat": -1
+      },
+      "usedFor": "Boss 6, hitting the wall.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 6/Attack",
+        "scale": 0.6
+      }
+    },
+    {
+      "key": "enemy.boss6.dead",
+      "type": "spritesheet",
+      "path": "enemies/boss6-dead.png",
+      "width": 2928,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
+      "frameCount": 12,
+      "displayScale": 0.83,
+      "animation": {
+        "frameRate": 12,
+        "repeat": 0
+      },
+      "usedFor": "Boss 6, falling over.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 6/Dead",
+        "scale": 0.6
+      }
+    },
+    {
+      "key": "enemy.boss7.walk",
+      "type": "spritesheet",
+      "path": "enemies/boss7-walk.png",
+      "width": 3416,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
+      "frameCount": 14,
+      "displayScale": 0.83,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Boss 7 (late levels), walking left.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 7/Walk",
+        "scale": 0.6
+      }
+    },
+    {
+      "key": "enemy.boss7.attack",
+      "type": "spritesheet",
+      "path": "enemies/boss7-attack.png",
+      "width": 2928,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
+      "frameCount": 12,
+      "displayScale": 0.83,
+      "animation": {
+        "frameRate": 14,
+        "repeat": -1
+      },
+      "usedFor": "Boss 7, hitting the wall.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 7/Attack",
+        "scale": 0.6
+      }
+    },
+    {
+      "key": "enemy.boss7.dead",
+      "type": "spritesheet",
+      "path": "enemies/boss7-dead.png",
+      "width": 2928,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
+      "frameCount": 12,
+      "displayScale": 0.83,
+      "animation": {
+        "frameRate": 12,
+        "repeat": 0
+      },
+      "usedFor": "Boss 7, falling over.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 7/Dead",
+        "scale": 0.6
+      }
+    },
+    {
+      "key": "addon.guard.idle",
+      "type": "spritesheet",
+      "path": "addons/guard-idle.png",
+      "width": 2808,
+      "height": 182,
+      "frameWidth": 234,
+      "frameHeight": 182,
+      "frameCount": 12,
+      "displayScale": 0.68,
+      "animation": {
+        "frameRate": 16,
+        "repeat": -1
+      },
+      "usedFor": "Cat Guardian add-on, standing guard in a lane.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Cat Guardian/Idle",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "addon.guard.attack",
+      "type": "spritesheet",
+      "path": "addons/guard-attack.png",
+      "width": 2808,
+      "height": 182,
+      "frameWidth": 234,
+      "frameHeight": 182,
+      "frameCount": 12,
+      "displayScale": 0.68,
+      "animation": {
+        "frameRate": 20,
+        "repeat": -1
+      },
+      "usedFor": "Cat Guardian add-on, hitting zombies.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Cat Guardian/Attack",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "addon.boxer.idle",
+      "type": "spritesheet",
+      "path": "addons/boxer-idle.png",
+      "width": 3204,
+      "height": 208,
+      "frameWidth": 267,
+      "frameHeight": 208,
+      "frameCount": 12,
+      "displayScale": 0.68,
+      "animation": {
+        "frameRate": 16,
+        "repeat": -1
+      },
+      "usedFor": "Boxer Cat add-on, waiting in a lane.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/CatBoxing/Idle",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "addon.boxer.attack",
+      "type": "spritesheet",
+      "path": "addons/boxer-attack.png",
+      "width": 3204,
+      "height": 208,
+      "frameWidth": 267,
+      "frameHeight": 208,
+      "frameCount": 12,
+      "displayScale": 0.68,
+      "animation": {
+        "frameRate": 22,
+        "repeat": -1
+      },
+      "usedFor": "Boxer Cat add-on, punching zombies.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/CatBoxing/Attack",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "bg.screen",
+      "type": "image",
+      "path": "bg/screen.png",
+      "width": 1440,
+      "height": 720,
+      "frameWidth": 1440,
+      "frameHeight": 720,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Map and Cats screens: dark side menu and the grey panel.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/LevelMap_Bg_Screen.png",
+        "crop": [
+          0,
+          0,
+          2126,
+          1063
+        ],
+        "align": "center"
+      }
+    },
+    {
+      "key": "bg.screen-addon",
+      "type": "image",
+      "path": "bg/screen-addon.png",
+      "width": 1440,
+      "height": 720,
+      "frameWidth": 1440,
+      "frameHeight": 720,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Add-ons screen: side menu, loadout column and the panel.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/AddonScreen.png",
+        "crop": [
+          0,
+          0,
+          2124,
+          1062
+        ],
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.levelmap",
+      "type": "image",
+      "path": "ui/levelmap.png",
+      "width": 3891,
+      "height": 393,
+      "frameWidth": 3891,
+      "frameHeight": 393,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Level select: the winding road with the 15 levels on it.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/LevelMap.png",
+        "scale": 0.5,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.lvl-done",
+      "type": "image",
+      "path": "ui/lvl-done.png",
+      "width": 89,
+      "height": 95,
+      "frameWidth": 89,
+      "frameHeight": 95,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Level marker: cleared (stars under it).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/OrangeLvl.png",
+        "scale": 0.6,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.lvl-next",
+      "type": "image",
+      "path": "ui/lvl-next.png",
+      "width": 89,
+      "height": 95,
+      "frameWidth": 89,
+      "frameHeight": 95,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Level marker: the next level to play.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/GreenLevel.png",
+        "scale": 0.6,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.lvl-locked",
+      "type": "image",
+      "path": "ui/lvl-locked.png",
+      "width": 89,
+      "height": 95,
+      "frameWidth": 89,
+      "frameHeight": 95,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Level marker: locked.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/LockedLevel.png",
+        "scale": 0.6,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.tab",
+      "type": "image",
+      "path": "ui/tab.png",
+      "width": 157,
+      "height": 148,
+      "frameWidth": 157,
+      "frameHeight": 148,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Side menu tab (not selected).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/BtnTab_Active.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.tab-on",
+      "type": "image",
+      "path": "ui/tab-on.png",
+      "width": 212,
+      "height": 152,
+      "frameWidth": 212,
+      "frameHeight": 152,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Side menu tab (selected; joins the panel).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/BtnTab_on.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.icon-home",
+      "type": "image",
+      "path": "ui/icon-home.png",
+      "width": 94,
+      "height": 95,
+      "frameWidth": 94,
+      "frameHeight": 95,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Map tab icon.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Icon_home.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.icon-cat",
+      "type": "image",
+      "path": "ui/icon-cat.png",
+      "width": 95,
+      "height": 95,
+      "frameWidth": 95,
+      "frameHeight": 95,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Cats tab icon.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Icon_Cat.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.icon-addon",
+      "type": "image",
+      "path": "ui/icon-addon.png",
+      "width": 94,
+      "height": 95,
+      "frameWidth": 94,
+      "frameHeight": 95,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Add-ons tab icon.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Icon_Addon.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.gem",
+      "type": "image",
+      "path": "ui/gem.png",
+      "width": 57,
+      "height": 48,
+      "frameWidth": 57,
+      "frameHeight": 48,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Gem: the currency kept between levels.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/GemsIcon.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.gembar",
+      "type": "image",
+      "path": "ui/gembar.png",
+      "width": 229,
+      "height": 62,
+      "frameWidth": 229,
+      "frameHeight": 62,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Gem counter backing.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/GemsBarBg.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.daily",
+      "type": "image",
+      "path": "ui/daily.png",
+      "width": 165,
+      "height": 165,
+      "frameWidth": 165,
+      "frameHeight": 165,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Daily gift box.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/DaillyIcon.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.winbonus",
+      "type": "image",
+      "path": "ui/winbonus.png",
+      "width": 364,
+      "height": 119,
+      "frameWidth": 364,
+      "frameHeight": 119,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Gems won, on the You Win popup.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/WinBonus.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.bar0",
+      "type": "image",
+      "path": "ui/bar0.png",
+      "width": 144,
+      "height": 66,
+      "frameWidth": 144,
+      "frameHeight": 66,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Upgrade bar, 0 of 5 steps.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/0Bar.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.bar1",
+      "type": "image",
+      "path": "ui/bar1.png",
+      "width": 144,
+      "height": 66,
+      "frameWidth": 144,
+      "frameHeight": 66,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Upgrade bar, 1 of 5 steps.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/1Bar.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.bar2",
+      "type": "image",
+      "path": "ui/bar2.png",
+      "width": 144,
+      "height": 66,
+      "frameWidth": 144,
+      "frameHeight": 66,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Upgrade bar, 2 of 5 steps.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/2Bar.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.bar3",
+      "type": "image",
+      "path": "ui/bar3.png",
+      "width": 144,
+      "height": 66,
+      "frameWidth": 144,
+      "frameHeight": 66,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Upgrade bar, 3 of 5 steps.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/3Bar.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.bar4",
+      "type": "image",
+      "path": "ui/bar4.png",
+      "width": 144,
+      "height": 66,
+      "frameWidth": 144,
+      "frameHeight": 66,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Upgrade bar, 4 of 5 steps.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/4Bar.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.bar5",
+      "type": "image",
+      "path": "ui/bar5.png",
+      "width": 144,
+      "height": 66,
+      "frameWidth": 144,
+      "frameHeight": 66,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Upgrade bar, 5 of 5 steps.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/5Bar.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.add",
+      "type": "image",
+      "path": "ui/add.png",
+      "width": 94,
+      "height": 97,
+      "frameWidth": 94,
+      "frameHeight": 97,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Upgrade (+) button.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/AddBtn.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.add-off",
+      "type": "image",
+      "path": "ui/add-off.png",
+      "width": 94,
+      "height": 97,
+      "frameWidth": 94,
+      "frameHeight": 97,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Upgrade button, can't afford / maxed.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/AddBtn_Pressed.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.up0",
+      "type": "image",
+      "path": "ui/up0.png",
+      "width": 46,
+      "height": 59,
+      "frameWidth": 46,
+      "frameHeight": 59,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Rank chevrons, white.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Up0.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.badge1",
+      "type": "image",
+      "path": "ui/badge1.png",
+      "width": 43,
+      "height": 42,
+      "frameWidth": 43,
+      "frameHeight": 42,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Colour badge of cat C1.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Uplogo1.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.badge2",
+      "type": "image",
+      "path": "ui/badge2.png",
+      "width": 43,
+      "height": 42,
+      "frameWidth": 43,
+      "frameHeight": 42,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Colour badge of cat C2.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Uplogo2.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.badge3",
+      "type": "image",
+      "path": "ui/badge3.png",
+      "width": 43,
+      "height": 42,
+      "frameWidth": 43,
+      "frameHeight": 42,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Colour badge of cat C3.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Uplogo3.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.badge4",
+      "type": "image",
+      "path": "ui/badge4.png",
+      "width": 43,
+      "height": 42,
+      "frameWidth": 43,
+      "frameHeight": 42,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Colour badge of cat C4.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Uplogo4.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.badge5",
+      "type": "image",
+      "path": "ui/badge5.png",
+      "width": 43,
+      "height": 42,
+      "frameWidth": 43,
+      "frameHeight": 42,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Colour badge of cat C5.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Uplogo5.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.badge6",
+      "type": "image",
+      "path": "ui/badge6.png",
+      "width": 43,
+      "height": 42,
+      "frameWidth": 43,
+      "frameHeight": 42,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Colour badge of cat C6.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Uplogo6.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.badge7",
+      "type": "image",
+      "path": "ui/badge7.png",
+      "width": 43,
+      "height": 42,
+      "frameWidth": 43,
+      "frameHeight": 42,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Colour badge of cat C7.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Uplogo7.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.badge8",
+      "type": "image",
+      "path": "ui/badge8.png",
+      "width": 43,
+      "height": 42,
+      "frameWidth": 43,
+      "frameHeight": 42,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Colour badge of cat C8.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Uplogo8.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.badge9",
+      "type": "image",
+      "path": "ui/badge9.png",
+      "width": 43,
+      "height": 42,
+      "frameWidth": 43,
+      "frameHeight": 42,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Colour badge of cat C9.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Uplogo9.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.badge10",
+      "type": "image",
+      "path": "ui/badge10.png",
+      "width": 43,
+      "height": 42,
+      "frameWidth": 43,
+      "frameHeight": 42,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Colour badge of cat C10.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Uplogo10.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.badge11",
+      "type": "image",
+      "path": "ui/badge11.png",
+      "width": 43,
+      "height": 42,
+      "frameWidth": 43,
+      "frameHeight": 42,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Colour badge of cat C11.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Uplogo11.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.badge12",
+      "type": "image",
+      "path": "ui/badge12.png",
+      "width": 43,
+      "height": 42,
+      "frameWidth": 43,
+      "frameHeight": 42,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Colour badge of cat C12.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Uplogo12.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.badge13",
+      "type": "image",
+      "path": "ui/badge13.png",
+      "width": 43,
+      "height": 42,
+      "frameWidth": 43,
+      "frameHeight": 42,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Colour badge of cat C13.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Uplogo13.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.badge14",
+      "type": "image",
+      "path": "ui/badge14.png",
+      "width": 43,
+      "height": 42,
+      "frameWidth": 43,
+      "frameHeight": 42,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Colour badge of cat C14.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Uplogo14.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.badge15",
+      "type": "image",
+      "path": "ui/badge15.png",
+      "width": 43,
+      "height": 42,
+      "frameWidth": 43,
+      "frameHeight": 42,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Colour badge of cat C15.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Uplogo15.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.addon-rocket",
+      "type": "image",
+      "path": "ui/addon-rocket.png",
+      "width": 128,
+      "height": 112,
+      "frameWidth": 128,
+      "frameHeight": 112,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Add-on icon: rocket.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/AddonIcon1.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.addon-coins",
+      "type": "image",
+      "path": "ui/addon-coins.png",
+      "width": 128,
+      "height": 112,
+      "frameWidth": 128,
+      "frameHeight": 112,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Add-on icon: coins.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/AddonIcon2.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.addon-bomb",
+      "type": "image",
+      "path": "ui/addon-bomb.png",
+      "width": 128,
+      "height": 112,
+      "frameWidth": 128,
+      "frameHeight": 112,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Add-on icon: bomb.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/AddonIcon3.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.addon-timebomb",
+      "type": "image",
+      "path": "ui/addon-timebomb.png",
+      "width": 128,
+      "height": 112,
+      "frameWidth": 128,
+      "frameHeight": 112,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Add-on icon: timebomb.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/AddonIcon4.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.addon-guard",
+      "type": "image",
+      "path": "ui/addon-guard.png",
+      "width": 128,
+      "height": 112,
+      "frameWidth": 128,
+      "frameHeight": 112,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Add-on icon: guard.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/AddonIcon5.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.addon-tnt",
+      "type": "image",
+      "path": "ui/addon-tnt.png",
+      "width": 128,
+      "height": 112,
+      "frameWidth": 128,
+      "frameHeight": 112,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Add-on icon: tnt.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/AddonIcon6.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.addon-boxer",
+      "type": "image",
+      "path": "ui/addon-boxer.png",
+      "width": 128,
+      "height": 112,
+      "frameWidth": 128,
+      "frameHeight": 112,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Add-on icon: boxer.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/AddonIcon7.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.addon-spikes",
+      "type": "image",
+      "path": "ui/addon-spikes.png",
+      "width": 128,
+      "height": 112,
+      "frameWidth": 128,
+      "frameHeight": 112,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Add-on icon: spikes.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/AddonIcon8.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.addon-row",
+      "type": "image",
+      "path": "ui/addon-row.png",
+      "width": 529,
+      "height": 182,
+      "frameWidth": 529,
+      "frameHeight": 182,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Add-on row on the Add-ons screen.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/AddonBoxGrey.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.addon-count",
+      "type": "image",
+      "path": "ui/addon-count.png",
+      "width": 134,
+      "height": 51,
+      "frameWidth": 134,
+      "frameHeight": 51,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Add-on stock (3 / 5).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/AddonBoxNumber.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.btn-yellow",
+      "type": "image",
+      "path": "ui/btn-yellow.png",
+      "width": 152,
+      "height": 92,
+      "frameWidth": 152,
+      "frameHeight": 92,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Buy button (gems).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/AddonBtnyellow.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.addon-slot",
+      "type": "image",
+      "path": "ui/addon-slot.png",
+      "width": 151,
+      "height": 153,
+      "frameWidth": 151,
+      "frameHeight": 153,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Loadout slot / in-level add-on button.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/AddOnSlotBtn.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.addon-sel",
+      "type": "image",
+      "path": "ui/addon-sel.png",
+      "width": 562,
+      "height": 184,
+      "frameWidth": 562,
+      "frameHeight": 184,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Highlight around an equipped add-on row.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/YellowBorderAddon.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.slot-locked",
+      "type": "image",
+      "path": "ui/slot-locked.png",
+      "width": 155,
+      "height": 159,
+      "frameWidth": 155,
+      "frameHeight": 159,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Locked loadout slot.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/LockedBoxHelp.png",
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.music",
+      "type": "image",
+      "path": "ui/music.png",
+      "width": 122,
+      "height": 124,
+      "frameWidth": 122,
+      "frameHeight": 124,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Pause screen toggle: music.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/BtnMusic.png",
+        "scale": 0.6,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.music-off",
+      "type": "image",
+      "path": "ui/music-off.png",
+      "width": 122,
+      "height": 124,
+      "frameWidth": 122,
+      "frameHeight": 124,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Pause screen toggle: music-off.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/BtnMusicOff.png",
+        "scale": 0.6,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.sound",
+      "type": "image",
+      "path": "ui/sound.png",
+      "width": 122,
+      "height": 124,
+      "frameWidth": 122,
+      "frameHeight": 124,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Pause screen toggle: sound.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/BtnSound.png",
+        "scale": 0.6,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.sound-off",
+      "type": "image",
+      "path": "ui/sound-off.png",
+      "width": 122,
+      "height": 124,
+      "frameWidth": 122,
+      "frameHeight": 124,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Pause screen toggle: sound-off.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/BtnSound Off.png",
+        "scale": 0.6,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.vibra",
+      "type": "image",
+      "path": "ui/vibra.png",
+      "width": 122,
+      "height": 124,
+      "frameWidth": 122,
+      "frameHeight": 124,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Pause screen toggle: vibra.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/BtnVibra.png",
+        "scale": 0.6,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.vibra-off",
+      "type": "image",
+      "path": "ui/vibra-off.png",
+      "width": 122,
+      "height": 124,
+      "frameWidth": 122,
+      "frameHeight": 124,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Pause screen toggle: vibra-off.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/BtnVibra Off.png",
+        "scale": 0.6,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.pausebar",
+      "type": "image",
+      "path": "ui/pausebar.png",
+      "width": 723,
+      "height": 105,
+      "frameWidth": 723,
+      "frameHeight": 105,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Backing behind the pause toggles.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/BgPaused.png",
+        "scale": 0.8,
+        "align": "center"
+      }
     }
   ]
 }

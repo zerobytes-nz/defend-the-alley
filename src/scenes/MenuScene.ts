@@ -1,46 +1,49 @@
+// Title screen: pick a demo player (their AWIs come from bundled sample data until TheoSwap sign-in), then PLAY.
 import Phaser from 'phaser';
-import { GAME_W, GAME_H, COLORS } from '../config.ts';
+import { GAME_W, COLORS } from '../config.ts';
 import { button, muteButton, notice, tappable, text } from '../ui.ts';
-import { currentDeck } from '../deck.ts';
+import { player } from '../save.ts';
+import { PROFILES, type ProfileId } from '../game/demo.ts';
+import { awisFromItems } from '../game/awi.ts';
 import { RARITY_COLOR } from '../game/cats.ts';
+import { levelsCleared } from '../game/progress.ts';
 import { canInstall, install, isInstalled, onInstallChange, openInChromeUrl, tryCloseApp } from '../systems/install.ts';
 import { startMusic } from '../systems/audio.ts';
-
-const BEST_KEY = 'defend-the-alley.best.v1';
-export interface Best { won: boolean; wave: number; time: number }
-export function loadBest(): Best | null { try { const v = localStorage.getItem(BEST_KEY); return v ? (JSON.parse(v) as Best) : null; } catch { return null; } }
-export function saveBest(b: Best): void { try { localStorage.setItem(BEST_KEY, JSON.stringify(b)); } catch { /* private mode */ } }
 
 export class MenuScene extends Phaser.Scene {
   constructor() { super('Menu'); }
 
   create(): void {
     this.add.image(0, 0, 'bg.menu').setOrigin(0);
-    this.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.2).setOrigin(0);
+    this.add.rectangle(0, 0, GAME_W, 720, 0x000000, 0.25).setOrigin(0);
     text(this, GAME_W / 2, 90, 'DEFEND THE', 64, '#ffd02a', 12).setOrigin(0.5);
     text(this, GAME_W / 2, 170, 'ALLEY', 110, '#ff9a2a', 14).setOrigin(0.5);
     text(this, GAME_W / 2, 245, 'Cats hold the street. Zombies want it.', 30, COLORS.text, 6).setOrigin(0.5);
 
-    const deck = currentDeck();
-    const panelY = 400;
-    this.add.rectangle(GAME_W / 2, panelY, 640, 170, 0x000000, 0.55).setStrokeStyle(3, 0xffffff, 0.25);
-    const nft = deck.some((d) => d.source === 'nft');
-    text(this, GAME_W / 2, panelY - 58, nft ? 'Sample NFT deck (?nft)' : 'Guest cats: free for everyone', 28).setOrigin(0.5);
-    deck.forEach((d, i) => {
-      const x = GAME_W / 2 + (i - (deck.length - 1) / 2) * 116;
-      const s = this.add.sprite(x, panelY + 64, `cat.c${d.cat}.idle`).setOrigin(0.5, 1).setScale(0.85).play(`cat.c${d.cat}.idle`);
-      s.anims.setProgress((i * 0.31) % 1);
-      this.add.rectangle(x, panelY + 70, 80, 6, RARITY_COLOR[d.rarity]);
-    });
+    text(this, GAME_W / 2, 300, 'Play as', 28, COLORS.dim, 5).setOrigin(0.5);
+    (Object.keys(PROFILES) as ProfileId[]).forEach((id, i) => this.profileCard(id, GAME_W / 2 + (i - 1) * 330, 400));
 
-    button(this, GAME_W / 2, 570, 'PLAY', () => this.play(), 'ui.btn-green', 0.9, 56);
-    const best = loadBest();
-    if (best) text(this, GAME_W / 2, 650, best.won ? `Best: cleared all 5 areas in ${Math.round(best.time)} s` : `Best: wave ${best.wave} of 15`, 28, COLORS.dim, 5).setOrigin(0.5);
-    text(this, GAME_W / 2, 694, 'TheoSwap sign-in: your NFTs become cat AWIs (coming in milestone 3)', 20, COLORS.dim, 4).setOrigin(0.5);
+    button(this, GAME_W / 2, 560, 'PLAY', () => this.play(), 'ui.btn-green', 0.85, 56);
+    text(this, GAME_W / 2, 640, 'Demo players bring sample AWIs (Altered World Items): cat defenders and add-ons.', 22, COLORS.dim, 4).setOrigin(0.5);
+    text(this, GAME_W / 2, 674, 'TheoSwap sign-in, where your own NFTs become AWIs, comes in milestone 3.', 22, COLORS.dim, 4).setOrigin(0.5);
 
     muteButton(this, GAME_W - 50, 50);
     this.appButtons();
     this.input.keyboard?.on('keydown-SPACE', () => this.play());
+  }
+
+  private profileCard(id: ProfileId, x: number, y: number): void {
+    const p = PROFILES[id], on = player.id === id, save = player.peek(id);
+    const awis = awisFromItems(p.items);
+    const bg = this.add.rectangle(0, 0, 300, 150, 0x000000, on ? 0.7 : 0.5).setStrokeStyle(on ? 5 : 3, on ? 0xffee00 : 0xffffff, on ? 1 : 0.3);
+    const items: Phaser.GameObjects.GameObject[] = [bg,
+      text(this, 0, -46, p.name, 36, on ? '#ffd02a' : '#ffffff').setOrigin(0.5),
+      text(this, 0, -8, p.blurb, 20, COLORS.dim, 3).setOrigin(0.5),
+      text(this, 0, 50, `Level ${Math.min(15, levelsCleared(save) + 1)} · ${save.gems} gems`, 20, COLORS.text, 3).setOrigin(0.5),
+    ];
+    awis.slice(0, 9).forEach((a, k) => items.push(this.add.rectangle((k - (Math.min(9, awis.length) - 1) / 2) * 28, 22, 22, 8, RARITY_COLOR[a.rarity])));
+    const c = this.add.container(x, y, items).setSize(300, 150);
+    tappable(c, () => { if (player.id !== id) { player.use(id); this.scene.restart(); } });
   }
 
   private play(): void {
@@ -51,7 +54,7 @@ export class MenuScene extends Phaser.Scene {
       // Android Chrome can hold landscape while full screen; elsewhere the "turn your phone" hint covers it.
       (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> })?.lock?.('landscape').catch(() => { /* not supported */ });
     }
-    this.scene.start('Defense');
+    this.scene.start('Map');
   }
 
   /** Top left: "Install app" (until it is installed) and "Exit" (in full screen or the installed app). */

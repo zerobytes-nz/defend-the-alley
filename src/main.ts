@@ -3,6 +3,9 @@ import { GAME_W, GAME_H, DEBUG, COLORS } from './config.ts';
 import { BootScene } from './scenes/BootScene.ts';
 import { MenuScene } from './scenes/MenuScene.ts';
 import { DefenseScene } from './scenes/DefenseScene.ts';
+import { MapScene } from './scenes/MapScene.ts';
+import { CatsScene } from './scenes/CatsScene.ts';
+import { AddonsScene } from './scenes/AddonsScene.ts';
 import { initAudio } from './systems/audio.ts';
 import './systems/install.ts'; // listen for the browser's install prompt from the very first moment
 
@@ -19,7 +22,7 @@ const game = new Phaser.Game({
   disableContextMenu: true,
   banner: false,
   audio: { noAudio: true }, // sound is our own Web Audio synth (src/systems/audio.ts)
-  scene: [BootScene, MenuScene, DefenseScene],
+  scene: [BootScene, MenuScene, MapScene, CatsScene, AddonsScene, DefenseScene],
 });
 
 initAudio();

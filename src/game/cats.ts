@@ -1,9 +1,9 @@
-// Cat defenders: what an AWI (Altered World Item) becomes in Defend the Alley.
+// Cat defenders: what a cat defender AWI (Altered World Item) becomes in Defend the Alley.
 //
 // Every defender is one of the kit's 15 cats (C1–C15) plus an attack type (the bullet colour) and a rarity.
-// Milestone 2 reads these from TheoSwap: each NFT's seed picks a leaf of the game's AWI config tree, which
-// gives the cat, attack, rarity and stats (damage, fire rate, range). Until then makeDefender() derives the
-// stats, and guests get three free Common cats.
+// AWIs come from TheoSwap item data (src/game/awi.ts): the NFT's seed picks the cat, attack and rarity, and
+// makeDefender() derives the stats (damage, fire rate, range) unless the item overrides them.
+// Everyone also has free Common cats, unlocked by clearing levels (src/game/progress.ts).
 
 export const RARITIES = ['Common', 'Rare', 'Epic', 'Legendary'] as const;
 export type Rarity = (typeof RARITIES)[number];
@@ -41,6 +41,8 @@ export interface Defender {
   rate: number;         // shots per second
   range: number;        // street units in front of the cat (× layout U = game px)
   source: 'guest' | 'nft';
+  /** The NFT's collection (contract), for the collection bonus in milestone 3. */
+  collection?: string;
 }
 
 export const family = (cat: number) => FAMILIES[Math.floor((cat - 1) / 5)];
@@ -63,21 +65,24 @@ export function makeDefender(cat: number, attack: Attack, rarity: Rarity, extra:
   };
 }
 
-/** Free cats for everyone: one of each family and attack. */
-export const GUEST_DECK: Defender[] = [
-  makeDefender(1, 'blast', 'Common'),
-  makeDefender(6, 'venom', 'Common'),
-  makeDefender(11, 'rapid', 'Common'),
-];
+/** The attack of each free cat: the three attacks rotate through every family. */
+export const GUEST_ATTACK = (cat: number): Attack => (['blast', 'venom', 'rapid'] as const)[(Math.floor((cat - 1) / 5) + ((cat - 1) % 5)) % 3];
+/** The free Common version of a cat (everyone gets these as levels unlock them). */
+export const guestCat = (cat: number): Defender => makeDefender(cat, GUEST_ATTACK(cat), 'Common');
 
-/** ?nft: a deck like a collector's, to try rarities before TheoSwap sign-in exists (milestone 3). */
-export const SAMPLE_DECK: Defender[] = [
-  makeDefender(9, 'blast', 'Legendary', { source: 'nft', name: 'Top Hat #172' }),
-  makeDefender(14, 'rapid', 'Epic', { source: 'nft', name: 'Viking #21' }),
-  makeDefender(3, 'venom', 'Rare', { source: 'nft', name: 'Bandana #8' }),
-  makeDefender(12, 'rapid', 'Rare', { source: 'nft', name: 'Violet #65' }),
-  ...GUEST_DECK,
-].map((d, i) => ({ ...d, uid: `${d.uid}#${i}` }));
+/** The three cats everyone starts with: one of each family and attack (Ginger · Blast, Smokey · Venom, Snowy · Rapid). */
+export const GUEST_DECK: Defender[] = [guestCat(1), guestCat(6), guestCat(11)];
+
+/** Cat upgrades (Cats screen): 5 steps per cat, bought with gems. Each step adds damage and a little fire rate. */
+export const CAT_STEPS = 5;
+export const STEP_DMG = 0.07, STEP_RATE = 0.02;
+export function upgraded(d: Defender, step: number): Defender {
+  if (!step) return d;
+  return { ...d, dmg: Math.round(d.dmg * (1 + STEP_DMG * step)), rate: Math.round(d.rate * (1 + STEP_RATE * step) * 100) / 100 };
+}
+
+/** Damage per second, for sorting cards. */
+export const dps = (d: Defender) => d.dmg * d.rate * (d.attack === 'blast' ? 1.3 : 1);
 
 /** Placing a cat: the first copy of a card costs PLACE_COST, each further copy of the same card PLACE_STEP more. */
 export const PLACE_COST = 30, PLACE_STEP = 10;

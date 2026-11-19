@@ -3,6 +3,8 @@
 // Same sizes, frame counts and anchor points (feet on the bottom edge) as the real art, so swapping is seamless.
 // No text: fonts differ between machines, and CI checks that this output is byte-for-byte reproducible.
 
+import { MAP_PATH } from '../src/game/levels.ts';
+
 const TAU = Math.PI * 2;
 const ell = (c, x, y, rx, ry, fill) => { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, TAU); c.fillStyle = fill; c.fill(); };
 const rr = (c, x, y, w, h, r, fill, stroke, lw = 3) => {
@@ -202,3 +204,79 @@ for (let e = 1; e <= 8; e++) for (const m of ['walk', 'attack', 'dead']) drawers
 for (let b = 1; b <= 5; b++) for (const m of ['walk', 'attack', 'dead']) drawers[`enemy.boss${b}.${m}`] = fitTo(204, 172, zombie(BOSS[b - 1], m, 1.45));
 for (let a = 1; a <= 5; a++) drawers[`bg.area${a}`] = area(a - 1);
 for (let n = 1; n <= 3; n++) drawers[`ui.up${n}`] = up(n);
+
+// ── Milestone 2: bosses 6–7, add-on cats, menu screens and their UI ────────────────────────────────────
+for (const [b, col] of [[6, '#6a6a78'], [7, '#8a3a3a']]) for (const m of ['walk', 'attack', 'dead']) drawers[`enemy.boss${b}.${m}`] = fitTo(204, 172, zombie(col, m, 1.45));
+// Cat Guardian (helmet + shield) and Boxer Cat (red gloves): the cat figure with a twist, same anchor (feet at the bottom).
+const melee = (n, extra) => (mode) => (c, w, h, i, frames) => {
+  c.save(); c.translate(w * 0.2, h * 0.28); c.scale(0.75, 0.72); cat(n, 'idle')(c, 140, 126, mode === 'attack' ? 0 : i, frames); c.restore();
+  extra(c, w, h, mode === 'attack' ? Math.sin((i / frames) * TAU) : 0);
+};
+const guard = melee(12, (c, w, h, p) => { rr(c, w * 0.55 + p * 10, h * 0.45, 30, 46, 10, '#9aa0aa', OUT, 3); ell(c, w * 0.36, h * 0.3, 26, 16, '#b8bcc6'); });
+const boxer = melee(1, (c, w, h, p) => { ell(c, w * 0.58 + Math.max(0, p) * 22, h * 0.6, 13, 12, '#e03030'); ell(c, w * 0.5, h * 0.66, 12, 11, '#c02020'); });
+for (const m of ['idle', 'attack']) { drawers[`addon.guard.${m}`] = guard(m); drawers[`addon.boxer.${m}`] = boxer(m); }
+
+// Menu screens: dark diamond side menu, grey wall, darker panel (same places as the kit's, see src/scenes/menuFrame.ts).
+const screen = (panel) => (c, w, h) => {
+  c.fillStyle = '#7a857a'; c.fillRect(0, 0, w, h);
+  c.fillStyle = '#2c3438'; c.fillRect(0, 0, 281, h);
+  c.fillStyle = '#353e43'; for (let y = -26; y < h; y += 52) for (let x = (y / 52) % 2 ? 26 : 0; x < 281; x += 52) { c.beginPath(); c.moveTo(x, y); c.lineTo(x + 20, y + 26); c.lineTo(x, y + 52); c.lineTo(x - 20, y + 26); c.closePath(); c.fill(); }
+  rr(c, panel[0], panel[1], panel[2] - panel[0], panel[3] - panel[1], 6, '#626a60');
+};
+drawers['bg.screen'] = screen([370, 174, 1274, 619]);
+drawers['bg.screen-addon'] = screen([555, 181, 1274, 626]);
+// The level map: a winding road on grass, along the same path as the kit's (src/game/levels.ts MAP_PATH, ×0.5).
+drawers['ui.levelmap'] = (c, w, h) => {
+  c.fillStyle = '#4a514a'; c.fillRect(0, 30, w, h - 60);
+  c.fillStyle = '#7cc04a'; c.fillRect(10, 45, w - 20, h - 90);
+  const road = (lw, col) => { c.beginPath(); MAP_PATH.forEach(([x, y], i) => (i ? c.lineTo(x / 2, y / 2) : c.moveTo(x / 2, y / 2))); c.lineWidth = lw; c.strokeStyle = col; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(); };
+  road(44, '#e8dcb0'); road(36, '#46525e'); road(2, '#b08850');
+  for (let x = 120; x < w; x += 260) { rr(c, x, 120, 60, 50, 4, '#8a6a5a', OUT, 2); ell(c, x + 120, 300, 20, 20, '#3c9a3c'); }
+};
+const shield = (fill, edge = OUT) => (c, w, h) => {
+  c.beginPath(); c.moveTo(6, 6); c.lineTo(w - 6, 6); c.lineTo(w - 6, h * 0.62); c.lineTo(w / 2, h - 6); c.lineTo(6, h * 0.62); c.closePath();
+  c.fillStyle = fill; c.fill(); c.lineWidth = Math.max(2, w / 18); c.strokeStyle = edge; c.stroke();
+};
+const lock = (c, w, h) => { c.lineWidth = w / 12; c.strokeStyle = OUT; c.beginPath(); c.arc(w / 2, h * 0.42, w * 0.13, Math.PI, TAU); c.stroke(); rr(c, w * 0.32, h * 0.42, w * 0.36, h * 0.26, 4, '#d8d8dc', OUT, 2); };
+const withLock = (base) => (c, w, h) => { base(c, w, h); lock(c, w, h); };
+Object.assign(drawers, {
+  'ui.lvl-done': shield('#f6a12a'), 'ui.lvl-next': shield('#46b84a'), 'ui.lvl-locked': withLock(shield('#6c6f72')),
+  'ui.tab': (c, w, h) => rr(c, 2, 4, w - 2, h - 10, 14, '#00a99d', '#007a72', 4),
+  'ui.tab-on': (c, w, h) => rr(c, 2, 4, w - 2, h - 10, 14, '#7a857a'),
+  'ui.icon-home': (c, w, h) => { c.beginPath(); c.moveTo(w / 2, 10); c.lineTo(w - 10, h / 2); c.lineTo(10, h / 2); c.closePath(); c.fillStyle = '#f28c1c'; c.fill(); rr(c, w * 0.25, h / 2, w * 0.5, h * 0.38, 3, '#f6c04a', OUT, 3); },
+  'ui.icon-cat': (c, w, h) => { ell(c, w / 2, h / 2 + 6, w * 0.4, h * 0.3, '#f4a95a'); for (const s of [-1, 1]) { c.beginPath(); c.moveTo(w / 2 + s * 30, h / 2); c.lineTo(w / 2 + s * 34, 14); c.lineTo(w / 2 + s * 10, h / 2 - 16); c.closePath(); c.fillStyle = '#f4a95a'; c.fill(); } },
+  'ui.icon-addon': (c, w, h) => { rr(c, w * 0.2, h * 0.35, w * 0.6, h * 0.5, 6, '#c8402a', OUT, 3); c.fillStyle = '#3cb83c'; c.fillRect(w * 0.55, 8, 14, 30); },
+  'ui.gem': (c, w, h) => { c.beginPath(); c.moveTo(w * 0.2, 6); c.lineTo(w * 0.8, 6); c.lineTo(w - 4, h * 0.4); c.lineTo(w / 2, h - 4); c.lineTo(4, h * 0.4); c.closePath(); c.fillStyle = '#5ac83a'; c.fill(); c.lineWidth = 3; c.strokeStyle = '#2a6a2a'; c.stroke(); },
+  'ui.gembar': bar('#2c3438', '#4a5a5a'),
+  'ui.daily': (c, w, h) => { rr(c, w * 0.18, h * 0.3, w * 0.6, h * 0.5, 8, '#f0a020', OUT, 4); c.fillStyle = '#d0302a'; c.fillRect(w * 0.44, h * 0.3, 12, h * 0.5); ell(c, w * 0.78, h * 0.22, 22, 22, '#d0302a'); },
+  'ui.winbonus': bar('#6a3a3a', '#8a5a4a'),
+  'ui.add': (c, w, h) => { rr(c, 4, 4, w - 8, h - 8, 12, '#ffd02a', '#f08a1a', 5); c.fillStyle = '#fff'; c.fillRect(w / 2 - 8, 22, 16, h - 44); c.fillRect(22, h / 2 - 8, w - 44, 16); },
+  'ui.add-off': (c, w, h) => { rr(c, 4, 4, w - 8, h - 8, 12, '#8a6a1a', '#5a4a1a', 5); c.fillStyle = '#9a8a5a'; c.fillRect(w / 2 - 8, 22, 16, h - 44); c.fillRect(22, h / 2 - 8, w - 44, 16); },
+  'ui.up0': up(0),
+  'ui.addon-row': (c, w, h) => rr(c, 4, 4, w - 8, h - 8, 14, '#4a524c', '#626a60', 5),
+  'ui.addon-count': bar('#262c2c', '#3a4040'),
+  'ui.btn-yellow': button('#ffd02a', '#f08a1a'),
+  'ui.addon-slot': (c, w, h) => rr(c, 5, 5, w - 10, h - 10, 18, '#ffee00', '#f8c890', 8),
+  'ui.addon-sel': (c, w, h) => rr(c, 4, 4, w - 8, h - 8, 16, null, '#ffee00', 5),
+  'ui.slot-locked': withLock((c, w, h) => rr(c, 5, 5, w - 10, h - 10, 18, '#b8b8bc', '#e8e8ec', 8)),
+  'ui.pausebar': (c, w, h) => rr(c, 4, 10, w - 8, h - 20, 20, '#7a3a3a'),
+});
+for (let n = 0; n <= 5; n++) drawers[`ui.bar${n}`] = (c, w, h) => { for (let k = 0; k < 5; k++) rr(c, 4 + k * 28, 6, 22, h - 12, 6, k < n ? '#2aa8e0' : '#6a756a', OUT, 2); };
+const BADGE = ['#b8ff3c', '#4a8ad8', '#4ab8a8', '#8a5a2a', '#f0e0c8', '#e05a5a', '#f8b048', '#3cb84a', '#20f0f0', '#e02028', '#0070c0', '#a08a7a', '#ff8a8a', '#ffe020', '#f05a20'];
+for (let n = 1; n <= 15; n++) drawers[`ui.badge${n}`] = shield(BADGE[n - 1], '#4a1a1a');
+const ICON = {
+  rocket: (c, w, h) => { rr(c, w * 0.15, h * 0.4, w * 0.6, h * 0.22, 10, '#c8ccd8', OUT, 3); c.beginPath(); c.moveTo(w * 0.75, h * 0.4); c.lineTo(w * 0.92, h * 0.51); c.lineTo(w * 0.75, h * 0.62); c.fillStyle = '#e04030'; c.fill(); },
+  coins: (c, w, h) => { for (const [x, y] of [[0.35, 0.55], [0.45, 0.4]]) { ell(c, w * x, h * y, 22, 15, OUT); ell(c, w * x, h * y, 19, 12, '#ffd02a'); } c.fillStyle = '#e04030'; c.fillRect(w * 0.65, h * 0.5, 22, 22); },
+  bomb: (c, w, h) => { c.beginPath(); for (let k = 0; k < 16; k++) { const a = (k / 16) * TAU, r = k % 2 ? 22 : 40; c.lineTo(w / 2 + Math.cos(a) * r, h / 2 + Math.sin(a) * r); } c.closePath(); c.fillStyle = '#f04a20'; c.fill(); ell(c, w / 2, h / 2, 16, 16, '#ffd02a'); },
+  timebomb: (c, w, h) => { ell(c, w / 2, h / 2, 34, 30, '#5a646e'); ell(c, w / 2, h / 2, 22, 20, '#c83020'); ell(c, w / 2, h / 2, 10, 10, '#f0f0f0'); },
+  guard: (c, w, h) => { ell(c, w / 2, h * 0.4, 26, 24, '#b8bcc6'); rr(c, w * 0.35, h * 0.55, w * 0.3, h * 0.35, 8, '#9aa0aa', OUT, 3); },
+  tnt: (c, w, h) => { rr(c, w * 0.25, h * 0.3, w * 0.5, h * 0.6, 4, '#a0703a', OUT, 3); ell(c, w * 0.55, h * 0.3, 18, 18, '#e04020'); },
+  boxer: (c, w, h) => { ell(c, w / 2, h * 0.45, 30, 26, '#f4a95a'); ell(c, w * 0.3, h * 0.72, 14, 12, '#e03030'); ell(c, w * 0.7, h * 0.72, 14, 12, '#e03030'); },
+  spikes: (c, w, h) => { rr(c, w * 0.2, h * 0.15, w * 0.6, h * 0.7, 6, '#6a6e72', OUT, 3); for (let k = 0; k < 5; k++) ell(c, w * (0.32 + (k % 3) * 0.18), h * (0.32 + Math.floor(k / 3) * 0.3), 7, 11, '#e8e8ec'); },
+};
+for (const [k, f] of Object.entries(ICON)) drawers[`ui.addon-${k}`] = (c, w, h) => { rr(c, 8, 4, w - 16, h - 8, 10, '#5a6a68'); f(c, w, h); };
+const roundBtn = (on, glyph) => (c, w, h) => { ell(c, w / 2, h / 2, w / 2 - 3, h / 2 - 3, '#7a3a3a'); ell(c, w / 2, h / 2, w / 2 - 12, h / 2 - 12, on ? '#f8a838' : '#b8b8bc'); glyph(c, w, h); if (!on) { ell(c, w * 0.66, h * 0.64, 13, 13, '#7a3a3a'); } };
+const note = (c, w, h) => { c.fillStyle = OUT; c.fillRect(w * 0.55, h * 0.28, 7, h * 0.36); ell(c, w * 0.48, h * 0.66, 11, 9, OUT); };
+const spk = (c, w, h) => { c.fillStyle = OUT; c.beginPath(); c.moveTo(w * 0.3, h * 0.42); c.lineTo(w * 0.42, h * 0.42); c.lineTo(w * 0.56, h * 0.3); c.lineTo(w * 0.56, h * 0.7); c.lineTo(w * 0.42, h * 0.58); c.lineTo(w * 0.3, h * 0.58); c.closePath(); c.fill(); };
+const phone = (c, w, h) => rr(c, w * 0.38, h * 0.28, w * 0.24, h * 0.44, 5, null, OUT, 5);
+Object.assign(drawers, { 'ui.music': roundBtn(true, note), 'ui.music-off': roundBtn(false, note), 'ui.sound': roundBtn(true, spk), 'ui.sound-off': roundBtn(false, spk), 'ui.vibra': roundBtn(true, phone), 'ui.vibra-off': roundBtn(false, phone) });

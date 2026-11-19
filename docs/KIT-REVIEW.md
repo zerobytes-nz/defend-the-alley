@@ -109,9 +109,14 @@ The kit was designed for a sample game, **"Merge Cats Defender"**. Its screens d
 **Decision (2026-11-19):** the suggestions above are adopted in PLAN.md milestone 2, and AWIs are added to every screen
 (cat defender AWIs on the Cats screen, a new add-on kind of AWI on the Add-ons screen).
 
+**Built in milestone 2:** Cat Guardian and CatBoxing (the Cat Guardian and Boxer Cat add-ons), Boss 6–7 (levels 14–15
+and Full Alley), the level map, side-menu tabs, upgrade bars, add-on screen, pause toggles and win bonus are all in the
+manifest now (`npm run assets:import`). Still unused: the enemies' idle animations, `SelectedBorder` and `LockedCatBox`
+(the Cats screen draws its own rows), the shop art and `Logo.png`.
+
 ## Files to watch out for
 
 - `Logo.png` says "MERGE CATS DEFENDER". Our menu draws its own title, so don't use it.
-- `LevelMap.png` is 7782 px wide. Split it into two sheets of ≤ 4096 px, or scale it down to the 720 px screen height (7137 px wide, still two sheets).
+- `LevelMap.png` is 7782 px wide: over the 4096 px texture limit. The game imports it at half size (3891×393).
 - The Explosion frames are 1305×1289 each. They are already packed small (`ds 0.7`).
 - The kit's `__MACOSX/` folder and `.DS_Store` files are junk from a Mac zip. The importer only reads the exact `Png/` paths in the manifest, so it never touches them.

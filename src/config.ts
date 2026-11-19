@@ -5,7 +5,7 @@ export const GAME_H = 720;
 const params = new URLSearchParams(location.search);
 /** ?debug: FPS meter, window.__game and window.__sim. */
 export const DEBUG = params.has('debug');
-/** ?nft: play with a sample deck of NFT-style cats (Rare to Legendary), until TheoSwap sign-in lands (milestone 3). */
+/** ?nft: start as the Collector demo player (same as ?profile=collector). ?profile=guest|collector|whale picks one. */
 export const SAMPLE_NFTS = params.has('nft');
 /** ?seed=123: replay the same waves. */
 export const SEED = Number(params.get('seed')) || 0;

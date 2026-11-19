@@ -14,16 +14,17 @@ and unit cards in [Altered Arena](https://github.com/zerobytes-nz/altered-arena)
 ## The game
 
 Cats stand behind a wall of crates on the left of a street. Zombies walk in from the right along **5 lanes** and hit the
-wall. When the wall breaks, the run is over. Clear **5 areas** of the street to win.
+wall. When the wall breaks, the fight is lost. Pick one of **15 levels** on the map (3 per area), or play **Full Alley**:
+all 5 areas in one run.
 
 | | |
 |---|---|
-| Screen | 1440×720 landscape (2:1). The kit's Area art fills it and already has the 2×5 cat grid, the crate wall and the wall's health bar on the left, so the game uses them as drawn (`src/game/layout.ts` measures them). HUD on the top sidewalk (coins, area, wave, ×1/×2, pause), card tray bottom right. |
-| Run | 5 areas × 3 waves: two zombie waves, then a **boss** wave. About 2½–3 minutes. |
+| Screen | 1440×720 landscape (2:1). The kit's Area art fills it and already has the 2×5 cat grid, the crate wall and the wall's health bar on the left, so the game uses them as drawn (`src/game/layout.ts` measures them). HUD on the top sidewalk (coins, level and area, wave, ×1/×2, pause); Repair and add-on buttons bottom left, card tray bottom right. |
+| Levels | 4 waves at level 1, rising to 10 at level 15. Every 3rd level ends with its area's boss; Boss 6 and 7 join levels 14–15. Full Alley: 15 waves, 7 bosses, about 3 minutes. |
 | Areas | Main Street, Sand Lot, Overpass, Rush Hour, Park Lane (the kit's Area1–5). Each brings tougher zombie types and its own boss (kit Boss 1–5). |
 | Taps | Tap a cat card, then tap an empty spot to place it (the card stays picked, so placing several is quick). Tap a placed cat for its stats and **Upgrade** (levels 1–4). |
-| Coins | Start with 150; +3 a second; zombies drop 8–12, bosses 60. Placing costs 30, +10 for each more copy of the same card. Upgrades cost 35 / 60 / 95. |
-| Wall | 100 HP. Zombies hit it for 1–2, bosses for 5. |
+| Coins | Reset each fight. Start with 150; +3 a second; zombies drop 8–12, bosses 60. Placing costs 30, +10 for each more copy of the same card. Upgrades cost 35 / 60 / 95. |
+| Wall | 100 HP (+15 per Wall upgrade). Zombies hit it for 1–2, bosses for 5. **Repair** restores 25% for 40 coins, +25 each time. |
 | Zombies | 8 kinds (kit Enemy Reg 1–8): plain, pot helmet, fast granny, red cap, baseball cap, spiked tank, traffic cone, football helmet. Health grows each wave. |
 
 ### AWIs: cat defenders and add-ons
@@ -48,25 +49,31 @@ So an AWI says: which cat, its attack, its rarity, and the stats **damage, fire 
 
 ### Balance (`npm run sim`)
 
-A bot plays whole runs headless (`src/game/bot.ts`, the same code as `?bot` in the browser). 100 seeds per deck:
+A bot plays whole fights headless (`src/game/bot.ts`, the same code as `?bot` in the browser). It places and upgrades
+cats, repairs below 40% wall and fires add-ons at bosses or crowded lanes.
 
-| Deck | Wins | Typical end | Median run |
-|---|---|---|---|
-| Guest (3 Common) | 1% | area 4–5 | 185 s |
-| Rare ×3 | 90% | win / area 5 | 189 s |
-| Epic ×3 | 100% | win, wall 95 | 162 s |
-| Legendary ×3 | 100% | win, wall 100 | 142 s |
-| `?nft` sample deck | 100% | win, wall 90 | 159 s |
+Win % over 60 seeds, **no upgrades or add-ons bought**:
 
-That is the pitch: guests get far and see every area but rarely win; NFTs make the difference. A human may play worse
-than the bot, so check on a phone with real players in milestone 4 (and maybe give guests a little more).
+| Player | L1–8 | L9 | L10 | L11 | L12 | L13–15 | Full Alley |
+|---|---|---|---|---|---|---|---|
+| Guest (free cats unlocked by then) | 100 | 92 | 87 | 47 | 2 | 0 | 3 |
+| Collector (4 cat AWIs, 1 add-on AWI) | 100 | 100 | 100 | 100 | 100 | 97–100 | 100 |
+| Whale (6 Legendary/Epic cat AWIs, 3 add-on AWIs) | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
+
+`npm run sim -- --campaign` plays 20 guests through the levels in order, spending gems on upgrades between fights and
+replaying the last cleared level for gems after a loss: levels 1–13 take 1 fight each, level 14 about 1.5, level 15
+about 9. None got stuck. The tuning knobs are `src/game/levels.ts → tune()` (`--tune g0,step,curve,share`).
+
+That is the pitch: guests can clear everything by upgrading; NFTs (AWIs) make the hard levels easy. A human may play
+worse than the bot, so check on a phone with real players in milestone 4.
 
 ## Code map
 
 | | |
 |---|---|
-| `src/game/` | Pure TypeScript, no Phaser: `layout.ts` (lanes, spots, wall), `cats.ts` (AWI stats), `waves.ts` (areas, zombies, seeded waves), `sim.ts` (the 60 Hz simulation: commands in, events out), `bot.ts`. `npm run sim` runs it in Node. |
-| `src/scenes/` | `BootScene` (loads the deck's cats and area 1), `MenuScene` (deck, install, best run), `DefenseScene` (draws sim events, taps → commands, HUD, tray, pause, end screen). |
+| `src/game/` | Pure TypeScript, no Phaser: `layout.ts` (lanes, spots, wall), `cats.ts` (AWI stats, upgrade steps), `waves.ts` (areas, zombies, bosses, seeded waves), `levels.ts` (15 levels, Full Alley, stars, map markers), `addons.ts` (the 8 add-ons), `awi.ts` (TheoSwap-shaped items → cat and add-on AWIs), `demo.ts` (demo profiles), `progress.ts` (the save: gems, stars, upgrades, stock, loadout, daily gift), `sim.ts` (the 60 Hz simulation: commands in, events out), `bot.ts`. `npm run sim` runs it in Node. |
+| `src/save.ts` | The current demo player: their AWIs and their save (localStorage, one per profile). |
+| `src/scenes/` | `BootScene` (loads the deck's cats and area 1), `MenuScene` (pick a demo player, install), `MapScene`, `CatsScene`, `AddonsScene` (sharing `menuFrame.ts`: side tabs, gems, daily gift), `DefenseScene` (draws sim events, taps → commands, HUD, tray, add-ons, repair, pause, end screens). |
 | `src/assets.ts` | Manifest keys → Phaser textures/animations; `ensureLoaded` / `release` per area. |
 | `src/theoswap.ts`, `src/systems/install.ts`, `src/systems/audio.ts` | From Altered Arena: TheoSwap proxy client + offline cache, Android-via-Chrome / iOS install, Web Audio synth (no sound files). |
 | `scripts/` | Asset rails (`check-assets`, `assets:docs`, `assets:status`, `assets:placeholders`, `assets:pack`, **`assets:import`** for the kit), `sim`, `pwa:icons`, `deploy`. |
@@ -96,7 +103,7 @@ than the bot, so check on a phone with real players in milestone 4 (and maybe gi
   2.5 ms median, 3.0 ms p95 per frame; landscape: well under that). The pane throttles rendering, so **60 FPS on a
   real phone is not measured yet**.
 
-### 2. Level select, upgrades, add-ons, and AWIs in all of them
+### 2. Level select, upgrades, add-ons, and AWIs in all of them ✅
 Gives players a reason to come back between levels, built the way the kit's own screens are laid out
 (see [docs/KIT-REVIEW.md](docs/KIT-REVIEW.md)). **AWIs (Altered World Items) are part of every screen**, using bundled
 sample data in this milestone; live TheoSwap sign-in follows in milestone 3.
@@ -107,11 +114,12 @@ sample data in this milestone; live TheoSwap sign-in follows in milestone 3.
 
 **Map: level select** (`LevelMap.png`, `GreenLevel` / `OrangeLvl` / `LockedLevel`, `TitleRibbon`)
 - 15 levels, 3 per area (Main Street 1–3 … Park Lane 13–15), on the kit's winding road map. It scrolls sideways with a
-  drag. The map is 7782×785, so it is split into two sheets of ≤ 4096 px.
+  drag. The map is 7782×785, so it is imported at half size (3891×393, under the 4096 px limit).
 - A level is a fight on that area's street: 4 waves early, rising to 10 by level 15 ("Wave 3 / 10" in the HUD). The 3rd
   level of each area ends with that area's boss. Boss 6 and 7 (unused so far) join the last levels and Full Alley.
-- Markers: green = cleared (with 1–3 stars), orange = next, grey with a lock = locked. Clearing a level unlocks the next.
-- Stars from the wall's health left: any = ★, ≥ 50% = ★★, 100% = ★★★.
+- Markers, as the kit uses them: orange = cleared (with 1–3 stars), green = next, grey with a lock = locked. Clearing a
+  level unlocks the next. Tap a marker to pick it, tap again (or PLAY) to start.
+- Stars from the wall's health left: any = ★, ≥ 50% = ★★, 100% = ★★★ (a repaired wall counts).
 - The milestone 1 run (all 5 areas in a row) stays as **Full Alley**, unlocked after level 15, with its own best score.
 
 **Gems** (`GemsIcon`, `WinBonus`, `WinPopUp`)
@@ -143,7 +151,7 @@ sample data in this milestone; live TheoSwap sign-in follows in milestone 3.
 
   Cat Guardian and Boxer Cat use the kit's `Cat Guardian` and `CatBoxing` animations.
 - **Loadout: 4 slots**, as in the kit. 2 are open and 2 are unlocked with gems (300 and 400). Equipped add-ons appear
-  bottom right in a level with how many are left.
+  bottom left in a level with how many are left.
 - Bought add-ons: hold up to 5 of each, 25 gems each, used up when fired.
 - **Add-on AWIs:** an NFT can also become an add-on AWI (for example an Epic TNT Crate). It shows in the list with its
   rarity stripe instead of a price. It never runs out: it gives free uses every level (Common 1, Rare 1, Epic 2,
@@ -151,19 +159,19 @@ sample data in this milestone; live TheoSwap sign-in follows in milestone 3.
 
 **In a level** (from the kit's in-game mock-up)
 - **Repair Wall** button (`WallIcon`): spend coins to restore some wall health; the price rises with each use.
-- Add-on buttons bottom right with counts; tap one, then a lane where needed.
+- Add-on buttons bottom left with counts; tap one, then a lane where needed.
 - Pause screen with the kit's music / sound / vibration toggles (`BtnMusic`, `BtnSound`, `BtnVibra`), Restart, Resume.
 - "You Win" with the gem bonus and Continue; "You Lose" with Restart and Home (back to the map).
 
 **AWIs in this milestone**
-- `src/awi.ts`: one AWI model for both kinds, **cat defender** and **add-on**, from TheoSwap-shaped item data
+- `src/game/awi.ts`: one AWI model for both kinds, **cat defender** and **add-on**, from TheoSwap-shaped item data
   (`itemId`, `Rarity`, `attack`, optional stat overrides), so milestone 3 only has to plug in the live fetch.
-- Bundled demo profiles to try it without TheoSwap: **Guest** (no AWIs), **Collector** (a few Rare/Epic cats and an
-  add-on), **Whale** (Legendary cats and add-ons). Picked on the menu or with `?profile=`; `?nft` keeps working.
+- Bundled demo profiles to try it without TheoSwap: **Guest** (no AWIs), **Collector** (4 cat AWIs, Rare to Legendary,
+  and a Rare TNT Crate), **Whale** (6 Legendary/Epic cat AWIs, and Cat Guardian, Big Bomb and Rocket Strike AWIs). Picked on the menu or with `?profile=`; `?nft` keeps working.
 - AWIs are always unlocked, appear first on the Cats and Add-ons screens, and are marked with an "AWI" tag and rarity stripe.
 
 **Code and checks**
-- New scenes: `MapScene`, `CatsScene` (upgrades + deck), `AddonsScene`, sharing a `MenuFrame` (side tabs, gem counter).
+- New scenes: `MapScene`, `CatsScene` (upgrades + deck), `AddonsScene`, sharing `menuFrame.ts` (side tabs, gem counter, daily gift).
 - `src/game/progress.ts`: stars, gems, cat and wall/income steps, add-on stock, unlocked slots, daily streak; saved in
   localStorage (one save per profile).
 - `src/game/addons.ts`: add-on effects inside the simulation, so `npm run sim` and `?bot` can use them.

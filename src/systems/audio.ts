@@ -23,8 +23,8 @@ function ensure(): AudioContext | null {
   if (!AC) return null;
   ctx = new AC();
   master = ctx.createGain(); master.gain.value = muted ? 0 : 0.8; master.connect(ctx.destination);
-  sfxBus = ctx.createGain(); sfxBus.gain.value = 0.55; sfxBus.connect(master);
-  musicBus = ctx.createGain(); musicBus.gain.value = 0.22; musicBus.connect(master);
+  sfxBus = ctx.createGain(); sfxBus.gain.value = settings.sound ? 0.55 : 0; sfxBus.connect(master);
+  musicBus = ctx.createGain(); musicBus.gain.value = settings.music ? 0.22 : 0; musicBus.connect(master);
   noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.5, ctx.sampleRate);
   const d = noiseBuf.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -46,6 +46,31 @@ export function initAudio(): void {
 }
 
 export const isMuted = () => muted;
+
+// The pause screen's toggles (the kit's music / sound / vibration buttons). Mute (M, 🔊) silences everything.
+const SET_KEY = 'defend-the-alley.audio.v1';
+const settings = (() => { try { return { music: true, sound: true, vibra: true, ...JSON.parse(localStorage.getItem(SET_KEY) ?? '{}') }; } catch { return { music: true, sound: true, vibra: true }; } })();
+const keep = () => { try { localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch { /* private mode */ } };
+export const musicOn = () => settings.music as boolean;
+export const soundOn = () => settings.sound as boolean;
+export const vibraOn = () => settings.vibra as boolean;
+export function toggleMusic(): void {
+  settings.music = !settings.music; keep();
+  if (ctx && musicBus) musicBus.gain.setTargetAtTime(settings.music ? 0.22 : 0, ctx.currentTime, 0.02);
+}
+export function toggleSound(): void {
+  settings.sound = !settings.sound; keep();
+  if (ctx && sfxBus) sfxBus.gain.setTargetAtTime(settings.sound ? 0.55 : 0, ctx.currentTime, 0.02);
+}
+export function toggleVibra(): void { settings.vibra = !settings.vibra; keep(); }
+let lastBuzz = 0;
+/** A short buzz on phones that support it (Android), at most every 250 ms. */
+export function buzz(ms = 30): void {
+  const now = performance.now();
+  if (!settings.vibra || now - lastBuzz < 250) return;
+  lastBuzz = now;
+  try { navigator.vibrate?.(ms); } catch { /* not allowed */ }
+}
 export function onMuteChange(fn: (m: boolean) => void): () => void { listeners.add(fn); return () => listeners.delete(fn); }
 export function toggleMute(): void {
   muted = !muted;

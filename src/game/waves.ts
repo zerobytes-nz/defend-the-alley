@@ -1,5 +1,6 @@
-// The run: 5 areas × 3 waves (two zombie waves, then a boss), about 2½ minutes.
+// Zombies, bosses, areas and how a wave is made. Which waves a fight has is up to src/game/levels.ts.
 import { LANES } from './layout.ts';
+import type { WavePlan } from './levels.ts';
 
 export interface EnemyType {
   key: string;        // art: enemy.<key>.walk / .attack / .dead
@@ -22,8 +23,11 @@ export const ENEMIES: Record<string, EnemyType> = {
   reg8: { key: 'reg8', hp: 95, speed: 62, dmg: 2, hitEvery: 0.9, coins: 11 }, // football helmet
 };
 const boss = (n: number, hp: number, speed: number): EnemyType => ({ key: `boss${n}`, hp, speed, dmg: 5, hitEvery: 1.3, coins: 60, boss: true });
-/** Boss health is absolute (not scaled by waveHp): one boss closes each area. */
-export const BOSSES = [boss(1, 700, 34), boss(2, 1200, 36), boss(3, 1900, 34), boss(4, 2800, 38), boss(5, 4000, 36)];
+/** Boss health is absolute (not scaled by waveHp). Bosses 1–5 close their area; 6 and 7 join the last fights. */
+export const BOSSES: Record<number, EnemyType> = {
+  1: boss(1, 700, 34), 2: boss(2, 1200, 36), 3: boss(3, 1900, 34), 4: boss(4, 2800, 38), 5: boss(5, 4000, 36),
+  6: boss(6, 3000, 40), 7: boss(7, 4600, 32),
+};
 
 export interface Area { name: string; bg: string; pool: string[] }
 export const AREAS: Area[] = [
@@ -33,10 +37,7 @@ export const AREAS: Area[] = [
   { name: 'Rush Hour', bg: 'bg.area4', pool: ['reg3', 'reg4', 'reg5', 'reg6', 'reg7'] },
   { name: 'Park Lane', bg: 'bg.area5', pool: ['reg4', 'reg5', 'reg6', 'reg7', 'reg8'] },
 ];
-export const WAVES_PER_AREA = 3;
-export const TOTAL_WAVES = AREAS.length * WAVES_PER_AREA;
-
-/** Enemy health grows each wave (global wave index 0–14). */
+/** Enemy health grows with a wave's difficulty g (0 on level 1, 14 at the end of Full Alley). */
 export const waveHp = (g: number) => 1 + 0.14 * g + 0.007 * g * g;
 
 export interface Spawn { at: number; type: EnemyType; lane: number }
@@ -54,11 +55,9 @@ export function rng(seed: number): () => number {
 }
 
 /** The spawns of one wave, times in seconds from the wave's start. */
-export function makeWave(g: number, rand: () => number): Spawn[] {
-  const area = AREAS[Math.floor(g / WAVES_PER_AREA)];
-  const w = g % WAVES_PER_AREA;
-  const isBoss = w === WAVES_PER_AREA - 1;
-  const count = Math.round((5 + g * 0.8) * (isBoss ? 0.6 : 1));
+export function makeWave(w: WavePlan, rand: () => number): Spawn[] {
+  const area = AREAS[w.area], g = w.g;
+  const count = Math.round((5 + g * 0.8) * (w.bosses.length ? 0.6 : 1));
   const gap = Math.max(0.38, 0.85 - g * 0.035);
   const out: Spawn[] = [];
   let lastLane = -1;
@@ -68,6 +67,7 @@ export function makeWave(g: number, rand: () => number): Spawn[] {
     lastLane = lane;
     out.push({ at: i * gap + rand() * gap * 0.5, type: ENEMIES[area.pool[Math.floor(rand() * area.pool.length)]], lane });
   }
-  if (isBoss) out.push({ at: 1, type: BOSSES[Math.floor(g / WAVES_PER_AREA)], lane: 1 + Math.floor(rand() * 3) });
+  const lanes = [1, 2, 3, 0, 4].sort(() => rand() - 0.5);
+  w.bosses.forEach((b, i) => out.push({ at: 1 + i * 2.5, type: BOSSES[b], lane: lanes[i] }));
   return out.sort((a, b) => a.at - b.at);
 }

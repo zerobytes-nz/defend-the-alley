@@ -46,7 +46,7 @@ Edit `assets.manifest.json` (key, path, size, frames, what it's for, source). If
 `scripts/placeholder-art.mjs`. Then run `npm run assets:placeholders && npm run assets:docs` and commit the
 manifest, the placeholder, and this file. Game code refers to assets **only by manifest key**.
 
-## Every file to replace (94)
+## Every file to replace (164)
 
 ### Cat defenders (the AWIs)
 
@@ -126,6 +126,12 @@ manifest, the placeholder, and this file. Game code refers to assets **only by m
 | `enemy.boss5.walk` | `enemies/boss5-walk.png` | 3416×207 · 14 × 244×207 @ 12 fps, loop | Area 5 boss, walking left. | `Png/Enemies/Enemy Boss 5/Walk` |
 | `enemy.boss5.attack` | `enemies/boss5-attack.png` | 2928×207 · 12 × 244×207 @ 14 fps, loop | Area 5 boss, hitting the wall. | `Png/Enemies/Enemy Boss 5/Attack` |
 | `enemy.boss5.dead` | `enemies/boss5-dead.png` | 2928×207 · 12 × 244×207 @ 12 fps | Area 5 boss, falling over. | `Png/Enemies/Enemy Boss 5/Dead` |
+| `enemy.boss6.walk` | `enemies/boss6-walk.png` | 3416×207 · 14 × 244×207 @ 12 fps, loop | Boss 6 (late levels), walking left. | `Png/Enemies/Enemy Boss 6/Walk` |
+| `enemy.boss6.attack` | `enemies/boss6-attack.png` | 2928×207 · 12 × 244×207 @ 14 fps, loop | Boss 6, hitting the wall. | `Png/Enemies/Enemy Boss 6/Attack` |
+| `enemy.boss6.dead` | `enemies/boss6-dead.png` | 2928×207 · 12 × 244×207 @ 12 fps | Boss 6, falling over. | `Png/Enemies/Enemy Boss 6/Dead` |
+| `enemy.boss7.walk` | `enemies/boss7-walk.png` | 3416×207 · 14 × 244×207 @ 12 fps, loop | Boss 7 (late levels), walking left. | `Png/Enemies/Enemy Boss 7/Walk` |
+| `enemy.boss7.attack` | `enemies/boss7-attack.png` | 2928×207 · 12 × 244×207 @ 14 fps, loop | Boss 7, hitting the wall. | `Png/Enemies/Enemy Boss 7/Attack` |
+| `enemy.boss7.dead` | `enemies/boss7-dead.png` | 2928×207 · 12 × 244×207 @ 12 fps | Boss 7, falling over. | `Png/Enemies/Enemy Boss 7/Dead` |
 
 ### Effects
 
@@ -152,6 +158,8 @@ manifest, the placeholder, and this file. Game code refers to assets **only by m
 | `bg.area4` | `bg/area4.png` | 1440×720 | Area 4: the street, the 2×5 cat grid, the crate wall and its health bar. | `Png/Area/Area4.png` (crop 0, 0, 2124, 1062) |
 | `bg.area5` | `bg/area5.png` | 1440×720 | Area 5: the street, the 2×5 cat grid, the crate wall and its health bar. | `Png/Area/Area5.png` (crop 0, 0, 2124, 1062) |
 | `bg.menu` | `bg/menu.png` | 1440×720 | Menu backdrop: cats vs zombies (the landing screen). | `Png/Ui/LandingScreen.png` (crop 0, 0, 2126, 1063) |
+| `bg.screen` | `bg/screen.png` | 1440×720 | Map and Cats screens: dark side menu and the grey panel. | `Png/Ui/LevelMap_Bg_Screen.png` (crop 0, 0, 2126, 1063) |
+| `bg.screen-addon` | `bg/screen-addon.png` | 1440×720 | Add-ons screen: side menu, loadout column and the panel. | `Png/Ui/AddonScreen.png` (crop 0, 0, 2124, 1062) |
 
 ### HUD / UI
 
@@ -171,6 +179,73 @@ manifest, the placeholder, and this file. Game code refers to assets **only by m
 | `ui.up1` | `ui/up1.png` | 46×59 | Cat level 2 badge. | `Png/Ui/Up1.png` |
 | `ui.up2` | `ui/up2.png` | 46×59 | Cat level 3 badge. | `Png/Ui/Up2.png` |
 | `ui.up3` | `ui/up3.png` | 46×59 | Cat level 4 badge. | `Png/Ui/Up3.png` |
+| `ui.levelmap` | `ui/levelmap.png` | 3891×393 | Level select: the winding road with the 15 levels on it. | `Png/Ui/LevelMap.png` |
+| `ui.lvl-done` | `ui/lvl-done.png` | 89×95 | Level marker: cleared (stars under it). | `Png/Ui/OrangeLvl.png` |
+| `ui.lvl-next` | `ui/lvl-next.png` | 89×95 | Level marker: the next level to play. | `Png/Ui/GreenLevel.png` |
+| `ui.lvl-locked` | `ui/lvl-locked.png` | 89×95 | Level marker: locked. | `Png/Ui/LockedLevel.png` |
+| `ui.tab` | `ui/tab.png` | 157×148 | Side menu tab (not selected). | `Png/Ui/BtnTab_Active.png` |
+| `ui.tab-on` | `ui/tab-on.png` | 212×152 | Side menu tab (selected; joins the panel). | `Png/Ui/BtnTab_on.png` |
+| `ui.icon-home` | `ui/icon-home.png` | 94×95 | Map tab icon. | `Png/Ui/Icon_home.png` |
+| `ui.icon-cat` | `ui/icon-cat.png` | 95×95 | Cats tab icon. | `Png/Ui/Icon_Cat.png` |
+| `ui.icon-addon` | `ui/icon-addon.png` | 94×95 | Add-ons tab icon. | `Png/Ui/Icon_Addon.png` |
+| `ui.gem` | `ui/gem.png` | 57×48 | Gem: the currency kept between levels. | `Png/Ui/GemsIcon.png` |
+| `ui.gembar` | `ui/gembar.png` | 229×62 | Gem counter backing. | `Png/Ui/GemsBarBg.png` |
+| `ui.daily` | `ui/daily.png` | 165×165 | Daily gift box. | `Png/Ui/DaillyIcon.png` |
+| `ui.winbonus` | `ui/winbonus.png` | 364×119 | Gems won, on the You Win popup. | `Png/Ui/WinBonus.png` |
+| `ui.bar0` | `ui/bar0.png` | 144×66 | Upgrade bar, 0 of 5 steps. | `Png/Ui/0Bar.png` |
+| `ui.bar1` | `ui/bar1.png` | 144×66 | Upgrade bar, 1 of 5 steps. | `Png/Ui/1Bar.png` |
+| `ui.bar2` | `ui/bar2.png` | 144×66 | Upgrade bar, 2 of 5 steps. | `Png/Ui/2Bar.png` |
+| `ui.bar3` | `ui/bar3.png` | 144×66 | Upgrade bar, 3 of 5 steps. | `Png/Ui/3Bar.png` |
+| `ui.bar4` | `ui/bar4.png` | 144×66 | Upgrade bar, 4 of 5 steps. | `Png/Ui/4Bar.png` |
+| `ui.bar5` | `ui/bar5.png` | 144×66 | Upgrade bar, 5 of 5 steps. | `Png/Ui/5Bar.png` |
+| `ui.add` | `ui/add.png` | 94×97 | Upgrade (+) button. | `Png/Ui/AddBtn.png` |
+| `ui.add-off` | `ui/add-off.png` | 94×97 | Upgrade button, can't afford / maxed. | `Png/Ui/AddBtn_Pressed.png` |
+| `ui.up0` | `ui/up0.png` | 46×59 | Rank chevrons, white. | `Png/Ui/Up0.png` |
+| `ui.badge1` | `ui/badge1.png` | 43×42 | Colour badge of cat C1. | `Png/Ui/Uplogo1.png` |
+| `ui.badge2` | `ui/badge2.png` | 43×42 | Colour badge of cat C2. | `Png/Ui/Uplogo2.png` |
+| `ui.badge3` | `ui/badge3.png` | 43×42 | Colour badge of cat C3. | `Png/Ui/Uplogo3.png` |
+| `ui.badge4` | `ui/badge4.png` | 43×42 | Colour badge of cat C4. | `Png/Ui/Uplogo4.png` |
+| `ui.badge5` | `ui/badge5.png` | 43×42 | Colour badge of cat C5. | `Png/Ui/Uplogo5.png` |
+| `ui.badge6` | `ui/badge6.png` | 43×42 | Colour badge of cat C6. | `Png/Ui/Uplogo6.png` |
+| `ui.badge7` | `ui/badge7.png` | 43×42 | Colour badge of cat C7. | `Png/Ui/Uplogo7.png` |
+| `ui.badge8` | `ui/badge8.png` | 43×42 | Colour badge of cat C8. | `Png/Ui/Uplogo8.png` |
+| `ui.badge9` | `ui/badge9.png` | 43×42 | Colour badge of cat C9. | `Png/Ui/Uplogo9.png` |
+| `ui.badge10` | `ui/badge10.png` | 43×42 | Colour badge of cat C10. | `Png/Ui/Uplogo10.png` |
+| `ui.badge11` | `ui/badge11.png` | 43×42 | Colour badge of cat C11. | `Png/Ui/Uplogo11.png` |
+| `ui.badge12` | `ui/badge12.png` | 43×42 | Colour badge of cat C12. | `Png/Ui/Uplogo12.png` |
+| `ui.badge13` | `ui/badge13.png` | 43×42 | Colour badge of cat C13. | `Png/Ui/Uplogo13.png` |
+| `ui.badge14` | `ui/badge14.png` | 43×42 | Colour badge of cat C14. | `Png/Ui/Uplogo14.png` |
+| `ui.badge15` | `ui/badge15.png` | 43×42 | Colour badge of cat C15. | `Png/Ui/Uplogo15.png` |
+| `ui.addon-rocket` | `ui/addon-rocket.png` | 128×112 | Add-on icon: rocket. | `Png/Ui/AddonIcon1.png` |
+| `ui.addon-coins` | `ui/addon-coins.png` | 128×112 | Add-on icon: coins. | `Png/Ui/AddonIcon2.png` |
+| `ui.addon-bomb` | `ui/addon-bomb.png` | 128×112 | Add-on icon: bomb. | `Png/Ui/AddonIcon3.png` |
+| `ui.addon-timebomb` | `ui/addon-timebomb.png` | 128×112 | Add-on icon: timebomb. | `Png/Ui/AddonIcon4.png` |
+| `ui.addon-guard` | `ui/addon-guard.png` | 128×112 | Add-on icon: guard. | `Png/Ui/AddonIcon5.png` |
+| `ui.addon-tnt` | `ui/addon-tnt.png` | 128×112 | Add-on icon: tnt. | `Png/Ui/AddonIcon6.png` |
+| `ui.addon-boxer` | `ui/addon-boxer.png` | 128×112 | Add-on icon: boxer. | `Png/Ui/AddonIcon7.png` |
+| `ui.addon-spikes` | `ui/addon-spikes.png` | 128×112 | Add-on icon: spikes. | `Png/Ui/AddonIcon8.png` |
+| `ui.addon-row` | `ui/addon-row.png` | 529×182 | Add-on row on the Add-ons screen. | `Png/Ui/AddonBoxGrey.png` |
+| `ui.addon-count` | `ui/addon-count.png` | 134×51 | Add-on stock (3 / 5). | `Png/Ui/AddonBoxNumber.png` |
+| `ui.btn-yellow` | `ui/btn-yellow.png` | 152×92 | Buy button (gems). | `Png/Ui/AddonBtnyellow.png` |
+| `ui.addon-slot` | `ui/addon-slot.png` | 151×153 | Loadout slot / in-level add-on button. | `Png/Ui/AddOnSlotBtn.png` |
+| `ui.addon-sel` | `ui/addon-sel.png` | 562×184 | Highlight around an equipped add-on row. | `Png/Ui/YellowBorderAddon.png` |
+| `ui.slot-locked` | `ui/slot-locked.png` | 155×159 | Locked loadout slot. | `Png/Ui/LockedBoxHelp.png` |
+| `ui.music` | `ui/music.png` | 122×124 | Pause screen toggle: music. | `Png/Ui/BtnMusic.png` |
+| `ui.music-off` | `ui/music-off.png` | 122×124 | Pause screen toggle: music-off. | `Png/Ui/BtnMusicOff.png` |
+| `ui.sound` | `ui/sound.png` | 122×124 | Pause screen toggle: sound. | `Png/Ui/BtnSound.png` |
+| `ui.sound-off` | `ui/sound-off.png` | 122×124 | Pause screen toggle: sound-off. | `Png/Ui/BtnSound Off.png` |
+| `ui.vibra` | `ui/vibra.png` | 122×124 | Pause screen toggle: vibra. | `Png/Ui/BtnVibra.png` |
+| `ui.vibra-off` | `ui/vibra-off.png` | 122×124 | Pause screen toggle: vibra-off. | `Png/Ui/BtnVibra Off.png` |
+| `ui.pausebar` | `ui/pausebar.png` | 723×105 | Backing behind the pause toggles. | `Png/Ui/BgPaused.png` |
+
+### addon
+
+| Key | File (under `public/assets/licensed/`) | Size · frames | Used for | From the kit |
+|---|---|---|---|---|
+| `addon.guard.idle` | `addons/guard-idle.png` | 2808×182 · 12 × 234×182 @ 16 fps, loop | Cat Guardian add-on, standing guard in a lane. | `Png/Cat Guardian/Idle` |
+| `addon.guard.attack` | `addons/guard-attack.png` | 2808×182 · 12 × 234×182 @ 20 fps, loop | Cat Guardian add-on, hitting zombies. | `Png/Cat Guardian/Attack` |
+| `addon.boxer.idle` | `addons/boxer-idle.png` | 3204×208 · 12 × 267×208 @ 16 fps, loop | Boxer Cat add-on, waiting in a lane. | `Png/CatBoxing/Idle` |
+| `addon.boxer.attack` | `addons/boxer-attack.png` | 3204×208 · 12 × 267×208 @ 22 fps, loop | Boxer Cat add-on, punching zombies. | `Png/CatBoxing/Attack` |
 
 ## Sources
 
