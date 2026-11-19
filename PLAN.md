@@ -289,7 +289,7 @@ level 15 about 12 (the finale is a grind); 1 of 10 bot guests got stuck on level
 level 6 guest wins most Daily Challenges; Endless runs reach about 17 (4 upgrade steps) to 25 waves (Collector).
 Play-testing on phones in milestone 5 should decide whether level 15 needs softening.
 
-### 4. TheoSwap (in progress)
+### 4. TheoSwap ✅ (images and real collections still to do)
 - ✅ Hidden game **Defend the Alley** created (id 9, code `jpANeS3Z`) and a free draft config **Defend the Alley AWIs**
   (id 18). The game has no ads and takes no money; AWIs (Altered World Items) only come from NFTs players already own.
 - Config tree, one item per NFT (each item is about equally likely, so roughly 60% cats, 20% add-ons, 20% boosts):
@@ -309,12 +309,14 @@ Play-testing on phones in milestone 5 should decide whether level 15 needs softe
   connected player is "My NFTs" on the title screen with its own save. Demo players keep bundled sample data.
 - ✅ Collection bonus (2+ deck cards from one collection: +10% damage; 3+: +10% fire rate) shown on the Cats screen;
   perks on the Cats rows and Reveal cards; boosts in the Almanac.
-- **Waiting on the user:**
-  - Put the game's **test** API key in `.env` (`THEOSWAP_API_KEY`, from the Developer page). Until then Connect shows
-    TheoSwap's "No data provided".
-  - Publish config 18 (a live change). Test codes return nothing until then, as with Arena.
-  - Then: check what test codes AAAAAAAA… return (item shares, perks), item images (`upload_config_image`), game icon
-    and banner, and assigning real NFT collections (confirm contract and chain first).
+- ✅ Config 18 published and made the game's default (test NFTs only get items from the default config). Test API key
+  in `.env` (gitignored). Test NFTs set with `set_test_items`: **AAAAAAAA** 12 NFTs (6 cats incl. a Legendary
+  Hoodie · Brick Layer, 3 add-ons, 3 boosts), **BBBBBBBB** 6, **CCCCCCCC** 1 cat. All three connect and reveal in the
+  game; each test token always gives the same item. Test NFTs share the zero-address contract, so no collection bonus.
+- ✅ GitHub repo `zerobytes-nz/defend-the-alley` (private). No kit art in git; the README has the download link and
+  import steps.
+- Still to do: item images (`upload_config_image`), game icon and banner, assigning real NFT collections (confirm
+  contract and chain first), and the production nginx proxy for the live key (milestone 5).
 
 ### 5. Polish and deploy
 - Fill wide phones (19.5:9) instead of letterboxing (Phaser `Scale.EXPAND`, extend the street art to the sides).
