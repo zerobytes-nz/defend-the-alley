@@ -54,7 +54,7 @@ export const HARD_HP = 1.35;
 
 export const LEVEL_COUNT = 15;
 /** Level difficulty: the last wave of level n has g = PEAK_G0 + PEAK_STEP·n + PEAK_CURVE·n²; the first START_SHARE of that. */
-export let PEAK_G0 = 1.5, PEAK_STEP = 0.95, PEAK_CURVE = 0.006, START_SHARE = 0.3;
+export let PEAK_G0 = 1.6, PEAK_STEP = 0.8, PEAK_CURVE = 0, START_SHARE = 0.3;
 /** For balancing from scripts/sim.mjs. */
 export const tune = (g0: number, step: number, curve: number, share: number) => { PEAK_G0 = g0; PEAK_STEP = step; PEAK_CURVE = curve; START_SHARE = share; };
 export const FULL_ALLEY = LEVEL_COUNT;

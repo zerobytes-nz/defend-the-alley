@@ -31,7 +31,7 @@ export const UNLOCKS: Unlock[][] = [
   [cat(11), feature('cats')],        // 3: Snowy (Rapid) and the Cats screen
   [addon('rocket'), feature('addons')], // 4
   [cat(2)],                          // 5
-  [feature('merge')],                // 6
+  [feature('merge'), feature('daily')], // 6
   [cat(7), addon('bomb')],           // 7
   [cat(12), addon('tnt')],           // 8
   [cat(3), addon('guard')],          // 9

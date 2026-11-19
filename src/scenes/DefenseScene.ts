@@ -11,7 +11,7 @@ import { ABILITIES, AREAS, ENEMY_NAMES } from '../game/waves.ts';
 import { DAILY, ENDLESS, FULL_ALLEY, GOALS, HARD_BASE, LEVEL_COUNT, RULES, dayKey, daySeed, isHard, starGoals, type LevelDef } from '../game/levels.ts';
 import { addTotals, checkAchievements } from '../game/achievements.ts';
 import { ADDONS, type Equipped } from '../game/addons.ts';
-import { alleyGems, challengeToday, clearLevel, endlessGems, finishDaily, levelGems, spendAddons } from '../game/progress.ts';
+import { alleyGems, challengeToday, lossGems, clearLevel, endlessGems, finishDaily, levelGems, spendAddons } from '../game/progress.ts';
 import { FEATURES, type Feature, type Unlock } from '../game/unlocks.ts';
 import { think } from '../game/bot.ts';
 import { button, tappable, text } from '../ui.ts';
@@ -916,7 +916,7 @@ export class DefenseScene extends Phaser.Scene {
       first = (isHard(n) ? s.hard[n - HARD_BASE] : s.stars[n]) === 0;
       gems = levelGems(n, stars, first);
       got = clearLevel(s, player.awis, n, stars);
-    }
+    } else if (!this.def.tutorial) gems = lossGems(cleared);
     s.gems += gems;
     spendAddons(s, this.startAddons, this.sim.addons);
     addTotals(s, st, won);

@@ -51,7 +51,7 @@ export const ENEMIES: Record<string, EnemyType> = {
 export const SPLIT_CHILD: EnemyType = { ...ENEMIES.reg3, hp: 30, coins: 3, ability: undefined };
 const BOSS_ABILITY: Record<number, Ability> = { 1: 'summon', 2: 'charge', 3: 'enrage', 4: 'summon', 5: 'charge', 6: 'hop', 7: 'summon' };
 /** Who a summoning boss calls in. */
-export const MINION: Record<number, string> = { 1: 'reg1', 4: 'reg3', 7: 'reg6' };
+export const MINION: Record<number, string> = { 1: 'reg1', 4: 'reg3', 7: 'reg2' };
 const boss = (n: number, hp: number, speed: number): EnemyType => ({ key: `boss${n}`, hp, speed, dmg: 5, hitEvery: 1.3, coins: 60, boss: true, ability: BOSS_ABILITY[n] });
 /** Boss health is absolute (not scaled by waveHp). Bosses 1–5 close their area; 6 and 7 join the last fights. */
 export const BOSSES: Record<number, EnemyType> = {

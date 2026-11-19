@@ -83,6 +83,8 @@ export function levelGems(n: number, stars: number, first: boolean): number {
   const base = (15 + 5 * n) * k;
   return Math.round((base * [0, 1, 1.5, 2][stars] + (first ? 20 : 0)) / 5) * 5;
 }
+/** A lost level still pays a little: 3 gems per wave cleared (so a hard level can be ground out). */
+export const lossGems = (wavesCleared: number) => wavesCleared * 3;
 /** Gems for a Full Alley run: per wave cleared, plus a prize for winning. */
 export const alleyGems = (wavesCleared: number, won: boolean) => wavesCleared * 10 + (won ? 200 : 0);
 /** Gems for an Endless run: 5 a wave, and 15 more for each wave past your old best. */

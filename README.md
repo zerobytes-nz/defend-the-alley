@@ -16,12 +16,16 @@ npm run dev      # http://localhost:5182
 npm run build    # static site in dist/
 npm run sim      # balance check: win % per level for each demo player, no browser
 npm run sim -- --campaign   # guests playing through all 15 levels, upgrading as they go
+npm run sim -- --modes      # Daily Challenge and Endless
 ```
 
 URL switches: `?profile=guest|collector|whale` demo player (also picked on the title screen) · `?nft` = collector · `?bot` the bot plays (hands-free demo) · `?seed=N` same waves · `?debug` FPS meter.
 
-Controls: taps only. Tap a cat card, then a spot by the wall. Tap a placed cat to upgrade it. Tap an add-on, then a
-lane (Big Bomb and Coins ×2 fire at once). The wall button repairs. ⚙ pauses, ×1/×2 speeds up.
+Controls: taps and drags. Tap a cat card, then a square by the wall. Tap a placed cat for its stats, **Upgrade** and
+**Sell**. Drag a cat to another free square to move it, or onto the same cat to merge them (from level 6). Tap an
+add-on, then a lane (Big Bomb and Coins ×2 fire at once). The wall button repairs. ⚙ pauses, ×1/×2 speeds up.
+The map has the 15 levels, **Hard mode** (after level 15), the **Daily Challenge** (after level 6), **Endless** and
+Full Alley; the **Almanac** tab lists cats, add-ons, zombies met and achievements.
 Keyboard: Space = Play, P / Esc = pause, M = mute.
 
 ## Art: read [ASSETS.md](ASSETS.md)

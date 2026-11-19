@@ -11,7 +11,7 @@ import { DAILY, ENDLESS, FULL_ALLEY, LEVEL_COUNT, dailyDef, dayKey, daySeed, lev
 import { addTotals, checkAchievements } from '../src/game/achievements.ts';
 import { awisFromItems } from '../src/game/awi.ts';
 import { PROFILES } from '../src/game/demo.ts';
-import { addonUnlocked, featureUnlocked, buyAddon, buyCatStep, buyIncome, buyWall, catStepCost, clearLevel, deckOf, equipped, fightSetup, levelGems, newSave, rowStepCost, spendAddons, toggleLoadout } from '../src/game/progress.ts';
+import { addonUnlocked, featureUnlocked, buyAddon, buyCatStep, buyIncome, buyWall, catStepCost, lossGems, clearLevel, deckOf, equipped, fightSetup, levelGems, newSave, rowStepCost, spendAddons, toggleLoadout } from '../src/game/progress.ts';
 
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? Number(process.argv[i + 1]) : d; };
 const seeds = arg('--seeds', 60);
@@ -70,6 +70,7 @@ function campaign() {
         addTotals(s, d.stats, d.state === 'won');
         t++;
         if (d.state === 'won') { award(s, n, d); break; }
+        s.gems += lossGems(d.wave);
         if (t >= 40) break;
         // Lost: replay the last cleared level for gems, like a player would.
         if (n > 0) { const f = fight(s, awis, n - 1, ++seed); spendAddons(s, f.used, f.addons); if (f.state === 'won') award(s, n - 1, f); t++; }

@@ -22,7 +22,7 @@ all 5 areas in one run.
 | Screen | 1440×720 landscape (2:1). The kit's Area art fills it and already has the 2×5 cat grid, the crate wall and the wall's health bar on the left, so the game uses them as drawn (`src/game/layout.ts` measures them). HUD on the top sidewalk (coins, level and area, wave, ×1/×2, pause); Repair and add-on buttons bottom left, card tray bottom right. |
 | Levels | 4 waves at level 1, rising to 10 at level 15. Every 3rd level ends with its area's boss; Boss 6 and 7 join levels 14–15. Full Alley: 15 waves, 7 bosses, about 3 minutes. |
 | Areas | Main Street, Sand Lot, Overpass, Rush Hour, Park Lane (the kit's Area1–5). Each brings tougher zombie types and its own boss (kit Boss 1–5). |
-| Taps | Tap a cat card, then tap an empty spot to place it (the card stays picked, so placing several is quick). Tap a placed cat for its stats and **Upgrade** (levels 1–4). |
+| Taps | Tap a cat card, then tap an empty spot to place it (the card stays picked, so placing several is quick). Tap a placed cat for its stats, **Upgrade** (levels 1–4) and **Sell**. Drag a cat to move it, or onto the same cat to merge. |
 | Coins | Reset each fight. Start with 150; +3 a second; zombies drop 8–12, bosses 60. Placing costs 30, +10 for each more copy of the same card. Upgrades cost 35 / 60 / 95. |
 | Wall | 100 HP (+15 per Wall upgrade). Zombies hit it for 1–2, bosses for 5. **Repair** restores 25% for 40 coins, +25 each time. |
 | Zombies | 8 kinds (kit Enemy Reg 1–8): plain, pot helmet, fast granny, red cap, baseball cap, spiked tank, traffic cone, football helmet. Health grows each wave. |
@@ -42,7 +42,7 @@ Every cat defender is **one of the kit's 15 cats** plus an **attack** and a **ra
 
 So an AWI says: which cat, its attack, its rarity, and the stats **damage, fire rate, range** (`src/game/cats.ts → makeDefender`).
 
-- **Guests** get three free Common cats, one per family and attack (Ginger · Blast, Smokey · Venom, Snowy · Rapid).
+- **Guests** start with one free Common cat (Ginger · Blast) and unlock the other 14 by clearing levels (milestone 3).
 - **NFT holders** bring up to 5 cards (the tray holds 5): their best NFTs, then guest cats to fill.
 - **Collection bonus** (milestone 4): 2+ cards from one NFT collection: +10% damage for those cats; 3+: also +10% fire rate.
   TheoSwap test NFTs share the zero-address contract, which counts as no collection (same rule as Arena).
@@ -52,17 +52,18 @@ So an AWI says: which cat, its attack, its rarity, and the stats **damage, fire 
 A bot plays whole fights headless (`src/game/bot.ts`, the same code as `?bot` in the browser). It places and upgrades
 cats, repairs below 40% wall and fires add-ons at bosses or crowded lanes.
 
-Win % over 60 seeds, **no upgrades or add-ons bought**:
+Win % over 40 seeds, **no upgrades or add-ons bought** (after milestone 3's behaviours, rules and retune):
 
-| Player | L1–8 | L9 | L10 | L11 | L12 | L13–15 | Full Alley |
-|---|---|---|---|---|---|---|---|
-| Guest (free cats unlocked by then) | 100 | 92 | 87 | 47 | 2 | 0 | 3 |
-| Collector (4 cat AWIs, 1 add-on AWI) | 100 | 100 | 100 | 100 | 100 | 97–100 | 100 |
-| Whale (6 Legendary/Epic cat AWIs, 3 add-on AWIs) | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
+| Player | L1–4 | L5 | L6–7 | L8 | L9 | L10 | L11 | L12 | L13 | L14–15 | Full Alley |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Guest (cats unlocked by then) | 93–100 | 75 | 100 | 83 | 57 | 68 | 53 | 10 | 3 | 0 | 0 |
+| Collector (4 cat AWIs, 1 add-on AWI) | 100 | 100 | 100 | 100 | 98 | 100 | 100 | 95 | 100 | 98 / 75 | 95 |
+| Whale (6 Legendary/Epic cat AWIs, 3 add-on AWIs) | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 
-`npm run sim -- --campaign` plays 20 guests through the levels in order, spending gems on upgrades between fights and
-replaying the last cleared level for gems after a loss: levels 1–13 take 1 fight each, level 14 about 1.5, level 15
-about 9. None got stuck. The tuning knobs are `src/game/levels.ts → tune()` (`--tune g0,step,curve,share`).
+`npm run sim -- --campaign` plays guests through the levels in order, spending gems on upgrades between fights and
+replaying the last cleared level for gems after a loss: levels 1–13 take 1–2 fights, level 14 about 5, level 15 about
+12. `npm run sim -- --modes` checks the Daily Challenge and Endless. The tuning knobs are
+`src/game/levels.ts → tune()` (`--tune g0,step,curve,share`).
 
 That is the pitch: guests can clear everything by upgrading; NFTs (AWIs) make the hard levels easy. A human may play
 worse than the bot, so check on a phone with real players in milestone 5.
@@ -181,7 +182,7 @@ sample data in this milestone; live TheoSwap sign-in follows in milestone 4.
   - Full Alley still shows "NFTs make the difference"
 - The new UI art goes into the manifest with placeholders of the same names and sizes, as before.
 
-### 3. Gameplay depth: a full game
+### 3. Gameplay depth: a full game ✅
 It stays a **free web game**: nothing to buy, no ads. This milestone adds what a full game needs on top of the demo:
 a tutorial, steady unlocks, more decisions in each fight, and reasons to keep playing after level 15. It comes before TheoSwap because cat roles and AWI perks change what the config has to hold. It reuses the
 kit's art; no new art is needed. Everything new goes into the simulation first, so `npm run sim` and the bot can
@@ -208,7 +209,7 @@ balance it.
   | 3 | Snowy (C11, Rapid), and the **Cats** screen (upgrades) |
   | 4 | Rocket Strike, and the **Add-ons** screen |
   | 5 | C2 |
-  | 6 | Merging cats (see below) |
+  | 6 | Merging cats (see below), Daily Challenge |
   | 7 | C7, Big Bomb |
   | 8 | C12, TNT Crate |
   | 9 | C3, Cat Guardian |
@@ -217,7 +218,7 @@ balance it.
   | 12 | C4, Coins ×2 |
   | 13 | C9, Boxer Cat |
   | 14 | C14 |
-  | 15 | C5, C10, C15, Full Alley, Hard mode |
+  | 15 | C5, C10, C15, Full Alley, Endless, Hard mode |
 
 - Locked add-ons and loadout slots can't be bought until they unlock. Gems still buy upgrades and add-on stock.
 - **AWIs (Altered World Items) skip the queue:** owning an AWI of a cat or add-on unlocks it at once, as in milestone 2.
@@ -261,6 +262,32 @@ balance it.
 - `npm run sim` learns the new roles, behaviours and rules. `--campaign` follows the unlock order, so each level stays
   winnable with only what has been unlocked by then.
 - Play-test on real phones: the tutorial without help, and how many tries the late levels take.
+
+**As built** (commits up to "Milestone 3: balance…")
+- Tutorial, unlock reveal cards, New zombie / New boss cards, Almanac tab (cats, add-ons, zombies, bosses,
+  achievements), locked Cats / Add-ons tabs until they unlock: `src/game/unlocks.ts`, `DefenseScene`, `AlmanacScene`.
+- Roles, merging (drag onto the same card), move (drag to a free square, 3 s cooldown), sell (half of what was spent),
+  Venom + Blast synergy: `src/game/sim.ts`, `src/game/cats.ts`.
+- Zombie behaviours: Pot Head armour, Granny runner, Red Cap lane switch, Slugger jump, Spike Tank shield, Cone Medic
+  heal, Linebacker split. Bosses: summon (1, 4, 7), charge (2, 5), enrage (3), hop (6). `src/game/waves.ts`.
+- Level rules (Tight budget L5, Rush L8, Fog L11, Narrow street L13, No Repair L14) and 3 star goals per level
+  (win · half the wall · the level's goal): `src/game/levels.ts`.
+- Hard mode (levels 100–114 in code): every level with a rule, zombies +35% health, gems ×1.5.
+- Daily Challenge: `dailyDef(day)` picks a level's waves (5–12), a street, a rule and a goal from the date; the seed
+  comes from the date too, so everyone gets the same zombies. 60 gems for the day's first win, +25 per star above
+  your best that day.
+- Endless: Full Alley, then Park Lane waves that keep rising (bosses every 3rd wave), 99 in all. Best = waves cleared;
+  5 gems a wave, +15 a wave past your best.
+- Cat perk at upgrade step 5: knockback 70% further / every 2nd shot crosses / pierce 2 zombies.
+- Add-on upgrades: 3 steps (60 / 120 / 200 gems), +20% power each, for bought add-ons and add-on AWIs.
+- 16 achievements with gem prizes (`src/game/achievements.ts`), shown on the end screen and in the Almanac.
+- A lost level pays 3 gems per wave cleared, so the last levels can be ground out.
+- Not done here: **AWI perks** need TheoSwap config data, so they move to milestone 4.
+
+Balance after all of it (`npm run sim -- --campaign --seeds 10`): levels 1–13 take 1–2 fights, level 14 about 5,
+level 15 about 12 (the finale is a grind); 1 of 10 bot guests got stuck on level 14 within 40 fights. `--modes`: a
+level 6 guest wins most Daily Challenges; Endless runs reach about 17 (4 upgrade steps) to 25 waves (Collector).
+Play-testing on phones in milestone 5 should decide whether level 15 needs softening.
 
 ### 4. TheoSwap
 - **Ask first:** create the hidden game "Defend the Alley" and its config with the theoswap MCP (dry run → approval).
