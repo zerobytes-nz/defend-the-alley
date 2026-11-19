@@ -5,7 +5,8 @@ import { COLORS } from '../config.ts';
 import { player } from '../save.ts';
 import { RARITY_COLOR } from '../game/cats.ts';
 import { ADDONS, ADDON_IDS, ADDON_MAX, ADDON_PRICE, AWI_ADDON_POWER, AWI_ADDON_USES, SLOTS_MAX, type AddonId } from '../game/addons.ts';
-import { addonAwis, addonUnlocked, buyAddon, buySlot, slotPrice, stockOf, toggleLoadout } from '../game/progress.ts';
+import { ADDON_STEPS, ADDON_STEP_POWER, addonAwis, addonStep, addonStepCost, addonUnlocked, buyAddon, buyAddonStep, buySlot, slotPrice, stockOf, toggleLoadout } from '../game/progress.ts';
+import { checkAchievements } from '../game/achievements.ts';
 import { addonLevel } from '../game/unlocks.ts';
 import { tappable, text } from '../ui.ts';
 import { sfx } from '../systems/audio.ts';
@@ -22,6 +23,8 @@ export class AddonsScene extends Phaser.Scene {
   private slots!: Phaser.GameObjects.Container;
   private dragged = false;
   private contentH = 0;
+  /** Add-on whose upgrade was tapped once (a second tap within 3 s buys it). */
+  private arm: { id: AddonId; until: number } | null = null;
 
   constructor() { super('Addons'); }
 
@@ -107,6 +110,30 @@ export class AddonsScene extends Phaser.Scene {
     this.contentH = y + ROW_H + 6;
   }
 
+  /** Top-right of a row: the add-on's upgrade step; tap twice to buy the next one. */
+  private stepBadge(id: AddonId): Phaser.GameObjects.Container {
+    const s = player.save, lv = addonStep(s, id), cost = addonStepCost(s, id);
+    const b = this.add.container(298, 24);
+    const bg = this.add.rectangle(0, 0, 70, 30, lv >= ADDON_STEPS ? 0x7a5a10 : 0x2b1d14).setStrokeStyle(2, 0xffd02a);
+    b.add([bg, text(this, 0, -1, lv >= ADDON_STEPS ? 'MAX' : `Lv ${lv + 1} ⬆`, 18, '#ffd02a', 0).setOrigin(0.5)]);
+    bg.setInteractive({ useHandCursor: true }).on('pointerup', () => {
+      if (this.dragged) return;
+      const name = ADDONS[id].name, pct = Math.round(ADDON_STEP_POWER * 100);
+      if (cost === null) { this.frame.flash(`${name} is fully upgraded (+${pct * ADDON_STEPS}% power)`); return; }
+      if (!this.arm || this.arm.id !== id || this.time.now > this.arm.until) {
+        this.arm = { id, until: this.time.now + 3000 };
+        this.frame.flash(`Lv ${lv + 2}: +${pct}% power for ${cost} gems · tap again to buy`);
+        return;
+      }
+      this.arm = null;
+      if (!buyAddonStep(s, id)) { this.frame.flash(`Need ${cost} gems`); return; }
+      const ach = checkAchievements(s);
+      player.persist(); sfx.buff(); this.redraw();
+      this.frame.flash(ach.length ? `🏆 ${ach[0].name} · +${ach[0].gems} gems` : `${name} is now Lv ${lv + 2}`);
+    });
+    return b;
+  }
+
   private row(it: Item, x: number, y: number): Phaser.GameObjects.Container {
     const s = player.save, def = ADDONS[it.id];
     const c = this.add.container(x, y);
@@ -116,7 +143,9 @@ export class AddonsScene extends Phaser.Scene {
     if (on) c.add(this.add.image(-4, -4, 'ui.addon-sel').setOrigin(0).setDisplaySize(ROW_W + 8, ROW_H + 8));
     c.add(this.add.image(58, 54, `ui.addon-${it.id}`).setScale(0.66));
     const name = text(this, 114, 24, it.awi ? it.awi.name : def.name, 24).setOrigin(0, 0.5);
-    if (name.width > 210) name.setScale(210 / name.width);
+    const unlocked = !!it.awi || addonUnlocked(s, player.awis, it.id), nameW = unlocked ? 150 : 210;
+    if (name.width > nameW) name.setScale(nameW / name.width);
+    if (unlocked) c.add(this.stepBadge(it.id));
     c.add(name);
     const blurb = this.add.text(114, 42, def.blurb, { fontFamily: '"Passion One", sans-serif', fontSize: '17px', color: COLORS.dim, wordWrap: { width: 210 } });
     c.add(blurb);

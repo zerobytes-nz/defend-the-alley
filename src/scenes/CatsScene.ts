@@ -3,7 +3,8 @@
 import Phaser from 'phaser';
 import { COLORS } from '../config.ts';
 import { player } from '../save.ts';
-import { ATTACKS, ROLE, roleOf, CAT_STEPS, RARITY_COLOR, catName, guestCat, upgraded, type Defender } from '../game/cats.ts';
+import { ATTACKS, PERK_TEXT, ROLE, roleOf, CAT_STEPS, RARITY_COLOR, catName, guestCat, upgraded, type Defender } from '../game/cats.ts';
+import { checkAchievements } from '../game/achievements.ts';
 import { buyCatStep, buyIncome, buyWall, cards, catStepCost, catUnlocked, deckOf, fightBonus, rowStepCost, toggleDeck, DECK_MAX, WALL_PER_STEP, START_PER_STEP, INCOME_PER_STEP } from '../game/progress.ts';
 import { ensureLoaded, release } from '../assets.ts';
 import { CAT_ORDER, catLevel } from '../game/unlocks.ts';
@@ -159,6 +160,12 @@ export class CatsScene extends Phaser.Scene {
     if (st.width > 220) st.setScale(220 / st.width);
     c.add(st);
     if (inDeck) c.add(text(this, 106, 80, '✓ In deck', 16, '#2a8a2a', 0).setOrigin(0, 0.5));
+    if (def && !locked) {
+      const has = steps >= CAT_STEPS, px = 106 + (inDeck ? 74 : 0);
+      const pt = text(this, px, 80, has ? `★ ${PERK_TEXT[roleOf(def.cat)].replace('Max perk: ', '')}` : 'Step 5: role perk', 15, has ? '#b07a00' : '#8a7a6a', 0).setOrigin(0, 0.5);
+      if (pt.width > 222 - (px - 106)) pt.setScale((222 - (px - 106)) / pt.width);
+      c.add(pt);
+    }
 
     // Upgrade bar and + button (locked cats can be upgraded once unlocked).
     if (!locked) {
@@ -172,7 +179,10 @@ export class CatsScene extends Phaser.Scene {
         if (this.dragged) return;
         if (cost === null) { this.frame.flash('Fully upgraded'); return; }
         if (!buy()) { this.frame.flash(`Need ${cost} gems: clear levels or open the daily gift`); return; }
+        const ach = checkAchievements(s);
         player.persist(); sfx.buff(); this.redraw();
+        if (ach.length) this.frame.flash(`🏆 ${ach[0].name} · +${ach[0].gems} gems`);
+        else if (def && steps + 1 >= CAT_STEPS) this.frame.flash(PERK_TEXT[roleOf(def.cat)]);
       });
     }
     // Tap the row: add to / take out of the deck.

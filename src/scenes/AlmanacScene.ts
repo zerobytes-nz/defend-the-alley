@@ -8,6 +8,7 @@ import { ADDONS, ADDON_IDS } from '../game/addons.ts';
 import { ABILITIES, BOSSES, ENEMIES, ENEMY_NAMES } from '../game/waves.ts';
 import { addonUnlocked, catUnlocked } from '../game/progress.ts';
 import { CAT_ORDER, addonLevel, catLevel } from '../game/unlocks.ts';
+import { ACHIEVEMENTS, checkAchievements } from '../game/achievements.ts';
 import { asset, ensureLoaded, release } from '../assets.ts';
 import { text } from '../ui.ts';
 import { PANEL, drawFrame } from './menuFrame.ts';
@@ -15,7 +16,7 @@ import { PANEL, drawFrame } from './menuFrame.ts';
 const LIST = { x: PANEL.x + 10, y: PANEL.y + 10, w: PANEL.w - 20, h: PANEL.h - 20 };
 const TILE_W = 212, TILE_H = 176, GAP = 10, PER_ROW = 4;
 
-interface Entry { key: string; known: boolean; name: string; blurb: string; pic: string; scale: number; hint: string }
+interface Entry { key: string; known: boolean; name: string; blurb: string; pic: string; scale: number; hint: string; /** Show the name even when not known (achievements). */ open?: boolean }
 
 export class AlmanacScene extends Phaser.Scene {
   private list!: Phaser.GameObjects.Container;
@@ -24,7 +25,9 @@ export class AlmanacScene extends Phaser.Scene {
   constructor() { super('Almanac'); }
 
   create(): void {
-    drawFrame(this, 'Almanac', 'Almanac');
+    const frame = drawFrame(this, 'Almanac', 'Almanac');
+    const got = checkAchievements(player.save);
+    if (got.length) { player.persist(); frame.refreshGems(); frame.flash(`🏆 ${got.map((a) => a.name).join(', ')} · +${got.reduce((g, a) => g + a.gems, 0)} gems`); }
     const loading = text(this, PANEL.x + PANEL.w / 2, PANEL.y + PANEL.h / 2, 'Loading…', 32).setOrigin(0.5);
     // Cat portraits and boss sheets aren't always loaded; the ones loaded here are freed when leaving.
     const before = new Set(Object.keys(this.textures.list));
@@ -52,6 +55,10 @@ export class AlmanacScene extends Phaser.Scene {
       'Add-ons', ...addons,
       'Zombies', ...Object.keys(ENEMIES).map((k) => zombie(k, false)),
       'Bosses', ...Object.values(BOSSES).map((b) => zombie(b.key, true)),
+      `Achievements · ${s.ach.length} of ${ACHIEVEMENTS.length}`, ...ACHIEVEMENTS.map((a): Entry => {
+        const got = s.ach.includes(a.id);
+        return { key: `ach.${a.id}`, known: got, open: true, name: a.name, blurb: `${a.blurb}\n✓ +${a.gems} gems`, pic: 'ui.up3', scale: 0.62, hint: `${a.blurb}\n+${a.gems} gems` };
+      }),
     ];
   }
 
@@ -91,7 +98,7 @@ export class AlmanacScene extends Phaser.Scene {
     if (pic.displayHeight > 84) pic.setScale(pic.scale * (84 / pic.displayHeight));
     if (!e.known) pic.setTintFill(0x22282a);
     c.add(pic);
-    const name = text(this, TILE_W / 2, 100, e.known ? e.name : '???', 22, e.known ? '#3a2a1c' : '#c9c0d8', 0).setOrigin(0.5);
+    const name = text(this, TILE_W / 2, 100, e.known || e.open ? e.name : '???', 22, e.known ? '#3a2a1c' : '#c9c0d8', 0).setOrigin(0.5);
     if (name.width > TILE_W - 12) name.setScale((TILE_W - 12) / name.width);
     c.add(name);
     c.add(this.add.text(TILE_W / 2, 114, e.known ? e.blurb : e.hint, { fontFamily: '"Passion One", sans-serif', fontSize: '15px', color: e.known ? '#5a4a3a' : COLORS.dim, align: 'center', wordWrap: { width: TILE_W - 14 } }).setOrigin(0.5, 0));

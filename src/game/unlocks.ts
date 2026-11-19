@@ -3,7 +3,7 @@
 // or add-on unlocks it right away. Pure TS: the sim and `npm run sim -- --campaign` follow the same order.
 import type { AddonId } from './addons.ts';
 
-export type Feature = 'repair' | 'cats' | 'addons' | 'merge' | 'alley' | 'hard';
+export type Feature = 'repair' | 'cats' | 'addons' | 'merge' | 'alley' | 'hard' | 'daily' | 'endless';
 export type Unlock = { kind: 'cat'; cat: number } | { kind: 'addon'; id: AddonId } | { kind: 'feature'; id: Feature };
 
 export const FEATURES: Record<Feature, { name: string; blurb: string }> = {
@@ -13,6 +13,8 @@ export const FEATURES: Record<Feature, { name: string; blurb: string }> = {
   merge: { name: 'Merging', blurb: 'Drag a cat onto the same cat to make one stronger cat' },
   alley: { name: 'Full Alley', blurb: 'All 5 areas in one run' },
   hard: { name: 'Hard mode', blurb: 'The 15 levels again, with rules and tougher zombies' },
+  daily: { name: 'Daily Challenge', blurb: 'A new level every day, the same for everyone' },
+  endless: { name: 'Endless', blurb: 'How many waves can you hold? Beat your best' },
 };
 
 /** The cat everyone starts with. */
@@ -38,7 +40,7 @@ export const UNLOCKS: Unlock[][] = [
   [cat(4), addon('coins')],          // 12
   [cat(9), addon('boxer')],          // 13
   [cat(14)],                         // 14
-  [cat(5), cat(10), cat(15), feature('alley'), feature('hard')], // 15
+  [cat(5), cat(10), cat(15), feature('alley'), feature('endless'), feature('hard')], // 15
 ];
 
 /** Every free cat in the order it unlocks (the Cats screen lists them like this). */

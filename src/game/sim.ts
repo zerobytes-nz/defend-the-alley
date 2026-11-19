@@ -1,6 +1,6 @@
 // The defense, as pure TypeScript: fixed 60 Hz steps, seeded, no Phaser. The scene sends commands
 // (place, upgrade, repair, add-ons) and draws what happened from `events`; `npm run sim` plays it with a bot.
-import { CROSS_EVERY, KNOCKBACK, LEVEL_DMG, MAX_LEVEL, PIERCE, PLACE_COST, PLACE_STEP, SLOW_FACTOR, SLOW_TIME, SPLASH_R, SPLASH_SHARE, UPGRADE_COST, VENOM_BLAST, roleOf, type Defender } from './cats.ts';
+import { CROSS_EVERY, KNOCKBACK, PERK, LEVEL_DMG, MAX_LEVEL, PIERCE, PLACE_COST, PLACE_STEP, SLOW_FACTOR, SLOW_TIME, SPLASH_R, SPLASH_SHARE, UPGRADE_COST, VENOM_BLAST, roleOf, type Defender } from './cats.ts';
 import { COLS, LANES, SLOT_X, SPAWN_X, STOP_X, U, slotLane } from './layout.ts';
 import { AREAS, ENEMIES, MINION, SPLIT_CHILD, makeWave, rng, waveHp, type EnemyType, type Spawn } from './waves.ts';
 import { ADDON_TUNING as T, type AddonId, type Equipped } from './addons.ts';
@@ -45,7 +45,7 @@ export interface Enemy {
 /** Zombie behaviour numbers. */
 const ARMOUR = 0.5, SHIELD_SHARE = 0.6, SHIELD_LET = 0.3, SWITCH_X = 1000, HEAL_EVERY = 2, HEAL_R = 190, HEAL_SHARE = 0.08;
 const SUMMON_EVERY = 7, CHARGE_AT = 0.6, CHARGE_MUL = 2.6, CHARGE_TIME = 1.8, ENRAGE_AT = 0.5, HOP_EVERY = 6;
-export interface Bullet { id: number; lane: number; x: number; dmg: number; attack: Defender['attack']; from: number; pierce: number; hitIds: number[]; knock: boolean }
+export interface Bullet { id: number; lane: number; x: number; dmg: number; attack: Defender['attack']; from: number; pierce: number; hitIds: number[]; knock: number }
 /** A melee add-on cat (Cat Guardian, Boxer Cat) standing in a lane. */
 export interface Unit { id: number; kind: 'guard' | 'boxer'; lane: number; x: number; hp: number; maxHp: number; until: number; cooldown: number; dmg: number; every: number; fighting: boolean }
 /** A trap or bomb lying in a lane. */
@@ -266,7 +266,7 @@ export class Defense {
         this.events.push({ t: 'blast', lane: -1, x: -1, r: 0 });
         break;
       case 'coins':
-        this.coinsUntil = this.time + T.coins.time;
+        this.coinsUntil = this.time + T.coins.time * p;
         this.events.push({ t: 'coins', until: this.coinsUntil });
         break;
       case 'timebomb': {
@@ -509,14 +509,14 @@ export class Defense {
       if (!this.target(p)) { p.cooldown = 0; continue; }
       p.cooldown += 1 / p.def.rate;
       p.shots++;
-      const role = roleOf(p.def.cat), lane = slotLane(p.slot);
-      const shot = (l: number): Bullet => ({ id: this.ids++, lane: l, x: SLOT_X[p.slot % COLS] + 25, dmg: this.dmgOf(p), attack: p.def.attack, from: p.slot, pierce: role === 'pierce' ? PIERCE : 0, hitIds: [], knock: role === 'knockback' });
+      const role = roleOf(p.def.cat), lane = slotLane(p.slot), perk = !!p.def.perk, every = perk ? PERK.crossEvery : CROSS_EVERY;
+      const shot = (l: number): Bullet => ({ id: this.ids++, lane: l, x: SLOT_X[p.slot % COLS] + 25, dmg: this.dmgOf(p), attack: p.def.attack, from: p.slot, pierce: role === 'pierce' ? (perk ? PERK.pierce : PIERCE) : 0, hitIds: [], knock: role === 'knockback' ? (perk ? PERK.knock : 1) : 0 });
       const b = shot(lane);
       this.bullets.push(b);
       this.events.push({ t: 'shoot', slot: p.slot, bullet: b });
-      if (role === 'cross' && p.shots % CROSS_EVERY === 0) {
+      if (role === 'cross' && p.shots % every === 0) {
         // Alternate between the lane below and above (whichever is open).
-        const tries = (p.shots / CROSS_EVERY) % 2 ? [lane + 1, lane - 1] : [lane - 1, lane + 1];
+        const tries = (p.shots / every) % 2 ? [lane + 1, lane - 1] : [lane - 1, lane + 1];
         const l = tries.find((x) => x >= 0 && x < LANES && this.laneOpen(x));
         if (l !== undefined) { const c = shot(l); this.bullets.push(c); this.events.push({ t: 'shoot', slot: p.slot, bullet: c }); }
       }
@@ -547,7 +547,7 @@ export class Defense {
     }
     if (b.knock && e.state !== 'dead') {
       // Bazooka hits shove the zombie back (bosses less); one fighting the wall has to walk up again.
-      e.x = Math.min(SPAWN_X - 60, e.x + KNOCKBACK * U * (e.type.boss ? 0.33 : 1));
+      e.x = Math.min(SPAWN_X - 60, e.x + KNOCKBACK * b.knock * U * (e.type.boss ? 0.33 : 1));
       if (e.state === 'attack' && !e.blockedBy) e.state = 'walk';
     }
   }

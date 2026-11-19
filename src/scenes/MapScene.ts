@@ -2,8 +2,9 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_W } from '../config.ts';
 import { player } from '../save.ts';
-import { FULL_ALLEY, GOALS, HARD_BASE, LEVEL_COUNT, MAP_MARKERS, RULES, levelDef } from '../game/levels.ts';
-import { featureUnlocked, levelOpen, levelsCleared, starsAt } from '../game/progress.ts';
+import { DAILY, ENDLESS, FULL_ALLEY, GOALS, HARD_BASE, LEVEL_COUNT, MAP_MARKERS, RULES, levelDef } from '../game/levels.ts';
+import { challengeToday, featureUnlocked, levelOpen, levelsCleared, starsAt } from '../game/progress.ts';
+import { featureLevel } from '../game/unlocks.ts';
 import { AREAS } from '../game/waves.ts';
 import { asset } from '../assets.ts';
 import { button, text } from '../ui.ts';
@@ -19,6 +20,9 @@ export class MapScene extends Phaser.Scene {
   private info!: Phaser.GameObjects.Text;
   private markers: Phaser.GameObjects.Image[] = [];
   private sub!: Phaser.GameObjects.Text;
+  /** Daily or Endless picked instead of a map level (PLAY starts it). */
+  private special: number | null = null;
+  private specialBtns: Phaser.GameObjects.Container[] = [];
   /** Showing Hard mode (kept while the game runs). */
   private static hard = false;
   /** Level number for map position n in the current mode. */
@@ -81,7 +85,14 @@ export class MapScene extends Phaser.Scene {
     // Below the panel: what's selected, PLAY, and Full Alley.
     this.info = text(this, PANEL.x, 644, '', 26, COLORS.text, 5).setOrigin(0, 0.5);
     this.sub = text(this, PANEL.x, 676, '', 19, COLORS.dim, 4).setOrigin(0, 0.5);
-    button(this, PANEL.x + PANEL.w - 300, 656, 'PLAY', () => startFight(this, this.id(this.selected)), 'ui.btn-green', 0.52, 50);
+    button(this, PANEL.x + PANEL.w - 300, 656, 'PLAY', () => startFight(this, this.playing()), 'ui.btn-green', 0.52, 50);
+    this.special = null;
+    this.specialBtns = [];
+    this.modeButton(DAILY, 250, 'Daily', 'ui.btn-green', () => {
+      const c = challengeToday(s, new Date());
+      return c.stars ? `Today: ${'★'.repeat(c.stars)}${'☆'.repeat(3 - c.stars)}` : c.tries ? `Tries today: ${c.tries}` : 'New today, the same\nfor everyone';
+    });
+    this.modeButton(ENDLESS, 400, 'Endless', 'ui.btn-orange', () => (s.endless ? `Best: ${s.endless} waves` : 'How long can\nyou hold?'));
     if (featureUnlocked(s, player.awis, 'hard')) {
       const t = button(this, GAME_W - 330, 44, MapScene.hard ? 'Normal' : 'Hard mode', () => { MapScene.hard = !MapScene.hard; this.scene.restart(); }, MapScene.hard ? 'ui.btn-green' : 'ui.btn-orange', 0.42, 64);
       t.setDepth(10);
@@ -94,29 +105,56 @@ export class MapScene extends Phaser.Scene {
     const best = s.alley;
     text(this, PANEL.x + PANEL.w + 60, 656, best ? (best.won ? `Best: won in ${Math.round(best.time)} s` : `Best: wave ${best.wave}/15`) : 'All 5 areas\nin one run', 20, COLORS.dim, 4).setOrigin(0, 0.5);
     this.showInfo();
-    this.input.keyboard?.on('keydown-SPACE', () => startFight(this, this.id(this.selected)));
+    this.input.keyboard?.on('keydown-SPACE', () => startFight(this, this.playing()));
+  }
+
+  /** The level PLAY starts. */
+  private playing(): number { return this.special ?? this.id(this.selected); }
+
+  /** Daily / Endless, in the column right of the map. */
+  private modeButton(n: number, y: number, label: string, key: string, caption: () => string): void {
+    const s = player.save, open = levelOpen(s, n), x = (PANEL.x + PANEL.w + GAME_W) / 2 + 4;
+    const b = button(this, x, y, open ? label : `🔒 ${label}`, () => {
+      if (!open) { this.frame.flash(`${label} opens after level ${featureLevel(n === DAILY ? 'daily' : 'endless')}`); return; }
+      if (this.special === n) { startFight(this, n); return; }
+      this.special = n;
+      this.highlight();
+      this.showInfo();
+    }, key, 0.42, 56);
+    if (!open) b.setAlpha(0.7);
+    this.specialBtns.push(b);
+    b.setData('mode', n);
+    text(this, x, y + 34, open ? caption() : '', 19, COLORS.dim, 4).setOrigin(0.5, 0).setAlign('center');
   }
 
   private dragged = false;
 
   private tapLevel(n: number): void {
     if (!levelOpen(player.save, this.id(n))) { this.frame.flash(`Clear ${MapScene.hard ? 'Hard ' : 'level '}${n} first`); return; }
-    if (n === this.selected) { startFight(this, this.id(n)); return; }
+    if (n === this.selected && this.special === null) { startFight(this, this.id(n)); return; }
     this.selected = n;
+    this.special = null;
     this.highlight();
     this.showInfo();
   }
 
   private highlight(): void {
-    this.markers.forEach((m, i) => { this.tweens.killTweensOf(m); m.setScale(0.7); if (i === this.selected) this.tweens.add({ targets: m, scale: 0.8, yoyo: true, repeat: -1, duration: 500 }); });
+    this.markers.forEach((m, i) => { this.tweens.killTweensOf(m); m.setScale(0.7); if (i === this.selected && this.special === null) this.tweens.add({ targets: m, scale: 0.8, yoyo: true, repeat: -1, duration: 500 }); });
+    this.specialBtns.forEach((b) => { this.tweens.killTweensOf(b); b.setScale(0.42); if (b.getData('mode') === this.special) this.tweens.add({ targets: b, scale: 0.47, yoyo: true, repeat: -1, duration: 500 }); });
   }
 
   private showInfo(): void {
-    const d = levelDef(this.id(this.selected));
-    const stars = starsAt(player.save, this.id(this.selected));
-    this.info.setText(`${d.title} · ${AREAS[d.area].name} · ${d.waves.length} waves${stars ? `  ${'★'.repeat(stars)}` : ''}`);
-    this.sub.setText(`${d.rule ? `${RULES[d.rule].name}: ${RULES[d.rule].blurb} · ` : ''}★3: ${GOALS[d.goal]}`);
-    if (this.sub.width > 600) this.sub.setScale(600 / this.sub.width); else this.sub.setScale(1);
+    const d = levelDef(this.playing());
+    if (d.n === ENDLESS) {
+      this.info.setText('Endless · all 5 areas, then Park Lane');
+      this.sub.setText(`Waves keep coming until the wall falls · Best: ${player.save.endless} waves`);
+    } else {
+      const stars = d.n === DAILY ? challengeToday(player.save, new Date()).stars : starsAt(player.save, d.n);
+      this.info.setText(`${d.title} · ${AREAS[d.area].name} · ${d.waves.length} waves${stars ? `  ${'★'.repeat(stars)}` : ''}`);
+      this.sub.setText(`${d.rule ? `${RULES[d.rule].name}: ${RULES[d.rule].blurb} · ` : ''}★3: ${GOALS[d.goal]}`);
+    }
+    this.info.setScale(this.info.width > 510 ? 510 / this.info.width : 1);
+    this.sub.setScale(this.sub.width > 510 ? 510 / this.sub.width : 1);
   }
 }
 

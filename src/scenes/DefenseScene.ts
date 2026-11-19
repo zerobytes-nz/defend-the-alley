@@ -8,9 +8,10 @@ import { ATTACKS, MAX_LEVEL, RARITY_COLOR, ROLE, catName, family, guestCat, muzz
 import { COLS, LANES, SLOT_SIZE, SLOT_X, SPAWN_X, STOP_X, WALL_BAR, WALL_X0, WALL_X1, LANE_H, LANE_TOP, laneCenter, laneFeet, slotIndex, slotLane } from '../game/layout.ts';
 import { Defense, STEP, type Bullet, type Enemy, type Placed, type SimEvent, type Trap, type Unit } from '../game/sim.ts';
 import { ABILITIES, AREAS, ENEMY_NAMES } from '../game/waves.ts';
-import { FULL_ALLEY, GOALS, HARD_BASE, LEVEL_COUNT, RULES, isHard, starGoals, type LevelDef } from '../game/levels.ts';
+import { DAILY, ENDLESS, FULL_ALLEY, GOALS, HARD_BASE, LEVEL_COUNT, RULES, dayKey, daySeed, isHard, starGoals, type LevelDef } from '../game/levels.ts';
+import { addTotals, checkAchievements } from '../game/achievements.ts';
 import { ADDONS, type Equipped } from '../game/addons.ts';
-import { alleyGems, clearLevel, levelGems, spendAddons } from '../game/progress.ts';
+import { alleyGems, challengeToday, clearLevel, endlessGems, finishDaily, levelGems, spendAddons } from '../game/progress.ts';
 import { FEATURES, type Feature, type Unlock } from '../game/unlocks.ts';
 import { think } from '../game/bot.ts';
 import { button, tappable, text } from '../ui.ts';
@@ -19,7 +20,7 @@ import { buzz, isMuted, musicOn, sfx, soundOn, toggleMusic, toggleMute, toggleSo
 const BOT = new URLSearchParams(location.search).has('bot');
 /** Fog rule: zombies fade out beyond this x. */
 const FOG_X = 860;
-const FEATURE_ICON: Record<Feature, string> = { repair: 'ui.wall', cats: 'ui.icon-cat', addons: 'ui.icon-addon', merge: 'ui.up1', alley: 'ui.icon-home', hard: 'ui.up3' };
+const FEATURE_ICON: Record<Feature, string> = { repair: 'ui.wall', cats: 'ui.icon-cat', addons: 'ui.icon-addon', merge: 'ui.up1', alley: 'ui.icon-home', hard: 'ui.up3', daily: 'ui.daily', endless: 'ui.wavebar' };
 const D = { bg: 0, slot: 10, wall: 20, actors: 100, fx: 900, hud: 1000, tray: 1100, bubble: 1200, overlay: 2000 };
 
 interface EnemyView {
@@ -89,7 +90,7 @@ export class DefenseScene extends Phaser.Scene {
     const f = player.fight(this.levelN);
     this.def = f.level;
     this.startAddons = f.addons.map((a) => ({ ...a }));
-    this.sim = new Defense({ ...f, seed: SEED || Math.floor(Math.random() * 1e9) });
+    this.sim = new Defense({ ...f, seed: this.def.n === DAILY ? daySeed(dayKey(new Date())) : SEED || Math.floor(Math.random() * 1e9) });
     this.acc = 0; this.speed = 1; this.paused = false; this.ended = false; this.armed = -1;
     this.tut = null; this.press = null; this.modal = false;
     this.enemies.clear(); this.cats.clear(); this.bullets.clear(); this.units.clear(); this.traps.clear();
@@ -155,7 +156,7 @@ export class DefenseScene extends Phaser.Scene {
       case 'kill': return this.onKill(e.enemy, e.coins);
       case 'wall': return this.onWallHit(e.enemy);
       case 'wave':
-        this.waveText.setText(`Wave ${e.wave + 1}/${e.total}`);
+        this.waveText.setText(this.def.n === ENDLESS ? `Wave ${e.wave + 1}` : `Wave ${e.wave + 1}/${e.total}`);
         if (e.boss) { this.banner('BOSS!', `${AREAS[e.area].name} boss incoming`); sfx.bossIn(); this.cameras.main.shake(300, 0.004); }
         return;
       case 'area': return this.changeArea(e.area);
@@ -508,7 +509,7 @@ export class DefenseScene extends Phaser.Scene {
     const where = this.def.n === FULL_ALLEY ? 'Full Alley' : this.def.title;
     this.areaText = text(this, 240, 46, `${where} · ${AREAS[this.sim.area].name}`, 30).setOrigin(0, 0.5).setDepth(D.hud);
     this.add.image(GAME_W - 270, 46, 'ui.wavebar').setDepth(D.hud);
-    this.waveText = text(this, GAME_W - 250, 44, `Wave 0/${this.sim.totalWaves}`, 28).setOrigin(0.5).setDepth(D.hud + 1);
+    this.waveText = text(this, GAME_W - 250, 44, this.def.n === ENDLESS ? 'Wave 0' : `Wave 0/${this.sim.totalWaves}`, 28).setOrigin(0.5).setDepth(D.hud + 1);
     this.coinsX2 = text(this, 128, 96, 'Coins ×2', 24, '#ffd02a', 5).setOrigin(0.5).setDepth(D.hud + 2).setVisible(false);
     const spd = text(this, GAME_W - 132, 46, '×1', 34).setOrigin(0.5).setDepth(D.hud);
     tappable(spd, () => { this.speed = this.speed === 1 ? 2 : 1; spd.setText(`×${this.speed}`); });
@@ -896,6 +897,19 @@ export class DefenseScene extends Phaser.Scene {
       const best = s.alley, wave = this.sim.wave + 1, time = this.sim.time;
       better = !best || (won && (!best.won || time < best.time)) || (!won && !best.won && wave > best.wave);
       if (better) s.alley = { won, wave, time: Math.round(time * 10) / 10 };
+    } else if (n === ENDLESS) {
+      const best = s.endless;
+      gems = endlessGems(cleared, best);
+      better = cleared > best;
+      if (better) s.endless = cleared;
+    } else if (n === DAILY) {
+      const before = challengeToday(s, new Date()).stars;
+      if (won) {
+        goals = starGoals(this.def, { wallShare: this.sim.wallHp / this.sim.wallMax, addonsUsed: st.addonsUsed, repairs: st.repairs, maxCats: st.maxCats });
+        stars = goals.filter(Boolean).length;
+      }
+      gems = finishDaily(s, new Date(), stars);
+      better = stars > before;
     } else if (won) {
       goals = starGoals(this.def, { wallShare: this.sim.wallHp / this.sim.wallMax, addonsUsed: st.addonsUsed, repairs: st.repairs, maxCats: st.maxCats });
       stars = goals.filter(Boolean).length;
@@ -905,6 +919,8 @@ export class DefenseScene extends Phaser.Scene {
     }
     s.gems += gems;
     spendAddons(s, this.startAddons, this.sim.addons);
+    addTotals(s, st, won);
+    const ach = checkAchievements(s);
     player.persist();
     (won ? sfx.finish : sfx.die)();
 
@@ -918,18 +934,29 @@ export class DefenseScene extends Phaser.Scene {
       if (n === FULL_ALLEY) {
         line(320, won ? `All 5 areas cleared in ${Math.round(this.sim.time)} s` : `Fell in Area ${this.sim.area + 1} · wave ${this.sim.wave + 1} of ${this.sim.totalWaves}`);
         if (better) line(368, 'New best!', 32, '#ffd02a');
+      } else if (n === ENDLESS) {
+        line(320, `${cleared} waves cleared`, 40, '#ffd02a');
+        line(368, better ? 'New best!' : `Best: ${s.endless} waves`, 30, better ? '#ffd02a' : '#ffffff');
+      } else if (n === DAILY && !won) {
+        line(320, `Wave ${this.sim.wave + 1} of ${this.sim.totalWaves}: same zombies next try, until tomorrow`);
       } else if (won) {
         line(300, '★'.repeat(stars) + '☆'.repeat(3 - stars), 56, '#ffd02a');
         const names = ['Win', 'Keep half the wall', GOALS[this.def.goal]];
-        names.forEach((g, i) => items.push(text(this, cx - 200 + i * 200, 352, `${goals[i] ? '✓' : '✗'} ${g}`, 19, goals[i] ? '#8cff6a' : '#ff9a8a', 4).setOrigin(0.5)));
+        names.forEach((g, i) => {
+          const l = text(this, cx - 300 + i * 300, 352, `${goals[i] ? '✓' : '✗'} ${g}`, 21, goals[i] ? '#8cff6a' : '#ff9a8a', 4).setOrigin(0.5);
+          if (l.width > 280) l.setScale(280 / l.width);
+          items.push(l);
+        });
       } else line(320, `Wave ${this.sim.wave + 1} of ${this.sim.totalWaves}: upgrade your cats and try again`);
       line(418, `${st.kills} zombies · ${st.bossKills} bosses · ${st.addonsUsed} add-ons`, 26, COLORS.dim);
       if (gems) {
         items.push(this.add.image(cx, 486, 'ui.winbonus').setScale(0.75), this.add.image(cx - 50, 486, 'ui.gem').setScale(0.7));
-        items.push(text(this, cx - 22, 484, `+${gems}${first ? ' first clear' : ''}`, 30).setOrigin(0, 0.5));
+        items.push(text(this, cx - 22, 484, `+${gems}${first ? ' first clear' : n === DAILY && better ? ' today' : ''}`, 30).setOrigin(0, 0.5));
       }
+      const achLines = ach.length > 2 ? [`🏆 ${ach.length} achievements · +${ach.reduce((g, a) => g + a.gems, 0)} gems`] : ach.map((a) => `🏆 ${a.name} · +${a.gems} gems`);
+      achLines.forEach((l, i) => items.push(text(this, cx, 532 + i * 26, l, 22, '#ffd02a', 4).setOrigin(0.5)));
       const last = isHard(n) ? HARD_BASE + LEVEL_COUNT - 1 : LEVEL_COUNT - 1;
-      const nextOpen = won && n !== FULL_ALLEY && n < last;
+      const nextOpen = won && n < last && (isHard(n) || n < LEVEL_COUNT);
       items.push(
         button(this, cx - 200, 610, won ? 'Map' : 'Restart', () => (won ? this.leave() : this.scene.restart({ level: this.levelN })), 'ui.btn-orange', 0.7),
         button(this, cx + 200, 610, nextOpen ? 'Next' : won ? 'Again' : 'Map', () => {
@@ -940,6 +967,7 @@ export class DefenseScene extends Phaser.Scene {
       const c = this.add.container(0, 0, items).setDepth(D.overlay).setAlpha(0);
       this.tweens.add({ targets: c, alpha: 1, duration: 300 });
       if (got.length) void this.reveal(got);
+      if (ach.length) sfx.buff();
       if (BOT) this.time.delayedCall(4000, () => this.scene.restart({ level: this.levelN }));
     });
   }

@@ -41,6 +41,8 @@ export interface Defender {
   rate: number;         // shots per second
   range: number;        // street units in front of the cat (× layout U = game px)
   source: 'guest' | 'nft';
+  /** Upgraded all 5 steps: the cat's role gets stronger (PERK). */
+  perk?: boolean;
   /** The NFT's collection (contract), for the collection bonus in milestone 4. */
   collection?: string;
 }
@@ -76,7 +78,7 @@ export const CAT_STEPS = 5;
 export const STEP_DMG = 0.07, STEP_RATE = 0.02;
 export function upgraded(d: Defender, step: number): Defender {
   if (!step) return d;
-  return { ...d, dmg: Math.round(d.dmg * (1 + STEP_DMG * step)), rate: Math.round(d.rate * (1 + STEP_RATE * step) * 100) / 100 };
+  return { ...d, dmg: Math.round(d.dmg * (1 + STEP_DMG * step)), rate: Math.round(d.rate * (1 + STEP_RATE * step) * 100) / 100, ...(step >= CAT_STEPS ? { perk: true } : {}) };
 }
 
 /** Damage per second, for sorting cards. */
@@ -98,5 +100,12 @@ export const ROLE: Record<Role, { name: string; blurb: string }> = {
   knockback: { name: 'Knockback', blurb: 'hits push zombies back' },
   cross: { name: 'Two lanes', blurb: 'every 3rd shot also hits the next lane' },
   pierce: { name: 'Pierce', blurb: 'shots go through the first zombie' },
+};
+/** The step-5 perk of each role: stronger knockback, every 2nd shot crosses, pierce through 2 zombies. */
+export const PERK = { knock: 1.7, crossEvery: 2, pierce: 2 };
+export const PERK_TEXT: Record<Role, string> = {
+  knockback: 'Max perk: knockback 70% further',
+  cross: 'Max perk: every 2nd shot hits the next lane',
+  pierce: 'Max perk: shots go through 2 zombies',
 };
 export const roleOf = (cat: number): Role => (['knockback', 'cross', 'pierce'] as const)[Math.floor((cat - 1) / 5)];

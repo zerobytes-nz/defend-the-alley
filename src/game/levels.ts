@@ -9,7 +9,7 @@ export interface WavePlan {
 }
 
 export interface LevelDef {
-  /** 0–14 for the map levels; 15 = Full Alley. */
+  /** 0–14 for the map levels; 15 = Full Alley, 16 = Endless, 17 = today's Daily Challenge; 100+ = Hard mode. */
   n: number;
   title: string;
   area: number;
@@ -58,6 +58,10 @@ export let PEAK_G0 = 1.5, PEAK_STEP = 0.95, PEAK_CURVE = 0.006, START_SHARE = 0.
 /** For balancing from scripts/sim.mjs. */
 export const tune = (g0: number, step: number, curve: number, share: number) => { PEAK_G0 = g0; PEAK_STEP = step; PEAK_CURVE = curve; START_SHARE = share; };
 export const FULL_ALLEY = LEVEL_COUNT;
+/** Endless: Full Alley, then Park Lane waves that keep getting harder. The best is the waves cleared. */
+export const ENDLESS = LEVEL_COUNT + 1, ENDLESS_WAVES = 99;
+/** Daily Challenge: one level a day, the same street, rule, goal and zombies (seed) for everyone. */
+export const DAILY = LEVEL_COUNT + 2;
 
 /** Extra bosses on the last levels: level 14 ends with Boss 6, level 15 with Boss 5 and Boss 7. */
 const EXTRA_BOSS: Record<number, number[]> = { 13: [6], 14: [7] };
@@ -71,6 +75,8 @@ const tutorial = (): LevelDef => ({
 
 export function levelDef(n: number): LevelDef {
   if (n === FULL_ALLEY) return fullAlley();
+  if (n === ENDLESS) return endless();
+  if (n === DAILY) return dailyDef(dayKey(new Date()));
   if (n >= HARD_BASE) return hardLevel(n - HARD_BASE);
   if (n === 0) return tutorial();
   const area = Math.floor(n / 3), step = n % 3;
@@ -102,6 +108,30 @@ function fullAlley(): LevelDef {
   waves[13].bosses.push(6);
   waves[14].bosses.push(7);
   return { n: FULL_ALLEY, title: 'Full Alley', area: 0, waves, goal: 'wall100' };
+}
+
+function endless(): LevelDef {
+  const waves = fullAlley().waves;
+  for (let i = waves.length; i < ENDLESS_WAVES; i++) waves.push({ area: 4, g: 14 + (i - 14) * 0.9, bosses: i % 3 === 2 ? [1 + ((i / 3) | 0) % 7, ...(i >= 30 ? [1 + ((i * 5) % 7)] : [])] : [] });
+  return { n: ENDLESS, title: 'Endless', area: 0, waves, goal: 'wall100' };
+}
+
+/** A local date as YYYY-MM-DD (the daily gift and the Daily Challenge). */
+export const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+/** The day's number for seeding: everyone playing on that date gets the same one. */
+export function daySeed(day: string): number {
+  let h = 2166136261;
+  for (const ch of `daily:${day}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  return h >>> 0;
+}
+const GOAL_LIST = Object.keys(GOALS) as Goal[];
+/** The Daily Challenge of a day: the waves of one of levels 5–12, on any street, with a rule and a goal. */
+export function dailyDef(day: string): LevelDef {
+  const h = daySeed(day), base = 4 + (h % 8), area = (h >>> 3) % 5;
+  const rule = HARD_RULE[(h >>> 6) % HARD_RULE.length];
+  const waves = levelDef(base).waves.map((w) => ({ ...w, area }));
+  if (!waves[waves.length - 1].bosses.length) waves[waves.length - 1].bosses.push(area + 1);
+  return { n: DAILY, title: 'Daily Challenge', area, waves, rule, lanes: rule === 'lanes3' ? [1, 2, 3] : undefined, goal: GOAL_LIST[(h >>> 9) % GOAL_LIST.length] };
 }
 
 /** What the star goals look at. */

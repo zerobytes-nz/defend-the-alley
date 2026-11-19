@@ -3,7 +3,8 @@
 import { CAT_STEPS, dps, guestCat, upgraded, type Defender } from './cats.ts';
 import { ADDON_MAX, ADDON_PRICE, AWI_ADDON_POWER, AWI_ADDON_USES, SLOTS_MAX, SLOT_PRICES, type AddonId, type Equipped } from './addons.ts';
 import { INCOME_PER_S, START_COINS, WALL_HP } from './sim.ts';
-import { FULL_ALLEY, HARD_BASE, LEVEL_COUNT, isHard, levelDef } from './levels.ts';
+import { DAILY, ENDLESS, FULL_ALLEY, HARD_BASE, LEVEL_COUNT, dayKey, isHard, levelDef } from './levels.ts';
+export { dayKey };
 import { CAT_ORDER, UNLOCKS, addonOpen, catOpen, featureOpen, type Feature, type Unlock } from './unlocks.ts';
 import type { FightSetup } from './sim.ts';
 import type { AWI, AddonAwi, CatAwi } from './awi.ts';
@@ -25,13 +26,20 @@ export interface Save {
   tips: string[];            // one-time tips already shown (repair, addons, merge…)
   seen: string[];            // zombie and boss types met (New zombie cards, the Almanac)
   hard: number[];            // Hard mode stars per level
+  challenge: { day: string; stars: number; tries: number }; // today's Daily Challenge (stars 0 = not won yet)
+  endless: number;           // Endless best: waves cleared
+  addonLv: Partial<Record<AddonId, number>>; // add-on upgrade steps
+  ach: string[];             // achievements earned
+  totals: Totals;            // lifetime counts for achievements
 }
+export interface Totals { kills: number; bosses: number; merges: number; wins: number; addons: number; dailies: number }
 
 export const DECK_MAX = 5;
 export const START_GEMS = 50;
 export const newSave = (): Save => ({
   v: 1, gems: START_GEMS, stars: Array(LEVEL_COUNT).fill(0), cat: Array(15).fill(0), wall: 0, income: 0,
   stock: {}, slots: 2, loadout: [], deck: [], daily: { day: '', streak: 0 }, alley: null, tips: [], seen: [], hard: Array(LEVEL_COUNT).fill(0),
+  challenge: { day: '', stars: 0, tries: 0 }, endless: 0, addonLv: {}, ach: [], totals: { kills: 0, bosses: 0, merges: 0, wins: 0, addons: 0, dailies: 0 },
 });
 /** A stored save, repaired if it is from an older build or damaged. */
 export function fixSave(raw: unknown): Save {
@@ -43,6 +51,11 @@ export function fixSave(raw: unknown): Save {
   if (!Array.isArray(s.deck)) s.deck = [];
   if (!Array.isArray(s.tips)) s.tips = [];
   if (!Array.isArray(s.seen)) s.seen = [];
+  if (!Array.isArray(s.ach)) s.ach = [];
+  if (!s.challenge || typeof s.challenge !== 'object') s.challenge = newSave().challenge;
+  if (!s.addonLv || typeof s.addonLv !== 'object') s.addonLv = {};
+  s.totals = { ...newSave().totals, ...(s.totals && typeof s.totals === 'object' ? s.totals : {}) };
+  s.endless = Math.max(0, Number(s.endless) || 0);
   return s;
 }
 
@@ -55,6 +68,8 @@ export const WALL_PER_STEP = 15, START_PER_STEP = 15, INCOME_PER_STEP = 0.3;
 export const levelsCleared = (s: Save) => { let n = 0; while (n < LEVEL_COUNT && s.stars[n] > 0) n++; return n; };
 export function levelOpen(s: Save, n: number): boolean {
   if (n === FULL_ALLEY) return featureOpen(levelsCleared(s), 'alley');
+  if (n === ENDLESS) return featureOpen(levelsCleared(s), 'endless');
+  if (n === DAILY) return featureOpen(levelsCleared(s), 'daily');
   if (isHard(n)) { const h = n - HARD_BASE; return featureOpen(levelsCleared(s), 'hard') && (h === 0 || s.hard[h - 1] > 0); }
   return n === 0 || s.stars[n - 1] > 0;
 }
@@ -70,9 +85,27 @@ export function levelGems(n: number, stars: number, first: boolean): number {
 }
 /** Gems for a Full Alley run: per wave cleared, plus a prize for winning. */
 export const alleyGems = (wavesCleared: number, won: boolean) => wavesCleared * 10 + (won ? 200 : 0);
+/** Gems for an Endless run: 5 a wave, and 15 more for each wave past your old best. */
+export const endlessGems = (wavesCleared: number, best: number) => wavesCleared * 5 + Math.max(0, wavesCleared - best) * 15;
+
+/** Today's Daily Challenge record (reset when the day changes). */
+export function challengeToday(s: Save, today: Date) {
+  const day = dayKey(today);
+  if (s.challenge.day !== day) s.challenge = { day, stars: 0, tries: 0 };
+  return s.challenge;
+}
+/** Record a Daily Challenge result. Gems: 60 for the day's first win, then 25 per star above your best today. */
+export function finishDaily(s: Save, today: Date, stars: number): number {
+  const c = challengeToday(s, today);
+  c.tries++;
+  if (stars <= c.stars) return 0;
+  const gems = (c.stars === 0 ? 60 : 0) + 25 * (stars - c.stars);
+  if (c.stars === 0) s.totals.dailies++;
+  c.stars = stars;
+  return gems;
+}
 
 // ── Daily gift ───────────────────────────────────────────────────────────────────────────────────────
-export const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 export const dailyReady = (s: Save, today: Date) => s.daily.day !== dayKey(today);
 /** Claim today's gift: 30 gems on day 1, +10 a day in a row, up to 90. Returns the gems, or 0 if already claimed. */
 export function claimDaily(s: Save, today: Date): number {
@@ -169,6 +202,14 @@ export const buySlot = (s: Save) => spend(s, slotPrice(s)) && !!++s.slots;
 export const stockOf = (s: Save, id: AddonId) => s.stock[id] ?? 0;
 export const buyAddon = (s: Save, id: AddonId) => stockOf(s, id) < ADDON_MAX && spend(s, ADDON_PRICE) && !!(s.stock[id] = stockOf(s, id) + 1);
 
+/** Add-on upgrades: 3 steps per add-on, each +20% power (bought ones and AWIs alike). */
+export const ADDON_STEPS = 3, ADDON_STEP_POWER = 0.2;
+export const ADDON_STEP_COST = [60, 120, 200] as const;
+export const addonStep = (s: Save, id: AddonId) => s.addonLv[id] ?? 0;
+export const addonStepCost = (s: Save, id: AddonId): number | null => (addonStep(s, id) >= ADDON_STEPS ? null : ADDON_STEP_COST[addonStep(s, id)]);
+export const buyAddonStep = (s: Save, id: AddonId) => spend(s, addonStepCost(s, id)) && !!(s.addonLv[id] = addonStep(s, id) + 1);
+const addonPower = (s: Save, id: AddonId) => 1 + ADDON_STEP_POWER * addonStep(s, id);
+
 /** Equip or unequip an add-on (an id, or an add-on AWI's uid). Returns false when the loadout is full. */
 export function toggleLoadout(s: Save, key: string): boolean {
   const i = s.loadout.indexOf(key);
@@ -184,8 +225,8 @@ export function equipped(s: Save, awis: AWI[]): Equipped[] {
   const out: Equipped[] = [];
   for (const key of s.loadout.slice(0, s.slots)) {
     const a = mine.find((x) => x.uid === key);
-    if (a) out.push({ key, id: a.addon, uses: AWI_ADDON_USES[a.rarity], power: AWI_ADDON_POWER[a.rarity], awi: true });
-    else if (stockOf(s, key as AddonId) > 0 && addonUnlocked(s, awis, key as AddonId)) out.push({ key, id: key as AddonId, uses: stockOf(s, key as AddonId), power: 1, awi: false });
+    if (a) out.push({ key, id: a.addon, uses: AWI_ADDON_USES[a.rarity], power: Math.round(AWI_ADDON_POWER[a.rarity] * addonPower(s, a.addon) * 100) / 100, awi: true });
+    else if (stockOf(s, key as AddonId) > 0 && addonUnlocked(s, awis, key as AddonId)) out.push({ key, id: key as AddonId, uses: stockOf(s, key as AddonId), power: addonPower(s, key as AddonId), awi: false });
   }
   return out;
 }

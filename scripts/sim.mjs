@@ -1,12 +1,14 @@
 // Balance check: a simple bot plays many fights with different players and prints win rates. No browser needed.
 //   npm run sim                 levels and Full Alley, no upgrades, for each demo player
 //   npm run sim -- --campaign   a guest plays levels 1–15 in order, spending gems like a player would
+//   npm run sim -- --modes      Daily Challenge (next 14 days) and Endless
 //   npm run sim -- --seeds 200
 //   npm run sim -- --tune 1.5,0.97,0.03,0.3
 // Node runs the game's own TypeScript (src/game/) directly (type stripping, Node ≥ 22.18).
 import { Defense } from '../src/game/sim.ts';
 import { think } from '../src/game/bot.ts';
-import { FULL_ALLEY, LEVEL_COUNT, levelDef, starsOf, tune } from '../src/game/levels.ts';
+import { DAILY, ENDLESS, FULL_ALLEY, LEVEL_COUNT, dailyDef, dayKey, daySeed, levelDef, starsOf, tune } from '../src/game/levels.ts';
+import { addTotals, checkAchievements } from '../src/game/achievements.ts';
 import { awisFromItems } from '../src/game/awi.ts';
 import { PROFILES } from '../src/game/demo.ts';
 import { addonUnlocked, featureUnlocked, buyAddon, buyCatStep, buyIncome, buyWall, catStepCost, clearLevel, deckOf, equipped, fightSetup, levelGems, newSave, rowStepCost, spendAddons, toggleLoadout } from '../src/game/progress.ts';
@@ -18,19 +20,20 @@ const t = process.argv.indexOf('--tune');
 if (t > 0) tune(...process.argv[t + 1].split(',').map(Number));
 
 /** One fight; returns the sim at the end. */
-function fight(save, awis, n, seed) {
+function fight(save, awis, n, seed, level) {
   const setup = fightSetup(save, awis, n);
+  if (level) setup.level = level;
   const d = new Defense({ ...setup, seed });
   d.used = setup.addons; // as they were at the start (the sim works on a copy)
   let k = 0;
-  while (d.state === 'playing' && d.time < 900) { if (k++ % 30 === 0) think(d); d.step(); d.events.length = 0; }
+  while (d.state === 'playing' && d.time < (n === ENDLESS ? 4000 : 900)) { if (k++ % 30 === 0) think(d); d.step(); d.events.length = 0; }
   return d;
 }
 
 /** A save with every level up to `cleared` done (unlocks free cats) and nothing bought. */
 const saveAt = (cleared) => { const s = newSave(); for (let i = 0; i < cleared; i++) s.stars[i] = 1; return s; };
 
-if (process.argv.includes('--campaign')) campaign(); else table();
+if (process.argv.includes('--campaign')) campaign(); else if (process.argv.includes('--modes')) modes(); else table();
 
 function table() {
   const cols = [...Array(LEVEL_COUNT).keys(), FULL_ALLEY];
@@ -64,6 +67,7 @@ function campaign() {
         shop(s, awis);
         const d = fight(s, awis, n, ++seed);
         spendAddons(s, d.used, d.addons);
+        addTotals(s, d.stats, d.state === 'won');
         t++;
         if (d.state === 'won') { award(s, n, d); break; }
         if (t >= 40) break;
@@ -85,6 +89,29 @@ function award(s, n, d) {
   const stars = starsOf(d.level, { wallShare: d.wallHp / d.wallMax, ...d.stats });
   s.gems += levelGems(n, stars, s.stars[n] === 0);
   clearLevel(s, [], n, stars);
+  checkAchievements(s);
+}
+
+/** Daily Challenge win % over the next 14 days, and Endless waves cleared, for a few saves. */
+function modes() {
+  const n = Math.min(seeds, 20);
+  const upgraded = (cleared, steps) => { const s = saveAt(cleared); s.cat.fill(steps); s.wall = s.income = Math.min(5, steps); return s; };
+  const saves = [['Guest L6, 2 steps', upgraded(6, 2), []], ['Guest L15, 4 steps', upgraded(15, 4), []], ['Guest L15, maxed', upgraded(15, 5), []], ['Collector L15', saveAt(15), awisFromItems(PROFILES.collector.items)]];
+  console.log('Daily Challenge: win % per day (each day one fixed seed, like the game; × = lost)');
+  for (const [name, s, awis] of saves) {
+    const row = [];
+    for (let k = 0; k < 14; k++) {
+      const day = dayKey(new Date(Date.UTC(2026, 10, 20 + k)));
+      row.push(fight(s, awis, DAILY, daySeed(day), dailyDef(day)).state === 'won' ? '✓' : '×');
+    }
+    console.log(name.padEnd(20), row.join(' '));
+  }
+  console.log(`\nEndless: waves cleared over ${n} seeds (min / average / max)`);
+  for (const [name, s, awis] of saves.slice(1)) {
+    const w = [];
+    for (let seed = 1; seed <= n; seed++) { const d = fight(s, awis, ENDLESS, seed); w.push(d.state === 'won' ? d.totalWaves : d.wave); }
+    console.log(name.padEnd(20), Math.min(...w), (w.reduce((a, b) => a + b, 0) / n).toFixed(1), Math.max(...w));
+  }
 }
 
 /** Spend gems like a sensible player: deck cats' upgrades, then wall and income, keep 2 add-ons stocked. */
