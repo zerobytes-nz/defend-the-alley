@@ -5,9 +5,9 @@ import { COLORS, DEBUG, GAME_H, GAME_W, SEED, TRAY_Y } from '../config.ts';
 import { addonArt, areaArt, asset, ensureLoaded, isAreaArt, release } from '../assets.ts';
 import { player } from '../save.ts';
 import { ATTACKS, MAX_LEVEL, RARITY_COLOR, ROLE, catName, family, guestCat, muzzleOffset, roleOf, type Defender } from '../game/cats.ts';
-import { COLS, LANES, SLOT_SIZE, SLOT_X, STOP_X, WALL_BAR, WALL_X0, WALL_X1, LANE_H, LANE_TOP, laneCenter, laneFeet, slotIndex, slotLane } from '../game/layout.ts';
+import { COLS, LANES, SLOT_SIZE, SLOT_X, SPAWN_X, STOP_X, WALL_BAR, WALL_X0, WALL_X1, LANE_H, LANE_TOP, laneCenter, laneFeet, slotIndex, slotLane } from '../game/layout.ts';
 import { Defense, STEP, type Bullet, type Enemy, type Placed, type SimEvent, type Trap, type Unit } from '../game/sim.ts';
-import { AREAS } from '../game/waves.ts';
+import { ABILITIES, AREAS, ENEMY_NAMES } from '../game/waves.ts';
 import { FULL_ALLEY, LEVEL_COUNT, starsFor, type LevelDef } from '../game/levels.ts';
 import { ADDONS, type Equipped } from '../game/addons.ts';
 import { alleyGems, clearLevel, levelGems, spendAddons } from '../game/progress.ts';
@@ -20,7 +20,11 @@ const BOT = new URLSearchParams(location.search).has('bot');
 const FEATURE_ICON: Record<Feature, string> = { repair: 'ui.wall', cats: 'ui.icon-cat', addons: 'ui.icon-addon', merge: 'ui.up1', alley: 'ui.icon-home', hard: 'ui.up3' };
 const D = { bg: 0, slot: 10, wall: 20, actors: 100, fx: 900, hud: 1000, tray: 1100, bubble: 1200, overlay: 2000 };
 
-interface EnemyView { spr: Phaser.GameObjects.Sprite; bar: Phaser.GameObjects.Rectangle; barBg: Phaser.GameObjects.Rectangle; state: Enemy['state']; flashUntil: number }
+interface EnemyView {
+  spr: Phaser.GameObjects.Sprite; bar: Phaser.GameObjects.Rectangle; barBg: Phaser.GameObjects.Rectangle; state: Enemy['state']; flashUntil: number;
+  /** Bars sit this far above the feet; `lift` is a jump in progress; `shield` is drawn in front of shield zombies. */
+  top: number; lift: number; lane: number; shield: Phaser.GameObjects.Ellipse | null;
+}
 interface CatView { spr: Phaser.GameObjects.Sprite; badge: Phaser.GameObjects.Image | null }
 interface CardView { def: Defender; c: Phaser.GameObjects.Container; cost: Phaser.GameObjects.Text; glow: Phaser.GameObjects.Rectangle; afford: boolean | null }
 interface UnitView { spr: Phaser.GameObjects.Sprite; bar: Phaser.GameObjects.Rectangle; fighting: boolean }
@@ -69,6 +73,8 @@ export class DefenseScene extends Phaser.Scene {
   private repairBtn: { c: Phaser.GameObjects.Container; cost: Phaser.GameObjects.Text; shown: string } | null = null;
   private coinsX2!: Phaser.GameObjects.Text;
   /** A finger down on a square: a tap, or a drag of the cat on it (move / merge). */
+  /** A card (new zombie) is up: the fight waits for it. */
+  private modal = false;
   private press: { slot: number; x: number; y: number; drag: boolean } | null = null;
   /** Level 1's guided steps (null on other levels or once done). */
   private tut: { step: number; hand: Phaser.GameObjects.Text; box: Phaser.GameObjects.Container; msg: Phaser.GameObjects.Text } | null = null;
@@ -83,7 +89,7 @@ export class DefenseScene extends Phaser.Scene {
     this.startAddons = f.addons.map((a) => ({ ...a }));
     this.sim = new Defense({ ...f, seed: SEED || Math.floor(Math.random() * 1e9) });
     this.acc = 0; this.speed = 1; this.paused = false; this.ended = false; this.armed = -1;
-    this.tut = null; this.press = null;
+    this.tut = null; this.press = null; this.modal = false;
     this.enemies.clear(); this.cats.clear(); this.bullets.clear(); this.units.clear(); this.traps.clear();
     this.fxPool = []; this.cards = []; this.slotTiles = []; this.addonBtns = []; this.laneZones = []; this.bubble = null;
     this.shown = { coins: -1, wall: -1 };
@@ -136,6 +142,10 @@ export class DefenseScene extends Phaser.Scene {
       case 'merge': return this.onMerge(e.from, e.cat);
       case 'move': return this.onMove(e.from, e.cat);
       case 'sell': return this.onSell(e.slot, e.coins);
+      case 'switch': return this.popText(e.enemy, '⇅', '#ffd02a');
+      case 'jump': { const v = this.enemies.get(e.enemy.id); if (v) this.tweens.add({ targets: v, lift: 70, yoyo: true, duration: 260, ease: 'Sine.Out' }); return; }
+      case 'heal': return this.healFx(e.enemy);
+      case 'ability': return this.onAbility(e.enemy, e.what);
       case 'shoot': return this.shoot(e.slot, e.bullet);
       case 'hit': return this.onHit(e.enemy, e.bullet?.id ?? -1, e.bullet?.attack ?? null, e.splash);
       case 'kill': return this.onKill(e.enemy, e.coins);
@@ -164,13 +174,20 @@ export class DefenseScene extends Phaser.Scene {
       const v = this.enemies.get(e.id);
       if (!v) continue;
       v.spr.x = e.x;
+      // Lane switches glide; jumps lift the sprite.
+      const base = laneFeet(e.lane) + 4;
+      if (v.lane !== e.lane) { v.lane = e.lane; v.spr.setDepth(D.actors + base); }
+      const y = Math.abs(v.spr.y + v.lift - base) < 2 ? base : v.spr.y + v.lift + (base - v.spr.y - v.lift) * 0.15;
+      v.spr.y = y - v.lift;
       if (e.state !== v.state) { v.state = e.state; v.spr.play(`enemy.${e.type.key}.${e.state}`); }
       if (now < v.flashUntil) v.spr.setTintFill(0xffffff);
       else if (now < e.slowUntil) v.spr.setTint(0x9dff8a);
+      else if (e.rage > 1 || e.speedMul > 1) v.spr.setTint(0xff8a7a);
       else v.spr.clearTint();
+      if (v.shield) { if (e.shield > 0) v.shield.setPosition(e.x - 30, v.spr.y - 44); else { v.shield.destroy(); v.shield = null; } }
       const show = e.hp < e.maxHp;
       v.bar.setVisible(show); v.barBg.setVisible(show);
-      if (show) { v.barBg.x = e.x; v.bar.x = e.x - v.barBg.width / 2 + 2; v.bar.width = Math.max(0, (v.barBg.width - 4) * (e.hp / e.maxHp)); }
+      if (show) { v.barBg.setPosition(e.x, v.spr.y - v.top); v.bar.setPosition(e.x - v.barBg.width / 2 + 2, v.spr.y - v.top); v.bar.width = Math.max(0, (v.barBg.width - 4) * (e.hp / e.maxHp)); }
     }
     const live = new Set(this.sim.bullets.map((b) => b.id));
     for (const b of this.sim.bullets) { const img = this.bullets.get(b.id); if (img) img.x = b.x; }
@@ -387,11 +404,56 @@ export class DefenseScene extends Phaser.Scene {
     const spr = this.add.sprite(e.x, y + 4, `${key}.walk`).setOrigin(0.5, 1).setScale(asset(`${key}.walk`).displayScale)
       .setDepth(D.actors + y + (e.type.boss ? 0.5 : 0)).play(`${key}.walk`);
     spr.anims.setProgress(Math.random());
-    const w = e.type.boss ? 90 : 48, top = y - (e.type.boss ? 150 : 92);
+    if (e.child) spr.setScale(spr.scale * 0.72);
+    const w = e.type.boss ? 90 : 48, dy = e.type.boss ? 150 : e.child ? 70 : 92, top = y - dy;
     const barBg = this.add.rectangle(e.x, top, w, e.type.boss ? 12 : 8, 0x000000, 0.65).setDepth(D.fx + 1).setVisible(false);
     const bar = this.add.rectangle(e.x, top, w - 4, e.type.boss ? 8 : 4, e.type.boss ? 0xff5040 : 0x8cff6a).setOrigin(0, 0.5).setDepth(D.fx + 2).setVisible(false);
-    this.enemies.set(e.id, { spr, bar, barBg, state: 'walk', flashUntil: 0 });
-    if (e.type.boss) { spr.setAlpha(0); this.tweens.add({ targets: spr, alpha: 1, duration: 400 }); }
+    const shield = e.shield > 0 ? this.add.ellipse(e.x - 30, y - 40, 16, 64, 0x6ad0ff, 0.45).setStrokeStyle(2, 0xbfeaff, 0.9).setDepth(D.fx) : null;
+    this.enemies.set(e.id, { spr, bar, barBg, state: 'walk', flashUntil: 0, top: dy, lift: 0, lane: e.lane, shield });
+    if (e.type.boss || e.x < SPAWN_X - 10) { spr.setAlpha(0); this.tweens.add({ targets: spr, alpha: 1, duration: 400 }); } // bosses, summoned and split zombies fade in
+    this.meet(e);
+  }
+
+  /** A short word or symbol rising from a zombie. */
+  private popText(e: Enemy, s: string, color: string, size = 26): void {
+    const v = this.enemies.get(e.id);
+    const t = text(this, e.x, (v?.spr.y ?? laneFeet(e.lane)) - (v?.top ?? 92) - 20, s, size, color, 5).setOrigin(0.5).setDepth(D.fx + 6);
+    this.tweens.add({ targets: t, y: t.y - 40, alpha: 0, duration: 900, onComplete: () => t.destroy() });
+  }
+
+  private healFx(e: Enemy): void {
+    const v = this.enemies.get(e.id);
+    const ring = this.add.circle(e.x, (v?.spr.y ?? laneFeet(e.lane)) - 40, 20, 0x6aff6a, 0.25).setStrokeStyle(3, 0x8cff6a, 0.8).setDepth(D.fx);
+    this.tweens.add({ targets: ring, radius: 190, alpha: 0, duration: 600, onComplete: () => ring.destroy() });
+  }
+
+  private onAbility(e: Enemy, what: 'summon' | 'charge' | 'enrage' | 'shieldBreak'): void {
+    if (what === 'shieldBreak') { this.popText(e, 'Shield broken!', '#9fdcff', 22); sfx.thud(); return; }
+    this.popText(e, what === 'summon' ? 'Help me!' : what === 'charge' ? 'CHARGE!' : 'ENRAGED!', '#ff6a5a', 32);
+    if (what !== 'summon') this.cameras.main.shake(200, 0.004);
+    sfx.bossIn();
+  }
+
+  /** The first time a zombie or boss type shows up: a card explaining it (plain zombies just count as seen). */
+  private meet(e: Enemy): void {
+    const s = player.save, key = e.type.key;
+    if (e.child || s.seen.includes(key)) return;
+    s.seen.push(key);
+    player.persist();
+    if (key === 'reg1' || this.ended) return;
+    this.paused = true; this.modal = true;
+    this.anims.pauseAll();
+    const cx = GAME_W / 2, cy = 360;
+    const shade = this.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.6).setOrigin(0).setInteractive();
+    const card = this.add.rectangle(cx, cy, 560, 380, 0xf4e3c3).setStrokeStyle(5, e.type.boss ? 0xff5040 : 0x8cff6a);
+    const head = text(this, cx, cy - 214, e.type.boss ? 'NEW BOSS!' : 'NEW ZOMBIE!', 40, e.type.boss ? '#ff6a5a' : '#8cff6a', 7).setOrigin(0.5);
+    const pic = this.add.image(cx, cy + 20, `enemy.${key}.walk`, 0).setOrigin(0.5, 1).setScale(asset(`enemy.${key}.walk`).displayScale * (e.type.boss ? 1.3 : 2.4));
+    const name = text(this, cx, cy + 56, ENEMY_NAMES[key] ?? key, 34, '#3a2a1c', 0).setOrigin(0.5);
+    const blurb = this.add.text(cx, cy + 86, e.type.ability ? ABILITIES[e.type.ability] : '', { fontFamily: '"Passion One", sans-serif', fontSize: '23px', color: '#5a4a3a', align: 'center', wordWrap: { width: 500 } }).setOrigin(0.5, 0);
+    const box = this.add.container(0, 0, [shade, card, head, pic, name, blurb]).setDepth(D.overlay + 4);
+    const close = () => { box.destroy(); this.paused = false; this.modal = false; this.anims.resumeAll(); };
+    box.add(button(this, cx, cy + 228, 'Got it', close, 'ui.btn-green', 0.55, 38));
+    if (BOT) this.time.delayedCall(800, close);
   }
 
   private onHit(e: Enemy, bulletId: number, attack: Defender['attack'] | null, splash: boolean): void {
@@ -407,7 +469,7 @@ export class DefenseScene extends Phaser.Scene {
     const v = this.enemies.get(e.id);
     if (!v) return;
     this.enemies.delete(e.id);
-    v.bar.destroy(); v.barBg.destroy();
+    v.bar.destroy(); v.barBg.destroy(); v.shield?.destroy();
     v.spr.clearTint().play(`enemy.${e.type.key}.dead`);
     v.spr.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => this.tweens.add({ targets: v.spr, alpha: 0, duration: 250, onComplete: () => v.spr.destroy() }));
     const t = text(this, e.x, laneFeet(e.lane) - 84, `+${coins}`, e.type.boss ? 38 : 26, '#ffd02a', 5).setOrigin(0.5).setDepth(D.fx + 5);
@@ -782,7 +844,7 @@ export class DefenseScene extends Phaser.Scene {
   private overlay: Phaser.GameObjects.Container | null = null;
 
   private togglePause(): void {
-    if (this.ended) return;
+    if (this.ended || this.modal) return;
     if (this.paused) { this.paused = false; this.overlay?.destroy(); this.overlay = null; this.anims.resumeAll(); this.tweens.resumeAll(); return; }
     this.paused = true;
     this.disarm();

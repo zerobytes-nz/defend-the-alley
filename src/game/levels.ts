@@ -18,6 +18,8 @@ export interface LevelDef {
   lanes?: number[];
   /** Level 1: guided, waves wait for the first cat, and the wall can't fall below 1. */
   tutorial?: boolean;
+  /** Only these zombies (the tutorial uses plain ones). */
+  pool?: string[];
 }
 
 export const LEVEL_COUNT = 15;
@@ -33,7 +35,7 @@ const EXTRA_BOSS: Record<number, number[]> = { 13: [6], 14: [7] };
 /** Level 1, the tutorial: 3 lanes, 3 small waves, no boss. */
 export const TUTORIAL_LANES = [1, 2, 3];
 const tutorial = (): LevelDef => ({
-  n: 0, title: 'Level 1', area: 0, lanes: TUTORIAL_LANES, tutorial: true,
+  n: 0, title: 'Level 1', area: 0, lanes: TUTORIAL_LANES, tutorial: true, pool: ['reg1'],
   waves: [0.3, 0.8, 1.4].map((g) => ({ area: 0, g, bosses: [] })),
 });
 

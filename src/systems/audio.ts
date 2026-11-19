@@ -67,7 +67,7 @@ let lastBuzz = 0;
 /** A short buzz on phones that support it (Android), at most every 250 ms. */
 export function buzz(ms = 30): void {
   const now = performance.now();
-  if (!settings.vibra || now - lastBuzz < 250) return;
+  if (!settings.vibra || now - lastBuzz < 250 || navigator.userActivation?.hasBeenActive === false) return; // browsers refuse before the first tap
   lastBuzz = now;
   try { navigator.vibrate?.(ms); } catch { /* not allowed */ }
 }

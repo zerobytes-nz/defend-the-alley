@@ -2,7 +2,7 @@
 // (place, upgrade, repair, add-ons) and draws what happened from `events`; `npm run sim` plays it with a bot.
 import { CROSS_EVERY, KNOCKBACK, LEVEL_DMG, MAX_LEVEL, PIERCE, PLACE_COST, PLACE_STEP, SLOW_FACTOR, SLOW_TIME, SPLASH_R, SPLASH_SHARE, UPGRADE_COST, VENOM_BLAST, roleOf, type Defender } from './cats.ts';
 import { COLS, LANES, SLOT_X, SPAWN_X, STOP_X, U, slotLane } from './layout.ts';
-import { AREAS, makeWave, rng, waveHp, type EnemyType, type Spawn } from './waves.ts';
+import { AREAS, ENEMIES, MINION, SPLIT_CHILD, makeWave, rng, waveHp, type EnemyType, type Spawn } from './waves.ts';
 import { ADDON_TUNING as T, type AddonId, type Equipped } from './addons.ts';
 import type { LevelDef } from './levels.ts';
 
@@ -37,7 +37,14 @@ export interface Enemy {
   state: 'walk' | 'attack' | 'dead';
   /** The melee add-on cat it is fighting (0 = the wall). */
   blockedBy: number;
+  /** Behaviour state: shield left, a one-off move used (switch / jump / charge / enrage), next ability time, speed and hit-rate multipliers. */
+  shield: number; used: boolean; nextAt: number; speedMul: number; until: number; rage: number;
+  /** A Linebacker's small zombie (doesn't split again). */
+  child?: boolean;
 }
+/** Zombie behaviour numbers. */
+const ARMOUR = 0.5, SHIELD_SHARE = 0.6, SHIELD_LET = 0.3, SWITCH_X = 1000, HEAL_EVERY = 2, HEAL_R = 190, HEAL_SHARE = 0.08;
+const SUMMON_EVERY = 7, CHARGE_AT = 0.6, CHARGE_MUL = 2.6, CHARGE_TIME = 1.8, ENRAGE_AT = 0.5, HOP_EVERY = 6;
 export interface Bullet { id: number; lane: number; x: number; dmg: number; attack: Defender['attack']; from: number; pierce: number; hitIds: number[]; knock: boolean }
 /** A melee add-on cat (Cat Guardian, Boxer Cat) standing in a lane. */
 export interface Unit { id: number; kind: 'guard' | 'boxer'; lane: number; x: number; hp: number; maxHp: number; until: number; cooldown: number; dmg: number; every: number; fighting: boolean }
@@ -51,6 +58,10 @@ export type SimEvent =
   | { t: 'shoot'; slot: number; bullet: Bullet }
   | { t: 'hit'; bullet: Bullet | null; enemy: Enemy; dmg: number; splash: boolean }
   | { t: 'kill'; enemy: Enemy; coins: number }
+  | { t: 'switch'; enemy: Enemy; from: number }
+  | { t: 'jump'; enemy: Enemy }
+  | { t: 'heal'; enemy: Enemy }
+  | { t: 'ability'; enemy: Enemy; what: 'summon' | 'charge' | 'enrage' | 'shieldBreak' }
   | { t: 'wall'; enemy: Enemy; dmg: number }
   | { t: 'place'; cat: Placed }
   | { t: 'upgrade'; cat: Placed }
@@ -288,6 +299,7 @@ export class Defense {
     if (this.income >= 1) { const n = Math.floor(this.income); this.coins += n; this.income -= n; }
 
     this.runWaves();
+    this.abilities();
     this.moveEnemies(dt);
     this.runUnits(dt);
     this.runTraps();
@@ -301,9 +313,7 @@ export class Defense {
     while (this.queue.length && this.time >= this.waveStart + this.queue[0].at) {
       const s = this.queue.shift()!;
       const hp = Math.round(s.type.boss ? s.type.hp : s.type.hp * waveHp(this.level.waves[this.wave].g));
-      const e: Enemy = { id: this.ids++, type: s.type, lane: s.lane, x: SPAWN_X, hp, maxHp: hp, slowUntil: 0, hitTimer: 0, state: 'walk', blockedBy: 0 };
-      this.enemies.push(e);
-      this.events.push({ t: 'spawn', enemy: e });
+      this.spawn(s.type, s.lane, SPAWN_X, hp);
     }
     const waves = this.level.waves, last = this.wave === waves.length - 1;
     if (this.wave >= 0 && !this.queue.length) {
@@ -318,12 +328,75 @@ export class Defense {
     if (this.time >= this.nextWaveAt && !this.queue.length && !last) this.startWave(this.wave + 1);
   }
 
+  private spawn(type: EnemyType, lane: number, x: number, hp: number, child = false): Enemy {
+    const e: Enemy = {
+      id: this.ids++, type, lane, x, hp, maxHp: hp, slowUntil: 0, hitTimer: 0, state: 'walk', blockedBy: 0,
+      shield: type.ability === 'shield' ? hp * SHIELD_SHARE : 0, used: false, nextAt: this.time + (type.boss ? 4 : HEAL_EVERY), speedMul: 1, until: 0, rage: 1, child,
+    };
+    this.enemies.push(e);
+    this.events.push({ t: 'spawn', enemy: e });
+    return e;
+  }
+
+  /** The lanes next to `lane` that are open. */
+  private nextLanes(lane: number): number[] { return [lane - 1, lane + 1].filter((l) => l >= 0 && l < LANES && this.laneOpen(l)); }
+
+  /** Cats on a lane's two squares (fewer = where a lane switcher goes). */
+  private catsIn(lane: number): number { return [0, 1].reduce((n, c) => n + (this.slots[lane * COLS + c] ? this.slots[lane * COLS + c]!.level : 0), 0); }
+
+  /** Zombie behaviours and boss abilities that act on their own (not on being hit). */
+  private abilities(): void {
+    const g = this.level.waves[Math.max(0, this.wave)].g;
+    for (const e of [...this.enemies]) {
+      if (e.state === 'dead') continue;
+      const a = e.type.ability, share = e.hp / e.maxHp;
+      if (e.until && this.time >= e.until) { e.speedMul = 1; e.until = 0; }
+      switch (a) {
+        case 'switch': case 'hop': {
+          const due = a === 'switch' ? !e.used && e.x < SWITCH_X : this.time >= e.nextAt;
+          if (!due || e.state !== 'walk') break;
+          e.used = true; e.nextAt = this.time + HOP_EVERY;
+          const to = this.nextLanes(e.lane).sort((x, y) => this.catsIn(x) - this.catsIn(y))[0];
+          if (to === undefined) break;
+          const from = e.lane;
+          e.lane = to;
+          this.events.push({ t: 'switch', enemy: e, from });
+          break;
+        }
+        case 'heal':
+          if (this.time < e.nextAt) break;
+          e.nextAt = this.time + HEAL_EVERY;
+          for (const o of this.enemies) if (o !== e && !o.type.boss && o.state !== 'dead' && Math.abs(o.lane - e.lane) <= 1 && Math.abs(o.x - e.x) < HEAL_R && o.hp < o.maxHp) o.hp = Math.min(o.maxHp, o.hp + Math.round(o.maxHp * HEAL_SHARE));
+          this.events.push({ t: 'heal', enemy: e });
+          break;
+        case 'summon': {
+          if (this.time < e.nextAt || e.x > SPAWN_X - 60) break;
+          e.nextAt = this.time + SUMMON_EVERY;
+          const type = ENEMIES[MINION[Number(e.type.key.slice(4))] ?? 'reg1'];
+          for (const l of [e.lane, ...this.nextLanes(e.lane)].slice(0, 2)) this.spawn(type, l, Math.min(SPAWN_X, e.x + 60), Math.round(type.hp * waveHp(g)));
+          this.events.push({ t: 'ability', enemy: e, what: 'summon' });
+          break;
+        }
+        case 'charge':
+          if (e.used || share > CHARGE_AT) break;
+          e.used = true; e.speedMul = CHARGE_MUL; e.until = this.time + CHARGE_TIME;
+          this.events.push({ t: 'ability', enemy: e, what: 'charge' });
+          break;
+        case 'enrage':
+          if (e.used || share > ENRAGE_AT) break;
+          e.used = true; e.speedMul = 1.5; e.rage = 1.6;
+          this.events.push({ t: 'ability', enemy: e, what: 'enrage' });
+          break;
+      }
+    }
+  }
+
   private startWave(i: number): void {
     const w = this.level.waves[i];
     if (w.area !== this.area) { this.area = w.area; this.events.push({ t: 'area', area: w.area }); }
     this.wave = i;
     this.waveStart = this.time;
-    this.queue = makeWave(w, this.rand, this.level.lanes);
+    this.queue = makeWave(w, this.rand, this.level.lanes, this.level.pool);
     const lastAt = this.queue[this.queue.length - 1]?.at ?? 0;
     this.nextWaveAt = this.time + lastAt + WAVE_TIMEOUT;
     this.events.push({ t: 'wave', wave: i, total: this.totalWaves, area: w.area, boss: w.bosses.length > 0 });
@@ -338,12 +411,14 @@ export class Defense {
         // A melee add-on cat in the lane stops zombies in front of it; otherwise they walk up to the wall.
         let stop = STOP_X, by = 0;
         for (const u of this.units) if (u.lane === e.lane && u.x < e.x && u.x + UNIT_REACH > stop) { stop = u.x + UNIT_REACH; by = u.id; }
-        e.x -= e.type.speed * U * slow * dt;
+        // A Slugger jumps the first add-on cat in its way and lands behind it.
+        if (by && e.type.ability === 'jump' && !e.used && e.x - e.type.speed * U * dt <= stop) { e.used = true; e.x = stop - UNIT_REACH - 50; this.events.push({ t: 'jump', enemy: e }); continue; }
+        e.x -= e.type.speed * U * slow * e.speedMul * dt;
         if (e.x <= stop) { e.x = stop; e.state = 'attack'; e.blockedBy = by; e.hitTimer = e.type.hitEvery * 0.5; }
       } else if (e.state === 'attack') {
         const u = this.unitById(e.blockedBy);
         if (e.blockedBy && !u) { e.state = 'walk'; e.blockedBy = 0; continue; } // its add-on cat is gone: walk on
-        e.hitTimer -= dt * slow;
+        e.hitTimer -= dt * slow * e.rage;
         if (e.hitTimer > 0) continue;
         e.hitTimer += e.type.hitEvery;
         if (u) {
@@ -393,6 +468,7 @@ export class Defense {
         if (this.time >= t.tick) { t.tick = this.time + 0.25; for (const e of on) this.damage(e, t.dmg, null, true); }
         continue;
       }
+      if (t.kind === 'tnt') for (const e of inLane) if (e.type.ability === 'jump' && !e.used && e.x <= t.x + 20 && e.x > t.x - 80) { e.used = true; e.x = t.x - 90; this.events.push({ t: 'jump', enemy: e }); }
       const go = t.kind === 'timebomb' ? this.time >= t.until : inLane.some((e) => e.x <= t.x + 20 && e.x > t.x - 80);
       if (!go) continue;
       for (const e of inLane) if (Math.abs(e.x - t.x) <= t.r) this.damage(e, t.dmg, null, true);
@@ -470,6 +546,14 @@ export class Defense {
 
   private damage(e: Enemy, dmg: number, b: Bullet | null, splash: boolean): void {
     if (e.state === 'dead') return;
+    const front = !!b && !splash && b.lane === slotLane(b.from); // a shot straight down its lane
+    if (e.type.ability === 'armour' && b && !splash && b.attack !== 'blast') dmg = Math.round(dmg * ARMOUR);
+    if (e.shield > 0 && front) {
+      const soaked = dmg * (1 - SHIELD_LET);
+      e.shield -= soaked;
+      dmg = Math.round(dmg * SHIELD_LET);
+      if (e.shield <= 0) this.events.push({ t: 'ability', enemy: e, what: 'shieldBreak' });
+    }
     e.hp -= dmg;
     this.events.push({ t: 'hit', bullet: b, enemy: e, dmg, splash });
     if (e.hp > 0) return;
@@ -480,6 +564,7 @@ export class Defense {
     if (e.type.boss) this.stats.bossKills++;
     this.stats.coinsEarned += coins;
     this.events.push({ t: 'kill', enemy: e, coins });
+    if (e.type.ability === 'split' && !e.child) for (const dx of [-30, 30]) this.spawn(SPLIT_CHILD, e.lane, Math.min(SPAWN_X, e.x + 40 + dx), Math.round(SPLIT_CHILD.hp * waveHp(this.level.waves[this.wave].g)), true);
   }
 
   private finish(won: boolean): void {

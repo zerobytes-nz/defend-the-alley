@@ -23,13 +23,14 @@ export interface Save {
   daily: { day: string; streak: number };
   alley: Best | null;        // Full Alley best run
   tips: string[];            // one-time tips already shown (repair, addons, merge…)
+  seen: string[];            // zombie and boss types met (New zombie cards, the Almanac)
 }
 
 export const DECK_MAX = 5;
 export const START_GEMS = 50;
 export const newSave = (): Save => ({
   v: 1, gems: START_GEMS, stars: Array(LEVEL_COUNT).fill(0), cat: Array(15).fill(0), wall: 0, income: 0,
-  stock: {}, slots: 2, loadout: [], deck: [], daily: { day: '', streak: 0 }, alley: null, tips: [],
+  stock: {}, slots: 2, loadout: [], deck: [], daily: { day: '', streak: 0 }, alley: null, tips: [], seen: [],
 });
 /** A stored save, repaired if it is from an older build or damaged. */
 export function fixSave(raw: unknown): Save {
@@ -40,6 +41,7 @@ export function fixSave(raw: unknown): Save {
   if (!Array.isArray(s.loadout)) s.loadout = [];
   if (!Array.isArray(s.deck)) s.deck = [];
   if (!Array.isArray(s.tips)) s.tips = [];
+  if (!Array.isArray(s.seen)) s.seen = [];
   return s;
 }
 
