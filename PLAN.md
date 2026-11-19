@@ -79,6 +79,7 @@ than the bot, so check on a phone with real players in milestone 4 (and maybe gi
 - Memory: only the deck's cats are loaded; streets and bosses load one area ahead and are released after.
   Real art is 9.9 MB on disk for all 94 sheets (placeholders 4.4 MB).
 - Not used yet: Cat Guardian and CatBoxing (planned as add-ons in milestone 2), Boss 6–7, most UI screens (milestone 2).
+- Full inventory of the kit, its mock-up screens and how they compare with this plan: [docs/KIT-REVIEW.md](docs/KIT-REVIEW.md).
 
 ## Milestones
 
