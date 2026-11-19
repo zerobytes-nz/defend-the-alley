@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// Draws the PWA / home-screen icons from the game's own art: the Bazooka Tabby holding the barricade while
-// zombies and a boss come down the alley.
+// Draws the PWA / home-screen icons from the game's own art: the hoodie tabby (cat 5), no background.
 //   npm run pwa:icons             → public/icons/ from committable art only (cc0/, then placeholder/), safe to commit
 //   npm run pwa:icons:licensed    → public/assets/licensed/pwa-icons/ from the kit art (gitignored). `vite build`
 //                                   ships these in place of public/icons/ when they exist; deploy runs this first.
-// Also writes store-icon-1024.png next to the licensed icons (for TheoSwap and stores).
+// Also writes store-icon-1024.png next to the licensed icons (for TheoSwap and stores). With --licensed the cat
+// comes from pwa-icons/hero.png when `npm run pwa:hero` made it (sharp, from the kit's vector art).
 import fs from 'node:fs';
 import path from 'node:path';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
@@ -33,11 +33,15 @@ if (LICENSED && !(await art('cat.c1.shoot')).licensed) {
 }
 
 /** Frame `n` of a sheet, trimmed to its visible pixels: `h` px tall, bottom-centre at (x,y). */
-async function draw(c, key, n, x, y, h, { flip = false } = {}) {
+async function draw(c, key, n, x, y, h, opts) {
   const { img, a } = await art(key);
   const fw = a.frameWidth ?? a.width, fh = a.frameHeight ?? a.height;
   const cols = a.columns ?? a.frameCount ?? 1;
-  const sx = (n % cols) * fw, sy = Math.floor(n / cols) * fh;
+  drawTrimmed(c, img, (n % cols) * fw, Math.floor(n / cols) * fh, fw, fh, x, y, h, opts);
+}
+
+/** The (sx,sy,fw,fh) part of `img`, trimmed to its visible pixels: `h` px tall, bottom-centre at (x,y). */
+function drawTrimmed(c, img, sx, sy, fw, fh, x, y, h, { flip = false } = {}) {
   const t = createCanvas(fw, fh), tc = t.getContext('2d');
   tc.drawImage(img, sx, sy, fw, fh, 0, 0, fw, fh);
   const d = tc.getImageData(0, 0, fw, fh).data;
@@ -53,33 +57,22 @@ async function draw(c, key, n, x, y, h, { flip = false } = {}) {
   c.restore();
 }
 
-/** The scene on a 1024 canvas. `k` < 1 shrinks it into the centre (maskable safe zone), with the road behind. */
-async function scene(k = 1) {
+/**
+ * The hoodie tabby (cat 5) on its own, 1024 px. `bg` fills behind it (maskable / Apple icons can't be
+ * transparent: the OS would show black); `k` < 1 shrinks it into the maskable safe zone.
+ */
+async function hero(k = 1, bg = null) {
   const S = 1024, cv = createCanvas(S, S), c = cv.getContext('2d');
-  const { img: bg } = await art('bg.area1');
-  // A close-up of the road past the barricade: crossing stripes and the yellow line running to the right.
-  c.drawImage(bg, 470, 150, 420, 420, 0, 0, S, S);
-  c.fillStyle = 'rgba(24,20,36,0.28)'; c.fillRect(0, 0, S, S);
+  if (bg) { c.fillStyle = bg; c.fillRect(0, 0, S, S); }
   c.save();
   c.translate(512 * (1 - k), 512 * (1 - k)); c.scale(k, k);
-
-  // The boss looms at the back, a zombie charges in front, all walking toward the wall on the left.
-  await draw(c, 'enemy.boss1.walk', 3, 850, 590, 470);
-  await draw(c, 'enemy.reg2.walk', 2, 800, 960, 400);
-  await draw(c, 'fx.explosion', 1, 650, 810, 150);
-
-  // Warm light from the shot, then the hero in front.
-  const glow = c.createRadialGradient(400, 720, 0, 400, 720, 460);
-  glow.addColorStop(0, 'rgba(255,190,80,0.45)'); glow.addColorStop(1, 'rgba(255,190,80,0)');
-  c.fillStyle = glow; c.fillRect(0, 0, S, S);
-  await draw(c, 'cat.c1.shoot', 4, 330, 1000, 600);
-  await draw(c, 'fx.muzzle', 3, 610, 760, 110);
+  // The sharp version built from the kit's vector parts (npm run pwa:hero), else the game sprite.
+  const big = path.join(OUT, 'hero.png');
+  if (LICENSED && fs.existsSync(big)) {
+    const img = await loadImage(fs.readFileSync(big));
+    drawTrimmed(c, img, 0, 0, img.width, img.height, 512, 990, 960);
+  } else await draw(c, 'cat.c5.idle', 0, 512, 990, 960);
   c.restore();
-
-  // Vignette so the edges fall away and the cat pops.
-  const v = c.createRadialGradient(470, 600, 300, 512, 560, 820);
-  v.addColorStop(0, 'rgba(18,14,28,0)'); v.addColorStop(1, 'rgba(18,14,28,0.7)');
-  c.fillStyle = v; c.fillRect(0, 0, S, S);
   return cv;
 }
 
@@ -91,12 +84,13 @@ function save(src, size, name) {
 }
 
 fs.mkdirSync(OUT, { recursive: true });
-const full = await scene(1);
-const safe = await scene(0.78); // maskable: keep the cat inside the centre 80%
+const BG = '#f4b35a'; // warm orange from the hoodie, for the icons that must be opaque
+const full = await hero(1);
+const safe = await hero(0.74, BG); // maskable: keep the cat inside the centre 80%
 save(full, 512, 'icon-512.png');
 save(full, 192, 'icon-192.png');
 save(safe, 512, 'maskable-512.png');
-save(safe, 180, 'apple-touch-icon.png');
+save(await hero(0.9, BG), 180, 'apple-touch-icon.png');
 save(full, 64, 'favicon-64.png');
 if (LICENSED) save(full, 1024, 'store-icon-1024.png');
 console.log(`✔ PWA icons → ${path.relative(ROOT, OUT)}/: ${fs.readdirSync(OUT).join(', ')}`);
