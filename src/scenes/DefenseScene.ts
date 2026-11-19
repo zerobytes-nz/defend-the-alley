@@ -15,6 +15,7 @@ import { alleyGems, challengeToday, lossGems, withGemBoost, clearLevel, endlessG
 import { FEATURES, type Feature, type Unlock } from '../game/unlocks.ts';
 import { think } from '../game/bot.ts';
 import { button, tappable, text } from '../ui.ts';
+import { Shots, shotIcon } from '../systems/shots.ts';
 import { buzz, isMuted, musicOn, sfx, soundOn, toggleMusic, toggleMute, toggleSound, toggleVibra, vibraOn } from '../systems/audio.ts';
 
 const BOT = new URLSearchParams(location.search).has('bot');
@@ -46,7 +47,7 @@ export class DefenseScene extends Phaser.Scene {
   private bg!: Phaser.GameObjects.Image;
   private enemies = new Map<number, EnemyView>();
   private cats = new Map<number, CatView>(); // by slot
-  private bullets = new Map<number, Phaser.GameObjects.Image>();
+  private shots!: Shots;
   private fxPool: Phaser.GameObjects.Sprite[] = [];
   private cards: CardView[] = [];
   private selected: Defender | null = null;
@@ -93,9 +94,10 @@ export class DefenseScene extends Phaser.Scene {
     this.sim = new Defense({ ...f, seed: this.def.n === DAILY ? daySeed(dayKey(new Date())) : SEED || Math.floor(Math.random() * 1e9) });
     this.acc = 0; this.speed = 1; this.paused = false; this.ended = false; this.armed = -1;
     this.tut = null; this.press = null; this.modal = false;
-    this.enemies.clear(); this.cats.clear(); this.bullets.clear(); this.units.clear(); this.traps.clear();
+    this.enemies.clear(); this.cats.clear(); this.units.clear(); this.traps.clear();
     this.fxPool = []; this.cards = []; this.slotTiles = []; this.addonBtns = []; this.laneZones = []; this.bubble = null;
     this.shown = { coins: -1, wall: -1 };
+    this.shots = new Shots(this, D.fx);
     this.loadingArea = false;
     const area = this.sim.area;
     if (this.def.waves.some((w) => w.area > area)) void ensureLoaded(this, areaArt(this.def, area + 1));
@@ -196,8 +198,8 @@ export class DefenseScene extends Phaser.Scene {
       if (show) { v.barBg.setPosition(e.x, v.spr.y - v.top); v.bar.setPosition(e.x - v.barBg.width / 2 + 2, v.spr.y - v.top); v.bar.width = Math.max(0, (v.barBg.width - 4) * (e.hp / e.maxHp)); }
     }
     const live = new Set(this.sim.bullets.map((b) => b.id));
-    for (const b of this.sim.bullets) { const img = this.bullets.get(b.id); if (img) img.x = b.x; }
-    for (const [id, img] of this.bullets) if (!live.has(id)) { img.destroy(); this.bullets.delete(id); }
+    for (const b of this.sim.bullets) this.shots.move(b.id, b.x);
+    this.shots.prune(live);
 
     if (this.sim.coins !== this.shown.coins) {
       this.shown.coins = this.sim.coins;
@@ -317,9 +319,8 @@ export class DefenseScene extends Phaser.Scene {
     const x = v.spr.x + mx, y = v.spr.y + my;
     const flash = this.fx(x, y, asset('fx.muzzle').displayScale, 'fx.muzzle');
     flash.setOrigin(0.1, 0.5);
-    const b = this.add.image(x + 10, y, `bullet.${attack}`).setScale(asset(`bullet.${attack}`).displayScale).setDepth(D.fx);
+    const b = this.shots.add(bulletId, attack, x + 10, y, D.fx);
     if (cross) { flash.setVisible(false); this.tweens.add({ targets: b, y: y + (laneFeet(bullet.lane) - laneFeet(slotLane(slot))), duration: 140 }); } // a Blaster's second shot
-    this.bullets.set(bulletId, b);
     if (!cross) sfx.pew(attack);
   }
 
@@ -466,8 +467,8 @@ export class DefenseScene extends Phaser.Scene {
     const v = this.enemies.get(e.id);
     if (v) v.flashUntil = this.sim.time + 0.06;
     if (splash) return;
-    const b = this.bullets.get(bulletId);
-    if (b && !this.sim.bullets.some((x) => x.id === bulletId)) { b.destroy(); this.bullets.delete(bulletId); }
+    this.shots.hit(bulletId);
+    if (this.shots.has(bulletId) && !this.sim.bullets.some((x) => x.id === bulletId)) this.shots.remove(bulletId);
     if (attack === 'blast') { this.fx(e.x - 8, laneFeet(e.lane) - 34, 0.45); sfx.boom(); }
   }
 
@@ -526,7 +527,7 @@ export class DefenseScene extends Phaser.Scene {
       const box = this.add.image(0, 0, 'ui.cardbox').setScale(0.62);
       const stripe = this.add.rectangle(0, -38, 76, 6, RARITY_COLOR[def.rarity]);
       const cat = this.add.image(-2, 28, `cat.c${def.cat}.idle`, 0).setOrigin(0.5, 1).setScale(0.5);
-      const bullet = this.add.image(30, -24, `bullet.${def.attack}`).setScale(0.5);
+      const bullet = shotIcon(this, 30, -24, def.attack, 30);
       const coin = this.add.image(-16, 44, 'ui.coin').setScale(0.3);
       const cost = text(this, 2, 42, '', 22, COLORS.text, 4).setOrigin(0, 0.5);
       const c = this.add.container(x, TRAY_Y, [glow, box, stripe, cat, bullet, coin, cost]).setSize(100, 100).setDepth(D.tray);

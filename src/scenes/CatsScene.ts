@@ -11,6 +11,7 @@ import { ensureLoaded, release } from '../assets.ts';
 import { CAT_ORDER, catLevel } from '../game/unlocks.ts';
 import { tappable, text } from '../ui.ts';
 import { sfx } from '../systems/audio.ts';
+import { shotIcon } from '../systems/shots.ts';
 import { PANEL, drawFrame, type Frame } from './menuFrame.ts';
 
 const LIST = { x: PANEL.x + 10, y: PANEL.y + 96, w: PANEL.w - 20, h: PANEL.h - 104 };
@@ -80,7 +81,7 @@ export class CatsScene extends Phaser.Scene {
       this.deckBar.add([
         this.add.rectangle(x, y - 28, 52, 5, RARITY_COLOR[d.rarity]),
         this.add.image(x - 2, y + 30, `cat.c${d.cat}.idle`, 0).setOrigin(0.5, 1).setScale(0.38),
-        this.add.image(x + 22, y - 18, `bullet.${d.attack}`).setScale(0.36),
+        shotIcon(this, x + 22, y - 18, d.attack, 22),
       ]);
       tappable(box, () => { if (toggleDeck(player.save, player.awis, d.uid)) { player.persist(); this.redraw(); } else this.frame.flash('The deck needs at least one cat'); });
     }
@@ -151,7 +152,7 @@ export class CatsScene extends Phaser.Scene {
       const face = this.add.image(54, ROW_H - 4, `cat.c${def.cat}.idle`, 0).setOrigin(0.5, 1).setScale(0.56);
       if (locked) face.setTintFill(0x22282a);
       c.add([face, this.add.image(20, 20, `ui.badge${def.cat}`).setScale(0.62)]);
-      if (!locked) c.add(this.add.image(92, 24, `bullet.${def.attack}`).setScale(0.4));
+      if (!locked) c.add(shotIcon(this, 92, 24, def.attack, 26));
     } else c.add(this.add.image(54, ROW_H / 2, r.kind === 'wall' ? 'ui.wall' : 'ui.coin').setScale(r.kind === 'wall' ? 0.8 : 1));
     const dark = locked ? '#c9c0d8' : '#3a2a1c';
     const t = text(this, 106, 26, title, 26, locked ? '#ffffff' : '#3a2a1c', 0).setOrigin(0, 0.5);

@@ -6,7 +6,8 @@ import { addonArt, areaArt, catArt, ensureLoaded } from '../assets.ts';
 import { player } from '../save.ts';
 import { claimDaily, dailyReady, featureUnlocked } from '../game/progress.ts';
 import { featureLevel } from '../game/unlocks.ts';
-import { tappable, text } from '../ui.ts';
+import { notice, tappable, text } from '../ui.ts';
+import { isInstalled, tryCloseApp } from '../systems/install.ts';
 import { sfx } from '../systems/audio.ts';
 
 export type Tab = 'Map' | 'Cats' | 'Addons' | 'Almanac';
@@ -74,6 +75,15 @@ export function drawFrame(scene: Phaser.Scene, active: Tab, title: string, bg = 
   ]).setSize(190, 50);
   tappable(who, () => scene.scene.start('Menu'));
 
+  // Installed app (or full screen): an Exit button next to it, so players don't have to go back to the title.
+  if (isInstalled() || scene.scale.isFullscreen) {
+    const exit = scene.add.container(GAME_W - 280, 44, [
+      scene.add.rectangle(0, 0, 130, 50, 0x000000, 0.45).setStrokeStyle(3, 0xffffff, 0.35),
+      text(scene, 0, -2, '✕ Exit', 26, COLORS.text, 4).setOrigin(0.5),
+    ]).setSize(130, 50);
+    tappable(exit, () => exitApp(scene));
+  }
+
   let msg: Phaser.GameObjects.Text | null = null;
   function flash(s: string, bad = true): void {
     msg?.destroy();
@@ -82,6 +92,14 @@ export function drawFrame(scene: Phaser.Scene, active: Tab, title: string, bg = 
     if (bad) sfx.hurt();
   }
   return { refreshGems, flash };
+}
+
+/** Close the installed app (or leave full screen in a browser). Browsers may refuse to close: then say how. */
+export function exitApp(scene: Phaser.Scene): void {
+  if (scene.scale.isFullscreen && !isInstalled()) { scene.scale.stopFullscreen(); return; }
+  tryCloseApp().then((closed) => {
+    if (!closed) notice(scene, 'Close the game', ['Swipe up, or use your phone\'s Home or', 'Back button.']);
+  });
 }
 
 /** Load what a fight needs (deck cats, first street and bosses, add-on cats), then start it. */

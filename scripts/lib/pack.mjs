@@ -31,6 +31,9 @@ export async function packFrames(a, files, opts = {}) {
   if (opts.crop) {
     const [sx, sy, sw, sh] = opts.crop;
     imgs.forEach((img, i) => { const [fx, fy] = frameXY(a, i); c.drawImage(img, sx, sy, sw, sh, fx, fy, a.frameWidth, a.frameHeight); });
+    // patch: [[sx, sy, w, h, dx, dy], …] copies part of the packed image over another (in output pixels),
+    // e.g. paint the background's trash-bin tile over with the plain tile above it.
+    for (const [px, py, pw, ph, dx, dy] of opts.patch ?? []) c.putImageData(c.getImageData(px, py, pw, ph), dx, dy);
     return canvas.toBuffer('image/png');
   }
   const maxW = Math.max(...imgs.map((i) => i.width)), maxH = Math.max(...imgs.map((i) => i.height));

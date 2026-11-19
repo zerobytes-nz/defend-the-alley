@@ -8,7 +8,8 @@ import { PROFILES, type ProfileId } from '../game/demo.ts';
 import { awisFromItems } from '../game/awi.ts';
 import { RARITY_COLOR } from '../game/cats.ts';
 import { levelsCleared } from '../game/progress.ts';
-import { canInstall, install, isInstalled, onInstallChange, openInChromeUrl, tryCloseApp } from '../systems/install.ts';
+import { canInstall, install, isInstalled, onInstallChange, openInChromeUrl } from '../systems/install.ts';
+import { exitApp } from './menuFrame.ts';
 import { startMusic } from '../systems/audio.ts';
 
 export class MenuScene extends Phaser.Scene {
@@ -95,7 +96,7 @@ export class MenuScene extends Phaser.Scene {
       return tappable(this.add.container(x, 50, [bg, t]).setSize(210, 56), onTap);
     };
     const inst = mk(125, '📲 Install app', () => this.installApp());
-    const exit = mk(GAME_W - 200, '✕ Exit', () => this.exitApp());
+    const exit = mk(GAME_W - 200, '✕ Exit', () => exitApp(this));
     const sync = () => {
       inst.setVisible(canInstall());
       exit.setVisible(isInstalled() || this.scale.isFullscreen);
@@ -132,10 +133,4 @@ export class MenuScene extends Phaser.Scene {
     });
   }
 
-  private exitApp(): void {
-    if (this.scale.isFullscreen && !isInstalled()) { this.scale.stopFullscreen(); return; }
-    tryCloseApp().then((closed) => {
-      if (!closed) notice(this, 'Close the game', ['Swipe up, or use your phone\'s Home or', 'Back button.']);
-    });
-  }
 }

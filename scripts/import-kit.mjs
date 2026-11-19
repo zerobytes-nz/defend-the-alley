@@ -10,6 +10,7 @@
 //   scale  fixed scale (keeps a character the same size across its animations); default: fit the frame
 //   crop   [x, y, w, h] part of the image to use (backgrounds)
 //   align  'bottom' (characters) or 'center'
+//   patch  [[sx, sy, w, h, dx, dy], …] copy part of the result over another (backgrounds: hide the trash-bin tile)
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadManifest, PUBLIC_DIR, ROOT } from './lib/assets.mjs';
@@ -34,7 +35,7 @@ for (const a of m.assets) {
   if (!files.length) { problems.push(`${a.key}: no PNG frames in ${a.kit.files}`); continue; }
   const out = path.join(PUBLIC_DIR, m.roots.licensed, a.path);
   fs.mkdirSync(path.dirname(out), { recursive: true });
-  fs.writeFileSync(out, await packFrames(a, files, { scale: a.kit.scale, crop: a.kit.crop, align: a.kit.align }));
+  fs.writeFileSync(out, await packFrames(a, files, { scale: a.kit.scale, crop: a.kit.crop, align: a.kit.align, patch: a.kit.patch }));
   n++;
   process.stdout.write(`\r  ${n} files…`);
 }

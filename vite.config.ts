@@ -59,6 +59,23 @@ const LICENSED_ICONS = path.join(PUBLIC_DIR, loadManifest().roots.licensed, 'pwa
 /** Where each shipped icon comes from: the licensed one when it was generated, else the committed one. */
 const iconSource = (f: string) => (fs.existsSync(path.join(LICENSED_ICONS, f)) ? path.join(LICENSED_ICONS, f) : path.join(PUBLIC_DIR, 'icons', f));
 
+/** Dev: serve the kit-art icons (when generated) at /icons/, the same ones a build ships. */
+function devIcons(): Plugin {
+  return {
+    name: 'defend-the-alley-dev-icons',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const f = req.url?.split('?')[0].match(/\/icons\/([\w.-]+\.png)$/)?.[1];
+        if (!f || !ICON_FILES.includes(f) || !fs.existsSync(path.join(LICENSED_ICONS, f))) return next();
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'no-cache');
+        fs.createReadStream(path.join(LICENSED_ICONS, f)).pipe(res);
+      });
+    },
+  };
+}
+
 function serviceWorker(): Plugin {
   let outDir = 'dist';
   return {
@@ -137,7 +154,7 @@ function localProxy(mode: string): Record<string, ProxyOptions> {
 
 export default defineConfig(({ mode }) => ({
   base: './',
-  plugins: [assetUrls(), serviceWorker()],
+  plugins: [assetUrls(), devIcons(), serviceWorker()],
   build: {
     target: 'es2020',
     chunkSizeWarningLimit: 1500,
