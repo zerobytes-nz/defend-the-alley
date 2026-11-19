@@ -1,6 +1,6 @@
 // AWIs (Altered World Items): what a player's NFTs become in Defend the Alley.
 //
-// TheoSwap's user-items API returns one entry per NFT, picked from this game's config tree (milestone 3):
+// TheoSwap's user-items API returns one entry per NFT, picked from this game's config tree (milestone 4):
 //   cat defender  { itemId: 'cat_c9', attack: 'blast', Rarity: 'Epic' }   (+ optional damage / fireRate / range)
 //   add-on        { itemId: 'addon_tnt', Rarity: 'Rare' }
 // Until sign-in lands, the demo players in demo.ts supply the same shape. Pure TS: the sim imports it too.

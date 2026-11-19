@@ -41,7 +41,7 @@ export interface Defender {
   rate: number;         // shots per second
   range: number;        // street units in front of the cat (× layout U = game px)
   source: 'guest' | 'nft';
-  /** The NFT's collection (contract), for the collection bonus in milestone 3. */
+  /** The NFT's collection (contract), for the collection bonus in milestone 4. */
   collection?: string;
 }
 

@@ -1,5 +1,5 @@
 // Demo players: AWIs from bundled sample data in the same shape TheoSwap returns, so every screen can be tried
-// without signing in. Milestone 3 swaps these for real TheoSwap test codes.
+// without signing in. Milestone 4 swaps these for real TheoSwap test codes.
 import type { ApiItem } from '../theoswap.ts';
 import { TEST_CONTRACT } from './awi.ts';
 

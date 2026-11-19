@@ -44,7 +44,7 @@ So an AWI says: which cat, its attack, its rarity, and the stats **damage, fire 
 
 - **Guests** get three free Common cats, one per family and attack (Ginger · Blast, Smokey · Venom, Snowy · Rapid).
 - **NFT holders** bring up to 5 cards (the tray holds 5): their best NFTs, then guest cats to fill.
-- **Collection bonus** (milestone 3): 2+ cards from one NFT collection: +10% damage for those cats; 3+: also +10% fire rate.
+- **Collection bonus** (milestone 4): 2+ cards from one NFT collection: +10% damage for those cats; 3+: also +10% fire rate.
   TheoSwap test NFTs share the zero-address contract, which counts as no collection (same rule as Arena).
 
 ### Balance (`npm run sim`)
@@ -65,7 +65,7 @@ replaying the last cleared level for gems after a loss: levels 1–13 take 1 fig
 about 9. None got stuck. The tuning knobs are `src/game/levels.ts → tune()` (`--tune g0,step,curve,share`).
 
 That is the pitch: guests can clear everything by upgrading; NFTs (AWIs) make the hard levels easy. A human may play
-worse than the bot, so check on a phone with real players in milestone 4.
+worse than the bot, so check on a phone with real players in milestone 5.
 
 ## Code map
 
@@ -106,7 +106,7 @@ worse than the bot, so check on a phone with real players in milestone 4.
 ### 2. Level select, upgrades, add-ons, and AWIs in all of them ✅
 Gives players a reason to come back between levels, built the way the kit's own screens are laid out
 (see [docs/KIT-REVIEW.md](docs/KIT-REVIEW.md)). **AWIs (Altered World Items) are part of every screen**, using bundled
-sample data in this milestone; live TheoSwap sign-in follows in milestone 3.
+sample data in this milestone; live TheoSwap sign-in follows in milestone 4.
 
 **Menu frame** (`LevelMap_Bg_Screen`, `BtnTab_*`, `Icon_home` / `Icon_Cat` / `Icon_Addon`, `GemsBarBg`, `DaillyIcon`)
 - The kit's dark side menu with tabs: **Map**, **Cats**, **Add-ons**. No Shop tab (no real-money sales).
@@ -165,7 +165,7 @@ sample data in this milestone; live TheoSwap sign-in follows in milestone 3.
 
 **AWIs in this milestone**
 - `src/game/awi.ts`: one AWI model for both kinds, **cat defender** and **add-on**, from TheoSwap-shaped item data
-  (`itemId`, `Rarity`, `attack`, optional stat overrides), so milestone 3 only has to plug in the live fetch.
+  (`itemId`, `Rarity`, `attack`, optional stat overrides), so milestone 4 only has to plug in the live fetch.
 - Bundled demo profiles to try it without TheoSwap: **Guest** (no AWIs), **Collector** (4 cat AWIs, Rare to Legendary,
   and a Rare TNT Crate), **Whale** (6 Legendary/Epic cat AWIs, and Cat Guardian, Big Bomb and Rocket Strike AWIs). Picked on the menu or with `?profile=`; `?nft` keeps working.
 - AWIs are always unlocked, appear first on the Cats and Add-ons screens, and are marked with an "AWI" tag and rarity stripe.
@@ -181,32 +181,9 @@ sample data in this milestone; live TheoSwap sign-in follows in milestone 3.
   - Full Alley still shows "NFTs make the difference"
 - The new UI art goes into the manifest with placeholders of the same names and sizes, as before.
 
-### 3. TheoSwap
-- **Ask first:** create the hidden game "Defend the Alley" and its config with the theoswap MCP (dry run → approval).
-- Config tree "Defend the Alley AWIs" with two branches:
-  - **Cat defenders**: leaves `cat_c1` … `cat_c15`, each with attack and rarity weights, so an NFT's seed picks e.g.
-    `{ itemId: 'cat_c9', attack: 'blast', Rarity: 'Epic' }`. Stats come from `makeDefender`; optional `damage` /
-    `fireRate` / `range` overrides in itemData win, so the config can tune single AWIs.
-  - **Add-ons**: leaves `addon_rocket` … `addon_spikes` (the 8 add-ons) with rarity weights. This branch is rarer,
-    e.g. 1 in 5 NFTs.
-- Swap the bundled demo profiles from milestone 2 for real test codes; `src/awi.ts` already reads TheoSwap-shaped data.
-- Port from Arena: Connect scene (8-letter code + `?userCode=` deep link), Reveal scene (one AWI card per NFT, both
-  kinds), `src/profile.ts`.
-- Collection bonus shown on the cards on the Cats screen.
-- Remember the Arena lesson: test codes only return items once the config is **published**, which is a live change
-  that needs the user's explicit OK.
-
-### 4. Polish and deploy
-- Fill wide phones (19.5:9) instead of letterboxing (Phaser `Scale.EXPAND`, extend the street art to the sides).
-- Measure FPS and memory on a real Android phone and an iPhone; trim texture sizes if needed.
-- Hit/death juice, coin fly-to-HUD, music per area.
-- Balance with real players.
-- **Ask first:** GitHub repo (zerobytes-nz/defend-the-alley), Jira epic (THEOS), push; then deploy to
-  `games.theoswap.io/defend-the-alley` with the nginx key proxy (same as Arena).
-
-### 5. Gameplay depth: a full game
+### 3. Gameplay depth: a full game
 It stays a **free web game**: nothing to buy, no ads. This milestone adds what a full game needs on top of the demo:
-a tutorial, steady unlocks, more decisions in each fight, and reasons to keep playing after level 15. It reuses the
+a tutorial, steady unlocks, more decisions in each fight, and reasons to keep playing after level 15. It comes before TheoSwap because cat roles and AWI perks change what the config has to hold. It reuses the
 kit's art; no new art is needed. Everything new goes into the simulation first, so `npm run sim` and the bot can
 balance it.
 
@@ -278,10 +255,32 @@ balance it.
 - A cat's 5th upgrade step unlocks a perk that changes how it plays, for example C1's knockback doubling, or C11
   piercing two zombies.
 - Add-ons get upgrade steps too (gems), like the cats.
-- AWIs can roll a perk from the TheoSwap config (milestone 3 data), so NFTs feel special without being required.
+- AWIs can roll a perk from the TheoSwap config (milestone 4 data), so NFTs feel special without being required.
 
 **Checks**
 - `npm run sim` learns the new roles, behaviours and rules. `--campaign` follows the unlock order, so each level stays
   winnable with only what has been unlocked by then.
 - Play-test on real phones: the tutorial without help, and how many tries the late levels take.
 
+### 4. TheoSwap
+- **Ask first:** create the hidden game "Defend the Alley" and its config with the theoswap MCP (dry run → approval).
+- Config tree "Defend the Alley AWIs" with two branches:
+  - **Cat defenders**: leaves `cat_c1` … `cat_c15`, each with attack and rarity weights, so an NFT's seed picks e.g.
+    `{ itemId: 'cat_c9', attack: 'blast', Rarity: 'Epic' }`. Stats come from `makeDefender`; optional `damage` /
+    `fireRate` / `range` overrides in itemData win, so the config can tune single AWIs.
+  - **Add-ons**: leaves `addon_rocket` … `addon_spikes` (the 8 add-ons) with rarity weights. This branch is rarer,
+    e.g. 1 in 5 NFTs.
+- Swap the bundled demo profiles from milestone 2 for real test codes; `src/awi.ts` already reads TheoSwap-shaped data.
+- Port from Arena: Connect scene (8-letter code + `?userCode=` deep link), Reveal scene (one AWI card per NFT, both
+  kinds), `src/profile.ts`.
+- Collection bonus shown on the cards on the Cats screen.
+- Remember the Arena lesson: test codes only return items once the config is **published**, which is a live change
+  that needs the user's explicit OK.
+
+### 5. Polish and deploy
+- Fill wide phones (19.5:9) instead of letterboxing (Phaser `Scale.EXPAND`, extend the street art to the sides).
+- Measure FPS and memory on a real Android phone and an iPhone; trim texture sizes if needed.
+- Hit/death juice, coin fly-to-HUD, music per area.
+- Balance with real players.
+- **Ask first:** GitHub repo (zerobytes-nz/defend-the-alley), Jira epic (THEOS), push; then deploy to
+  `games.theoswap.io/defend-the-alley` with the nginx key proxy (same as Arena).

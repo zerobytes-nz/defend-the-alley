@@ -52,13 +52,13 @@ npm run assets:import -- "/path/to/craftpix-net-397030-free-cartoon-cat-defense-
 
 ## TheoSwap and secrets
 
-TheoSwap sign-in arrives in milestone 3 (same flow as Altered Arena: player code or `?userCode=` link, AWI reveal cards,
+TheoSwap sign-in arrives in milestone 4 (same flow as Altered Arena: player code or `?userCode=` link, AWI reveal cards,
 demo players). `src/theoswap.ts` already holds the client.
 
 **No API key is ever in the browser or in git.** The game only calls its own server: `./api/user-items?userCode=…`.
 - `npm run dev` / `npm run preview`: `vite.config.ts` forwards that to TheoSwap's `/api/public/user-items` and adds
   `THEOSWAP_API_KEY` from `.env` (copy `.env.example`; use the game's **test** key). The name has no `VITE_` prefix, so Vite never bundles it.
-- Production: an nginx proxy holds the live key (set up in milestone 4, like Altered Arena).
+- Production: an nginx proxy holds the live key (set up in milestone 5, like Altered Arena).
 - `check-assets` rejects key-like `VITE_*` names, any key use in `src/`, and hard-coded key values. `npm run deploy` refuses to upload a build that contains the key.
 
 ## Licence

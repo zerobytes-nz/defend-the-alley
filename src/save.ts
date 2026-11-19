@@ -1,5 +1,5 @@
 // The current player in the browser: which demo player is picked, their AWIs, and their save (one per player).
-// Milestone 3 adds TheoSwap sign-in as one more way to get AWIs; everything else stays the same.
+// Milestone 4 adds TheoSwap sign-in as one more way to get AWIs; everything else stays the same.
 import { SAMPLE_NFTS } from './config.ts';
 import { awisFromItems, type AWI } from './game/awi.ts';
 import { PROFILES, type ProfileId } from './game/demo.ts';

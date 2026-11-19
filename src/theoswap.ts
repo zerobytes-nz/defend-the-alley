@@ -1,4 +1,4 @@
-// TheoSwap connection (wired into the game in milestone 3): fetch a player's items with their user code,
+// TheoSwap connection (wired into the game in milestone 4): fetch a player's items with their user code,
 // and keep the last good answer per code for bad signal.
 //
 // The browser only ever calls OUR server: ./api/user-items?userCode=… . There, nginx (production) or the

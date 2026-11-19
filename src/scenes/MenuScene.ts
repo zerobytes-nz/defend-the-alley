@@ -25,7 +25,7 @@ export class MenuScene extends Phaser.Scene {
 
     button(this, GAME_W / 2, 560, 'PLAY', () => this.play(), 'ui.btn-green', 0.85, 56);
     text(this, GAME_W / 2, 640, 'Demo players bring sample AWIs (Altered World Items): cat defenders and add-ons.', 22, COLORS.dim, 4).setOrigin(0.5);
-    text(this, GAME_W / 2, 674, 'TheoSwap sign-in, where your own NFTs become AWIs, comes in milestone 3.', 22, COLORS.dim, 4).setOrigin(0.5);
+    text(this, GAME_W / 2, 674, 'TheoSwap sign-in, where your own NFTs become AWIs, comes in milestone 4.', 22, COLORS.dim, 4).setOrigin(0.5);
 
     muteButton(this, GAME_W - 50, 50);
     this.appButtons();
