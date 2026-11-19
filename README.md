@@ -121,7 +121,7 @@ location = /defend-the-alley/api/user-items {
 location = /defend-the-alley/sw.js                { add_header Cache-Control "no-cache"; }
 location = /defend-the-alley/index.html           { add_header Cache-Control "no-cache"; }
 location = /defend-the-alley/manifest.webmanifest { add_header Cache-Control "no-cache"; }
-location ~ ^/defend-the-alley/assets/.+-[\w-]{8}\.js$ { add_header Cache-Control "public, max-age=31536000, immutable"; }
+location ~ "^/defend-the-alley/assets/.+-[\w-]{8}\.js$" { add_header Cache-Control "public, max-age=31536000, immutable"; }
 ```
 
 Then `sudo nginx -t && sudo systemctl reload nginx` and check
