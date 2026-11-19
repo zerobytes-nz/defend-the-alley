@@ -36,6 +36,8 @@ const run = (cmd, args) => {
   if (r.status !== 0) process.exit(r.status ?? 1);
 };
 
+// Home-screen icons drawn from the kit art (gitignored; the build ships them in place of the committed ones).
+run('npm', ['run', 'pwa:icons:licensed']);
 run('npm', ['run', 'build']);
 
 // Never upload an API key: the game only talks to its own server's proxy (./api/user-items), which adds the key.

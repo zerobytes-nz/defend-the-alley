@@ -52,19 +52,31 @@ function assetUrls(): Plugin {
  * every art file the build resolved (about 8 MB with the kit art), so the game plays offline after the first visit.
  * The cache name changes whenever code or art changes; old caches are deleted on activate.
  * Requests to other origins (the TheoSwap API) are never touched.
+ * When the kit art is imported, the icons drawn from it (`npm run pwa:icons:licensed`) replace public/icons/ in dist/.
  */
+const ICON_FILES = fs.readdirSync(path.join(PUBLIC_DIR, 'icons'));
+const LICENSED_ICONS = path.join(PUBLIC_DIR, loadManifest().roots.licensed, 'pwa-icons');
+/** Where each shipped icon comes from: the licensed one when it was generated, else the committed one. */
+const iconSource = (f: string) => (fs.existsSync(path.join(LICENSED_ICONS, f)) ? path.join(LICENSED_ICONS, f) : path.join(PUBLIC_DIR, 'icons', f));
+
 function serviceWorker(): Plugin {
+  let outDir = 'dist';
   return {
     name: 'defend-the-alley-sw',
     apply: 'build',
+    configResolved(c) { outDir = path.resolve(c.root, c.build.outDir); },
+    writeBundle() {
+      for (const f of ICON_FILES) fs.copyFileSync(iconSource(f), path.join(outDir, 'icons', f));
+      fs.rmSync(path.join(outDir, loadManifest().roots.licensed, 'pwa-icons'), { recursive: true, force: true });
+    },
     generateBundle(_opts, bundle) {
       const code = Object.keys(bundle).filter((f) => /\.(js|css)$/.test(f) && f !== 'sw.js');
-      const icons = [...fs.readdirSync(path.join(PUBLIC_DIR, 'icons')).map((f) => `icons/${f}`), 'fonts/PassionOne-Regular.ttf'];
+      const icons = [...ICON_FILES.map((f) => `icons/${f}`), 'fonts/PassionOne-Regular.ttf'];
       const art = resolveAssets(loadManifest()).filter((r) => r.state !== 'missing').map((r) => r.url);
       const files = ['./', 'manifest.webmanifest', ...icons, ...code, ...art];
       const h = createHash('sha256').update(SW_TEMPLATE);
       for (const f of code) { const o = bundle[f]; h.update(f).update(o.type === 'chunk' ? o.code : String(o.source)); }
-      for (const f of [...icons, ...art]) h.update(f).update(fs.readFileSync(path.join(PUBLIC_DIR, f)));
+      for (const f of [...icons, ...art]) h.update(f).update(fs.readFileSync(f.startsWith('icons/') ? iconSource(f.slice(6)) : path.join(PUBLIC_DIR, f)));
       const version = h.digest('hex').slice(0, 12);
       this.emitFile({ type: 'asset', fileName: 'sw.js', source: SW_TEMPLATE.replace('__VERSION__', version).replace('__FILES__', JSON.stringify(files)) });
     },
