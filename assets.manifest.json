@@ -1,0 +1,2016 @@
+{
+  "about": "Single source of truth for every art file. The game loads the first of public/<roots.licensed>/<path>, public/<roots.cc0>/<path>, public/<roots.placeholder>/<path> that exists with the right size. `kit` says where the file comes from in the CraftPix kit (npm run assets:import). Edit this file, then run `npm run assets:placeholders && npm run assets:docs`.",
+  "version": 1,
+  "roots": {
+    "licensed": "assets/licensed",
+    "cc0": "assets/cc0",
+    "placeholder": "assets/placeholder"
+  },
+  "sources": {
+    "craftpix-cat-defense": {
+      "name": "CraftPix: Free Cartoon Cat Defense Game Asset Kit",
+      "url": "https://craftpix.net/freebies/free-cartoon-cat-defense-game-asset-kit/",
+      "licence": "craftpix.net Freebies licence: free for commercial and personal projects; the raw files must NOT be redistributed, and the files may not be used to train AI. Keep them in public/assets/licensed/ (gitignored).",
+      "licenceUrl": "https://craftpix.net/file-licenses/"
+    },
+    "own": {
+      "name": "Altered Alley original (placeholder generator)",
+      "url": "scripts/placeholder-art.mjs",
+      "licence": "MIT, same as the code. Fine to commit."
+    }
+  },
+  "assets": [
+    {
+      "key": "cat.c1.idle",
+      "type": "spritesheet",
+      "path": "cats/c1-idle.png",
+      "width": 1880,
+      "height": 340,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 20,
+      "columns": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 24,
+        "repeat": -1
+      },
+      "usedFor": "Cat defender C1, idle loop (also its card portrait).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C1/Idle",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c1.shoot",
+      "type": "spritesheet",
+      "path": "cats/c1-shoot.png",
+      "width": 1880,
+      "height": 170,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 30,
+        "repeat": 0
+      },
+      "usedFor": "Cat defender C1, one shot.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C1/Shoot",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c2.idle",
+      "type": "spritesheet",
+      "path": "cats/c2-idle.png",
+      "width": 1880,
+      "height": 340,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 20,
+      "columns": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 24,
+        "repeat": -1
+      },
+      "usedFor": "Cat defender C2, idle loop (also its card portrait).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C2/Idle",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c2.shoot",
+      "type": "spritesheet",
+      "path": "cats/c2-shoot.png",
+      "width": 1880,
+      "height": 170,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 30,
+        "repeat": 0
+      },
+      "usedFor": "Cat defender C2, one shot.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C2/Shoot",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c3.idle",
+      "type": "spritesheet",
+      "path": "cats/c3-idle.png",
+      "width": 1880,
+      "height": 340,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 20,
+      "columns": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 24,
+        "repeat": -1
+      },
+      "usedFor": "Cat defender C3, idle loop (also its card portrait).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C3/Idle",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c3.shoot",
+      "type": "spritesheet",
+      "path": "cats/c3-shoot.png",
+      "width": 1880,
+      "height": 170,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 30,
+        "repeat": 0
+      },
+      "usedFor": "Cat defender C3, one shot.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C3/Shoot",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c4.idle",
+      "type": "spritesheet",
+      "path": "cats/c4-idle.png",
+      "width": 1880,
+      "height": 340,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 20,
+      "columns": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 24,
+        "repeat": -1
+      },
+      "usedFor": "Cat defender C4, idle loop (also its card portrait).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C4/Idle",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c4.shoot",
+      "type": "spritesheet",
+      "path": "cats/c4-shoot.png",
+      "width": 1880,
+      "height": 170,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 30,
+        "repeat": 0
+      },
+      "usedFor": "Cat defender C4, one shot.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C4/Shoot",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c5.idle",
+      "type": "spritesheet",
+      "path": "cats/c5-idle.png",
+      "width": 1880,
+      "height": 340,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 20,
+      "columns": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 24,
+        "repeat": -1
+      },
+      "usedFor": "Cat defender C5, idle loop (also its card portrait).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C5/Idle",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c5.shoot",
+      "type": "spritesheet",
+      "path": "cats/c5-shoot.png",
+      "width": 1880,
+      "height": 170,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 30,
+        "repeat": 0
+      },
+      "usedFor": "Cat defender C5, one shot.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C5/Shoot",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c6.idle",
+      "type": "spritesheet",
+      "path": "cats/c6-idle.png",
+      "width": 1880,
+      "height": 340,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 20,
+      "columns": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 24,
+        "repeat": -1
+      },
+      "usedFor": "Cat defender C6, idle loop (also its card portrait).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C6/Idle",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c6.shoot",
+      "type": "spritesheet",
+      "path": "cats/c6-shoot.png",
+      "width": 1880,
+      "height": 170,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 30,
+        "repeat": 0
+      },
+      "usedFor": "Cat defender C6, one shot.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C6/Shoot",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c7.idle",
+      "type": "spritesheet",
+      "path": "cats/c7-idle.png",
+      "width": 1880,
+      "height": 340,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 20,
+      "columns": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 24,
+        "repeat": -1
+      },
+      "usedFor": "Cat defender C7, idle loop (also its card portrait).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C7/Idle",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c7.shoot",
+      "type": "spritesheet",
+      "path": "cats/c7-shoot.png",
+      "width": 1880,
+      "height": 170,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 30,
+        "repeat": 0
+      },
+      "usedFor": "Cat defender C7, one shot.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C7/Shoot",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c8.idle",
+      "type": "spritesheet",
+      "path": "cats/c8-idle.png",
+      "width": 1880,
+      "height": 340,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 20,
+      "columns": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 24,
+        "repeat": -1
+      },
+      "usedFor": "Cat defender C8, idle loop (also its card portrait).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C8/Idle",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c8.shoot",
+      "type": "spritesheet",
+      "path": "cats/c8-shoot.png",
+      "width": 1880,
+      "height": 170,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 30,
+        "repeat": 0
+      },
+      "usedFor": "Cat defender C8, one shot.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C8/Shoot",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c9.idle",
+      "type": "spritesheet",
+      "path": "cats/c9-idle.png",
+      "width": 1880,
+      "height": 340,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 20,
+      "columns": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 24,
+        "repeat": -1
+      },
+      "usedFor": "Cat defender C9, idle loop (also its card portrait).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C9/Idle",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c9.shoot",
+      "type": "spritesheet",
+      "path": "cats/c9-shoot.png",
+      "width": 1880,
+      "height": 170,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 30,
+        "repeat": 0
+      },
+      "usedFor": "Cat defender C9, one shot.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C9/Shoot",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c10.idle",
+      "type": "spritesheet",
+      "path": "cats/c10-idle.png",
+      "width": 1880,
+      "height": 340,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 20,
+      "columns": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 24,
+        "repeat": -1
+      },
+      "usedFor": "Cat defender C10, idle loop (also its card portrait).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C10/Idle",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c10.shoot",
+      "type": "spritesheet",
+      "path": "cats/c10-shoot.png",
+      "width": 1880,
+      "height": 170,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 30,
+        "repeat": 0
+      },
+      "usedFor": "Cat defender C10, one shot.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C10/Shoot",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c11.idle",
+      "type": "spritesheet",
+      "path": "cats/c11-idle.png",
+      "width": 1880,
+      "height": 340,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 20,
+      "columns": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 24,
+        "repeat": -1
+      },
+      "usedFor": "Cat defender C11, idle loop (also its card portrait).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C11/Idle",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c11.shoot",
+      "type": "spritesheet",
+      "path": "cats/c11-shoot.png",
+      "width": 1880,
+      "height": 170,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 30,
+        "repeat": 0
+      },
+      "usedFor": "Cat defender C11, one shot.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C11/Shoot",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c12.idle",
+      "type": "spritesheet",
+      "path": "cats/c12-idle.png",
+      "width": 1880,
+      "height": 340,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 20,
+      "columns": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 24,
+        "repeat": -1
+      },
+      "usedFor": "Cat defender C12, idle loop (also its card portrait).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C12/Idle",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c12.shoot",
+      "type": "spritesheet",
+      "path": "cats/c12-shoot.png",
+      "width": 1880,
+      "height": 170,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 30,
+        "repeat": 0
+      },
+      "usedFor": "Cat defender C12, one shot.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C12/Shoot",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c13.idle",
+      "type": "spritesheet",
+      "path": "cats/c13-idle.png",
+      "width": 1880,
+      "height": 340,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 20,
+      "columns": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 24,
+        "repeat": -1
+      },
+      "usedFor": "Cat defender C13, idle loop (also its card portrait).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C13/Idle",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c13.shoot",
+      "type": "spritesheet",
+      "path": "cats/c13-shoot.png",
+      "width": 1880,
+      "height": 170,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 30,
+        "repeat": 0
+      },
+      "usedFor": "Cat defender C13, one shot.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C13/Shoot",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c14.idle",
+      "type": "spritesheet",
+      "path": "cats/c14-idle.png",
+      "width": 1880,
+      "height": 340,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 20,
+      "columns": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 24,
+        "repeat": -1
+      },
+      "usedFor": "Cat defender C14, idle loop (also its card portrait).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C14/Idle",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c14.shoot",
+      "type": "spritesheet",
+      "path": "cats/c14-shoot.png",
+      "width": 1880,
+      "height": 170,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 30,
+        "repeat": 0
+      },
+      "usedFor": "Cat defender C14, one shot.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C14/Shoot",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c15.idle",
+      "type": "spritesheet",
+      "path": "cats/c15-idle.png",
+      "width": 1880,
+      "height": 340,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 20,
+      "columns": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 24,
+        "repeat": -1
+      },
+      "usedFor": "Cat defender C15, idle loop (also its card portrait).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C15/Idle",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "cat.c15.shoot",
+      "type": "spritesheet",
+      "path": "cats/c15-shoot.png",
+      "width": 1880,
+      "height": 170,
+      "frameWidth": 188,
+      "frameHeight": 170,
+      "frameCount": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 30,
+        "repeat": 0
+      },
+      "usedFor": "Cat defender C15, one shot.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Characters/C15/Shoot",
+        "scale": 0.95
+      }
+    },
+    {
+      "key": "enemy.reg1.walk",
+      "type": "spritesheet",
+      "path": "enemies/reg1-walk.png",
+      "width": 1722,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 14,
+      "columns": 7,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Zombie 1, walking left.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 1/Walk",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg1.attack",
+      "type": "spritesheet",
+      "path": "enemies/reg1-attack.png",
+      "width": 1230,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 10,
+      "columns": 5,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Zombie 1, hitting the wall.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 1/Attack",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg1.dead",
+      "type": "spritesheet",
+      "path": "enemies/reg1-dead.png",
+      "width": 1230,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 10,
+      "columns": 5,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": 0
+      },
+      "usedFor": "Zombie 1, falling over.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 1/Dead",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg2.walk",
+      "type": "spritesheet",
+      "path": "enemies/reg2-walk.png",
+      "width": 1722,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 14,
+      "columns": 7,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Zombie 2, walking left.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 2/Walk",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg2.attack",
+      "type": "spritesheet",
+      "path": "enemies/reg2-attack.png",
+      "width": 1230,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 10,
+      "columns": 5,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Zombie 2, hitting the wall.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 2/Attack",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg2.dead",
+      "type": "spritesheet",
+      "path": "enemies/reg2-dead.png",
+      "width": 1230,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 10,
+      "columns": 5,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": 0
+      },
+      "usedFor": "Zombie 2, falling over.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 2/Dead",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg3.walk",
+      "type": "spritesheet",
+      "path": "enemies/reg3-walk.png",
+      "width": 1722,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 14,
+      "columns": 7,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Zombie 3, walking left.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 3/Walk",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg3.attack",
+      "type": "spritesheet",
+      "path": "enemies/reg3-attack.png",
+      "width": 1230,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 10,
+      "columns": 5,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Zombie 3, hitting the wall.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 3/Attack",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg3.dead",
+      "type": "spritesheet",
+      "path": "enemies/reg3-dead.png",
+      "width": 1230,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 10,
+      "columns": 5,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": 0
+      },
+      "usedFor": "Zombie 3, falling over.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 3/Dead",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg4.walk",
+      "type": "spritesheet",
+      "path": "enemies/reg4-walk.png",
+      "width": 1722,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 14,
+      "columns": 7,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Zombie 4, walking left.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 4/Walk",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg4.attack",
+      "type": "spritesheet",
+      "path": "enemies/reg4-attack.png",
+      "width": 1230,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 10,
+      "columns": 5,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Zombie 4, hitting the wall.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 4/Attack",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg4.dead",
+      "type": "spritesheet",
+      "path": "enemies/reg4-dead.png",
+      "width": 1230,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 10,
+      "columns": 5,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": 0
+      },
+      "usedFor": "Zombie 4, falling over.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 4/Dead",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg5.walk",
+      "type": "spritesheet",
+      "path": "enemies/reg5-walk.png",
+      "width": 1722,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 14,
+      "columns": 7,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Zombie 5, walking left.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 5/Walk",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg5.attack",
+      "type": "spritesheet",
+      "path": "enemies/reg5-attack.png",
+      "width": 1230,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 10,
+      "columns": 5,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Zombie 5, hitting the wall.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 5/Attack",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg5.dead",
+      "type": "spritesheet",
+      "path": "enemies/reg5-dead.png",
+      "width": 1230,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 10,
+      "columns": 5,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": 0
+      },
+      "usedFor": "Zombie 5, falling over.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 5/Dead",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg6.walk",
+      "type": "spritesheet",
+      "path": "enemies/reg6-walk.png",
+      "width": 1722,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 14,
+      "columns": 7,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Zombie 6, walking left.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 6/Walk",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg6.attack",
+      "type": "spritesheet",
+      "path": "enemies/reg6-attack.png",
+      "width": 1230,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 10,
+      "columns": 5,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Zombie 6, hitting the wall.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 6/Attack",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg6.dead",
+      "type": "spritesheet",
+      "path": "enemies/reg6-dead.png",
+      "width": 1230,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 10,
+      "columns": 5,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": 0
+      },
+      "usedFor": "Zombie 6, falling over.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 6/Dead",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg7.walk",
+      "type": "spritesheet",
+      "path": "enemies/reg7-walk.png",
+      "width": 1722,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 14,
+      "columns": 7,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Zombie 7, walking left.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 7/Walk",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg7.attack",
+      "type": "spritesheet",
+      "path": "enemies/reg7-attack.png",
+      "width": 1230,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 10,
+      "columns": 5,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Zombie 7, hitting the wall.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 7/Attack",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg7.dead",
+      "type": "spritesheet",
+      "path": "enemies/reg7-dead.png",
+      "width": 1230,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 10,
+      "columns": 5,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": 0
+      },
+      "usedFor": "Zombie 7, falling over.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 7/Dead",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg8.walk",
+      "type": "spritesheet",
+      "path": "enemies/reg8-walk.png",
+      "width": 1722,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 14,
+      "columns": 7,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Zombie 8, walking left.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 8/Walk",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg8.attack",
+      "type": "spritesheet",
+      "path": "enemies/reg8-attack.png",
+      "width": 1230,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 10,
+      "columns": 5,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Zombie 8, hitting the wall.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 8/Attack",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.reg8.dead",
+      "type": "spritesheet",
+      "path": "enemies/reg8-dead.png",
+      "width": 1230,
+      "height": 362,
+      "frameWidth": 246,
+      "frameHeight": 181,
+      "frameCount": 10,
+      "columns": 5,
+      "displayScale": 1.07,
+      "animation": {
+        "frameRate": 12,
+        "repeat": 0
+      },
+      "usedFor": "Zombie 8, falling over.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Reg 8/Dead",
+        "scale": 0.7
+      }
+    },
+    {
+      "key": "enemy.boss1.walk",
+      "type": "spritesheet",
+      "path": "enemies/boss1-walk.png",
+      "width": 2282,
+      "height": 552,
+      "frameWidth": 326,
+      "frameHeight": 276,
+      "frameCount": 14,
+      "columns": 7,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Area 1 boss, walking left.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 1/Walk",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "enemy.boss1.attack",
+      "type": "spritesheet",
+      "path": "enemies/boss1-attack.png",
+      "width": 1956,
+      "height": 552,
+      "frameWidth": 326,
+      "frameHeight": 276,
+      "frameCount": 12,
+      "columns": 6,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 14,
+        "repeat": -1
+      },
+      "usedFor": "Area 1 boss, hitting the wall.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 1/Attack",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "enemy.boss1.dead",
+      "type": "spritesheet",
+      "path": "enemies/boss1-dead.png",
+      "width": 1956,
+      "height": 552,
+      "frameWidth": 326,
+      "frameHeight": 276,
+      "frameCount": 12,
+      "columns": 6,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 12,
+        "repeat": 0
+      },
+      "usedFor": "Area 1 boss, falling over.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 1/Dead",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "enemy.boss2.walk",
+      "type": "spritesheet",
+      "path": "enemies/boss2-walk.png",
+      "width": 2282,
+      "height": 552,
+      "frameWidth": 326,
+      "frameHeight": 276,
+      "frameCount": 14,
+      "columns": 7,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Area 2 boss, walking left.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 2/Walk",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "enemy.boss2.attack",
+      "type": "spritesheet",
+      "path": "enemies/boss2-attack.png",
+      "width": 1956,
+      "height": 552,
+      "frameWidth": 326,
+      "frameHeight": 276,
+      "frameCount": 12,
+      "columns": 6,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 14,
+        "repeat": -1
+      },
+      "usedFor": "Area 2 boss, hitting the wall.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 2/Attack",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "enemy.boss2.dead",
+      "type": "spritesheet",
+      "path": "enemies/boss2-dead.png",
+      "width": 1956,
+      "height": 552,
+      "frameWidth": 326,
+      "frameHeight": 276,
+      "frameCount": 12,
+      "columns": 6,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 12,
+        "repeat": 0
+      },
+      "usedFor": "Area 2 boss, falling over.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 2/Dead",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "enemy.boss3.walk",
+      "type": "spritesheet",
+      "path": "enemies/boss3-walk.png",
+      "width": 2282,
+      "height": 552,
+      "frameWidth": 326,
+      "frameHeight": 276,
+      "frameCount": 14,
+      "columns": 7,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Area 3 boss, walking left.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 3/Walk",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "enemy.boss3.attack",
+      "type": "spritesheet",
+      "path": "enemies/boss3-attack.png",
+      "width": 1956,
+      "height": 552,
+      "frameWidth": 326,
+      "frameHeight": 276,
+      "frameCount": 12,
+      "columns": 6,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 14,
+        "repeat": -1
+      },
+      "usedFor": "Area 3 boss, hitting the wall.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 3/Attack",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "enemy.boss3.dead",
+      "type": "spritesheet",
+      "path": "enemies/boss3-dead.png",
+      "width": 1956,
+      "height": 552,
+      "frameWidth": 326,
+      "frameHeight": 276,
+      "frameCount": 12,
+      "columns": 6,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 12,
+        "repeat": 0
+      },
+      "usedFor": "Area 3 boss, falling over.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 3/Dead",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "enemy.boss4.walk",
+      "type": "spritesheet",
+      "path": "enemies/boss4-walk.png",
+      "width": 2282,
+      "height": 552,
+      "frameWidth": 326,
+      "frameHeight": 276,
+      "frameCount": 14,
+      "columns": 7,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Area 4 boss, walking left.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 4/Walk",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "enemy.boss4.attack",
+      "type": "spritesheet",
+      "path": "enemies/boss4-attack.png",
+      "width": 1956,
+      "height": 552,
+      "frameWidth": 326,
+      "frameHeight": 276,
+      "frameCount": 12,
+      "columns": 6,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 14,
+        "repeat": -1
+      },
+      "usedFor": "Area 4 boss, hitting the wall.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 4/Attack",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "enemy.boss4.dead",
+      "type": "spritesheet",
+      "path": "enemies/boss4-dead.png",
+      "width": 1956,
+      "height": 552,
+      "frameWidth": 326,
+      "frameHeight": 276,
+      "frameCount": 12,
+      "columns": 6,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 12,
+        "repeat": 0
+      },
+      "usedFor": "Area 4 boss, falling over.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 4/Dead",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "enemy.boss5.walk",
+      "type": "spritesheet",
+      "path": "enemies/boss5-walk.png",
+      "width": 2282,
+      "height": 552,
+      "frameWidth": 326,
+      "frameHeight": 276,
+      "frameCount": 14,
+      "columns": 7,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 12,
+        "repeat": -1
+      },
+      "usedFor": "Area 5 boss, walking left.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 5/Walk",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "enemy.boss5.attack",
+      "type": "spritesheet",
+      "path": "enemies/boss5-attack.png",
+      "width": 1956,
+      "height": 552,
+      "frameWidth": 326,
+      "frameHeight": 276,
+      "frameCount": 12,
+      "columns": 6,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 14,
+        "repeat": -1
+      },
+      "usedFor": "Area 5 boss, hitting the wall.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 5/Attack",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "enemy.boss5.dead",
+      "type": "spritesheet",
+      "path": "enemies/boss5-dead.png",
+      "width": 1956,
+      "height": 552,
+      "frameWidth": 326,
+      "frameHeight": 276,
+      "frameCount": 12,
+      "columns": 6,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 12,
+        "repeat": 0
+      },
+      "usedFor": "Area 5 boss, falling over.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Enemies/Enemy Boss 5/Dead",
+        "scale": 0.8
+      }
+    },
+    {
+      "key": "fx.explosion",
+      "type": "spritesheet",
+      "path": "fx/explosion.png",
+      "width": 2000,
+      "height": 400,
+      "frameWidth": 200,
+      "frameHeight": 200,
+      "frameCount": 20,
+      "columns": 10,
+      "displayScale": 1,
+      "animation": {
+        "frameRate": 30,
+        "repeat": 0
+      },
+      "usedFor": "Blast-cat splash and enemy pop.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Explosion",
+        "fit": true,
+        "align": "center"
+      }
+    },
+    {
+      "key": "fx.muzzle",
+      "type": "spritesheet",
+      "path": "fx/muzzle.png",
+      "width": 2070,
+      "height": 88,
+      "frameWidth": 138,
+      "frameHeight": 88,
+      "frameCount": 15,
+      "displayScale": 0.9,
+      "animation": {
+        "frameRate": 40,
+        "repeat": 0
+      },
+      "usedFor": "Muzzle flash when a cat fires.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/ShootFx",
+        "scale": 0.55,
+        "align": "center"
+      }
+    },
+    {
+      "key": "bullet.blast",
+      "type": "image",
+      "path": "fx/bullet-red.png",
+      "width": 68,
+      "height": 52,
+      "frameWidth": 68,
+      "frameHeight": 52,
+      "frameCount": 1,
+      "displayScale": 0.9,
+      "usedFor": "Blast bullet (red): splash damage.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Bullets/Artboard 1.png",
+        "scale": 0.6,
+        "align": "center"
+      }
+    },
+    {
+      "key": "bullet.venom",
+      "type": "image",
+      "path": "fx/bullet-green.png",
+      "width": 68,
+      "height": 52,
+      "frameWidth": 68,
+      "frameHeight": 52,
+      "frameCount": 1,
+      "displayScale": 0.9,
+      "usedFor": "Venom bullet (green): slows.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Bullets/Artboard 1 copy.png",
+        "scale": 0.6,
+        "align": "center"
+      }
+    },
+    {
+      "key": "bullet.rapid",
+      "type": "image",
+      "path": "fx/bullet-yellow.png",
+      "width": 68,
+      "height": 52,
+      "frameWidth": 68,
+      "frameHeight": 52,
+      "frameCount": 1,
+      "displayScale": 0.9,
+      "usedFor": "Rapid bullet (yellow): fast fire.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Bullets/Artboard 1 copy 2.png",
+        "scale": 0.6,
+        "align": "center"
+      }
+    },
+    {
+      "key": "bg.area1",
+      "type": "image",
+      "path": "bg/area1.png",
+      "width": 720,
+      "height": 988,
+      "frameWidth": 720,
+      "frameHeight": 988,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Area 1 road (5 lanes).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Area/Area1.png",
+        "crop": [
+          1369,
+          0,
+          774,
+          1062
+        ],
+        "align": "center"
+      }
+    },
+    {
+      "key": "bg.area2",
+      "type": "image",
+      "path": "bg/area2.png",
+      "width": 720,
+      "height": 988,
+      "frameWidth": 720,
+      "frameHeight": 988,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Area 2 road (5 lanes).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Area/Area2.png",
+        "crop": [
+          1369,
+          0,
+          774,
+          1062
+        ],
+        "align": "center"
+      }
+    },
+    {
+      "key": "bg.area3",
+      "type": "image",
+      "path": "bg/area3.png",
+      "width": 720,
+      "height": 988,
+      "frameWidth": 720,
+      "frameHeight": 988,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Area 3 road (5 lanes).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Area/Area3.png",
+        "crop": [
+          1369,
+          0,
+          774,
+          1062
+        ],
+        "align": "center"
+      }
+    },
+    {
+      "key": "bg.area4",
+      "type": "image",
+      "path": "bg/area4.png",
+      "width": 720,
+      "height": 988,
+      "frameWidth": 720,
+      "frameHeight": 988,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Area 4 road (5 lanes).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Area/Area4.png",
+        "crop": [
+          1369,
+          0,
+          774,
+          1062
+        ],
+        "align": "center"
+      }
+    },
+    {
+      "key": "bg.area5",
+      "type": "image",
+      "path": "bg/area5.png",
+      "width": 720,
+      "height": 988,
+      "frameWidth": 720,
+      "frameHeight": 988,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Area 5 road (5 lanes).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Area/Area5.png",
+        "crop": [
+          1369,
+          0,
+          774,
+          1062
+        ],
+        "align": "center"
+      }
+    },
+    {
+      "key": "bg.menu",
+      "type": "image",
+      "path": "bg/menu.png",
+      "width": 720,
+      "height": 1280,
+      "frameWidth": 720,
+      "frameHeight": 1280,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Menu backdrop: the cats from the landing screen.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/LandingScreen.png",
+        "crop": [
+          30,
+          0,
+          598,
+          1063
+        ],
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.coin",
+      "type": "image",
+      "path": "ui/coin.png",
+      "width": 59,
+      "height": 56,
+      "frameWidth": 59,
+      "frameHeight": 56,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Coin icon (HUD, card costs).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/CoinIcon.png",
+        "scale": 1,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.coinbar",
+      "type": "image",
+      "path": "ui/coinbar.png",
+      "width": 169,
+      "height": 56,
+      "frameWidth": 169,
+      "frameHeight": 56,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Coin counter backing.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/CoinBar.png",
+        "scale": 1,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.wavebar",
+      "type": "image",
+      "path": "ui/wavebar.png",
+      "width": 190,
+      "height": 69,
+      "frameWidth": 190,
+      "frameHeight": 69,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Wave counter with skull.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/WaveBar.png",
+        "scale": 1,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.cardbox",
+      "type": "image",
+      "path": "ui/cardbox.png",
+      "width": 158,
+      "height": 158,
+      "frameWidth": 158,
+      "frameHeight": 158,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Cat card in the bottom tray.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/YellowBox.png",
+        "scale": 1,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.btn-green",
+      "type": "image",
+      "path": "ui/btn-green.png",
+      "width": 340,
+      "height": 122,
+      "frameWidth": 340,
+      "frameHeight": 122,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Main button (Play).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/BtnGreen.png",
+        "scale": 1,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.btn-orange",
+      "type": "image",
+      "path": "ui/btn-orange.png",
+      "width": 337,
+      "height": 126,
+      "frameWidth": 337,
+      "frameHeight": 126,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Second button (Menu, Retry).",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/BtnOrange.png",
+        "scale": 1,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.settings",
+      "type": "image",
+      "path": "ui/settings.png",
+      "width": 99,
+      "height": 96,
+      "frameWidth": 99,
+      "frameHeight": 96,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Pause button.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/SettingBtn.png",
+        "scale": 1,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.wall",
+      "type": "image",
+      "path": "ui/wall.png",
+      "width": 86,
+      "height": 85,
+      "frameWidth": 86,
+      "frameHeight": 85,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Wall health icon.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/WallIcon.png",
+        "scale": 1,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.ribbon",
+      "type": "image",
+      "path": "ui/ribbon.png",
+      "width": 490,
+      "height": 148,
+      "frameWidth": 490,
+      "frameHeight": 148,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Area / wave banner.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/TitleRibbon.png",
+        "scale": 1,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.win",
+      "type": "image",
+      "path": "ui/win.png",
+      "width": 688,
+      "height": 301,
+      "frameWidth": 688,
+      "frameHeight": 301,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "You win banner.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/WinPopUp.png",
+        "scale": 0.5,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.lose",
+      "type": "image",
+      "path": "ui/lose.png",
+      "width": 644,
+      "height": 283,
+      "frameWidth": 644,
+      "frameHeight": 283,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "You lose banner.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/LosePopUp.png",
+        "scale": 0.6,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.up1",
+      "type": "image",
+      "path": "ui/up1.png",
+      "width": 46,
+      "height": 59,
+      "frameWidth": 46,
+      "frameHeight": 59,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Cat level 2 badge.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Up1.png",
+        "scale": 1,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.up2",
+      "type": "image",
+      "path": "ui/up2.png",
+      "width": 46,
+      "height": 59,
+      "frameWidth": 46,
+      "frameHeight": 59,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Cat level 3 badge.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Up2.png",
+        "scale": 1,
+        "align": "center"
+      }
+    },
+    {
+      "key": "ui.up3",
+      "type": "image",
+      "path": "ui/up3.png",
+      "width": 46,
+      "height": 59,
+      "frameWidth": 46,
+      "frameHeight": 59,
+      "frameCount": 1,
+      "displayScale": 1,
+      "usedFor": "Cat level 4 badge.",
+      "source": "craftpix-cat-defense",
+      "kit": {
+        "files": "Png/Ui/Up3.png",
+        "scale": 1,
+        "align": "center"
+      }
+    }
+  ]
+}
