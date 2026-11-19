@@ -64,6 +64,8 @@ export interface FightSetup {
   income?: number;
   /** The add-ons taken into this fight (the loadout). */
   addons?: Equipped[];
+  /** Repair Wall unlocks after level 2 (default on). */
+  repair?: boolean;
 }
 
 export class Defense {
@@ -90,6 +92,7 @@ export class Defense {
   readonly level: LevelDef;
   readonly addons: Equipped[];
   readonly seed: number;
+  readonly canRepair: boolean;
   private readonly incomePerS: number;
   private rand: () => number;
   private queue: Spawn[] = [];
@@ -108,6 +111,7 @@ export class Defense {
     this.incomePerS = setup.income ?? INCOME_PER_S;
     this.addons = (setup.addons ?? []).map((a) => ({ ...a }));
     this.area = setup.level.waves[0].area;
+    this.canRepair = setup.repair ?? true;
   }
 
   get totalWaves(): number { return this.level.waves.length; }
@@ -116,11 +120,14 @@ export class Defense {
   placeCost(def: Defender): number { return PLACE_COST + PLACE_STEP * (this.copies.get(def.uid) ?? 0); }
   upgradeCost(p: Placed): number | null { return p.level >= MAX_LEVEL ? null : UPGRADE_COST[p.level - 1]; }
   /** null when the wall is full. */
-  repairCost(): number | null { return this.wallHp >= this.wallMax ? null : REPAIR_COST + REPAIR_STEP * this.stats.repairs; }
+  repairCost(): number | null { return !this.canRepair || this.wallHp >= this.wallMax ? null : REPAIR_COST + REPAIR_STEP * this.stats.repairs; }
+
+  /** A lane is closed on levels that use fewer (the tutorial). */
+  laneOpen(lane: number): boolean { return !this.level.lanes || this.level.lanes.includes(lane); }
 
   place(slot: number, def: Defender): Placed | null {
     const cost = this.placeCost(def);
-    if (this.state !== 'playing' || this.slots[slot] || this.coins < cost) return null;
+    if (this.state !== 'playing' || this.slots[slot] || this.coins < cost || !this.laneOpen(slotLane(slot))) return null;
     this.coins -= cost;
     const p: Placed = { id: this.ids++, slot, def, level: 1, cooldown: 0.25 };
     this.slots[slot] = p;
@@ -157,7 +164,7 @@ export class Defense {
     const a = this.addons[index];
     if (this.state !== 'playing' || !a || a.uses <= 0) return false;
     const needsLane = a.id !== 'coins' && a.id !== 'bomb';
-    if (needsLane && (lane < 0 || lane >= LANES)) return false;
+    if (needsLane && (lane < 0 || lane >= LANES || !this.laneOpen(lane))) return false;
     a.uses--;
     this.stats.addonsUsed++;
     this.events.push({ t: 'addon', index, id: a.id, lane });
@@ -205,6 +212,7 @@ export class Defense {
   // ── Simulation ───────────────────────────────────────────────────────────────────────────────────
   step(): void {
     if (this.state !== 'playing') return;
+    if (this.level.tutorial && this.stats.placed === 0) return; // the tutorial waits for the first cat
     const dt = STEP;
     this.time += dt;
     this.income += this.incomePerS * dt;
@@ -246,7 +254,7 @@ export class Defense {
     if (w.area !== this.area) { this.area = w.area; this.events.push({ t: 'area', area: w.area }); }
     this.wave = i;
     this.waveStart = this.time;
-    this.queue = makeWave(w, this.rand);
+    this.queue = makeWave(w, this.rand, this.level.lanes);
     const lastAt = this.queue[this.queue.length - 1]?.at ?? 0;
     this.nextWaveAt = this.time + lastAt + WAVE_TIMEOUT;
     this.events.push({ t: 'wave', wave: i, total: this.totalWaves, area: w.area, boss: w.bosses.length > 0 });
@@ -273,8 +281,10 @@ export class Defense {
           u.hp -= e.type.dmg * 8; // add-on cats take hits harder than crates
           if (u.hp <= 0) this.removeUnit(u);
         } else {
-          this.wallHp = Math.max(0, this.wallHp - e.type.dmg);
+          this.wallHp = Math.max(this.level.tutorial ? 1 : 0, this.wallHp - e.type.dmg);
           this.events.push({ t: 'wall', enemy: e, dmg: e.type.dmg });
+          // The tutorial can't be lost: once its wall is down to 1, zombies that reach it are knocked out.
+          if (this.level.tutorial && this.wallHp <= 1) this.damage(e, e.hp, null, true);
         }
       }
     }

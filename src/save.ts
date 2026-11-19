@@ -3,8 +3,7 @@
 import { SAMPLE_NFTS } from './config.ts';
 import { awisFromItems, type AWI } from './game/awi.ts';
 import { PROFILES, type ProfileId } from './game/demo.ts';
-import { addonAwis, deckOf, equipped, fightBonus, fixSave, type Save } from './game/progress.ts';
-import { levelDef, type LevelDef } from './game/levels.ts';
+import { addonAwis, deckOf, fightSetup, fixSave, type Save } from './game/progress.ts';
 
 const PROFILE_KEY = 'defend-the-alley.profile.v1';
 const SAVE_KEY = 'defend-the-alley.save.v1.'; // + profile id
@@ -50,9 +49,7 @@ class Player {
   deck() { return deckOf(this.save, this.awis); }
 
   /** Everything a fight needs. */
-  fight(level: number): { level: LevelDef; deck: ReturnType<typeof deckOf>; addons: ReturnType<typeof equipped>; bonus: ReturnType<typeof fightBonus> } {
-    return { level: levelDef(level), deck: this.deck(), addons: equipped(this.save, this.awis), bonus: fightBonus(this.save) };
-  }
+  fight(level: number) { return fightSetup(this.save, this.awis, level); }
 }
 
 export const player = new Player();

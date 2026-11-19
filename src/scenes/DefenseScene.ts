@@ -4,18 +4,20 @@ import Phaser from 'phaser';
 import { COLORS, DEBUG, GAME_H, GAME_W, SEED, TRAY_Y } from '../config.ts';
 import { addonArt, areaArt, asset, ensureLoaded, isAreaArt, release } from '../assets.ts';
 import { player } from '../save.ts';
-import { ATTACKS, MAX_LEVEL, RARITY_COLOR, muzzleOffset, type Defender } from '../game/cats.ts';
+import { ATTACKS, MAX_LEVEL, RARITY_COLOR, catName, family, guestCat, muzzleOffset, type Defender } from '../game/cats.ts';
 import { COLS, LANES, SLOT_SIZE, SLOT_X, STOP_X, WALL_BAR, WALL_X0, WALL_X1, LANE_H, LANE_TOP, laneCenter, laneFeet, slotIndex, slotLane } from '../game/layout.ts';
 import { Defense, STEP, type Enemy, type Placed, type SimEvent, type Trap, type Unit } from '../game/sim.ts';
 import { AREAS } from '../game/waves.ts';
 import { FULL_ALLEY, LEVEL_COUNT, starsFor, type LevelDef } from '../game/levels.ts';
 import { ADDONS, type Equipped } from '../game/addons.ts';
-import { alleyGems, levelGems, spendAddons } from '../game/progress.ts';
+import { alleyGems, clearLevel, levelGems, spendAddons } from '../game/progress.ts';
+import { FEATURES, type Feature, type Unlock } from '../game/unlocks.ts';
 import { think } from '../game/bot.ts';
 import { button, tappable, text } from '../ui.ts';
 import { buzz, isMuted, musicOn, sfx, soundOn, toggleMusic, toggleMute, toggleSound, toggleVibra, vibraOn } from '../systems/audio.ts';
 
 const BOT = new URLSearchParams(location.search).has('bot');
+const FEATURE_ICON: Record<Feature, string> = { repair: 'ui.wall', cats: 'ui.icon-cat', addons: 'ui.icon-addon', merge: 'ui.up1', alley: 'ui.icon-home', hard: 'ui.up3' };
 const D = { bg: 0, slot: 10, wall: 20, actors: 100, fx: 900, hud: 1000, tray: 1100, bubble: 1200, overlay: 2000 };
 
 interface EnemyView { spr: Phaser.GameObjects.Sprite; bar: Phaser.GameObjects.Rectangle; barBg: Phaser.GameObjects.Rectangle; state: Enemy['state']; flashUntil: number }
@@ -64,8 +66,10 @@ export class DefenseScene extends Phaser.Scene {
   /** An add-on waiting for a lane tap. */
   private armed = -1;
   private laneZones: Phaser.GameObjects.Rectangle[] = [];
-  private repairBtn!: { c: Phaser.GameObjects.Container; cost: Phaser.GameObjects.Text; shown: string };
+  private repairBtn: { c: Phaser.GameObjects.Container; cost: Phaser.GameObjects.Text; shown: string } | null = null;
   private coinsX2!: Phaser.GameObjects.Text;
+  /** Level 1's guided steps (null on other levels or once done). */
+  private tut: { step: number; hand: Phaser.GameObjects.Text; box: Phaser.GameObjects.Container; msg: Phaser.GameObjects.Text } | null = null;
 
   constructor() { super('Defense'); }
 
@@ -75,8 +79,9 @@ export class DefenseScene extends Phaser.Scene {
     const f = player.fight(this.levelN);
     this.def = f.level;
     this.startAddons = f.addons.map((a) => ({ ...a }));
-    this.sim = new Defense({ deck: f.deck, level: f.level, seed: SEED || Math.floor(Math.random() * 1e9), ...f.bonus, addons: f.addons });
+    this.sim = new Defense({ ...f, seed: SEED || Math.floor(Math.random() * 1e9) });
     this.acc = 0; this.speed = 1; this.paused = false; this.ended = false; this.armed = -1;
+    this.tut = null;
     this.enemies.clear(); this.cats.clear(); this.bullets.clear(); this.units.clear(); this.traps.clear();
     this.fxPool = []; this.cards = []; this.slotTiles = []; this.addonBtns = []; this.laneZones = []; this.bubble = null;
     this.shown = { coins: -1, wall: -1 };
@@ -92,7 +97,7 @@ export class DefenseScene extends Phaser.Scene {
     this.drawHud();
     this.drawTray(f.deck);
     this.drawAddons();
-    this.selectCard(f.deck[0]);
+    if (this.def.tutorial) this.startTutorial(); else { this.selectCard(f.deck[0]); this.showTips(); }
     this.banner(this.def.n === FULL_ALLEY ? `Area 1 · ${AREAS[0].name}` : `${this.def.title} · ${AREAS[area].name}`, 'Place your cats!');
 
     this.input.on('pointerdown', (_p: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => { if (!over.length) this.closeBubble(); });
@@ -122,8 +127,8 @@ export class DefenseScene extends Phaser.Scene {
   private onEvent(e: SimEvent): void {
     switch (e.t) {
       case 'spawn': return this.spawnEnemy(e.enemy);
-      case 'place': this.hideHint(); return this.showCat(e.cat, true);
-      case 'upgrade': return this.showCat(e.cat, false);
+      case 'place': this.hideHint(); this.showCat(e.cat, true); return this.tutStep('place');
+      case 'upgrade': this.showCat(e.cat, false); return this.tutStep('upgrade');
       case 'shoot': return this.shoot(e.slot, e.bullet.id, e.bullet.attack);
       case 'hit': return this.onHit(e.enemy, e.bullet?.id ?? -1, e.bullet?.attack ?? null, e.splash);
       case 'kill': return this.onKill(e.enemy, e.coins);
@@ -179,17 +184,18 @@ export class DefenseScene extends Phaser.Scene {
       if (u.fighting !== v.fighting) { v.fighting = u.fighting; v.spr.play(`addon.${u.kind}.${u.fighting ? 'attack' : 'idle'}`); }
       v.bar.width = 56 * Math.max(0, u.hp / u.maxHp);
     }
+    if (this.tut) this.tutTick();
     if (this.coinsX2.visible && now >= this.sim.coinsUntil) this.coinsX2.setVisible(false);
     this.addonBtns.forEach((b, i) => {
       const n = this.sim.addons[i].uses;
       if (n !== b.shown) { b.shown = n; b.count.setText(String(n)); b.c.setAlpha(n > 0 ? 1 : 0.4); }
     });
-    const rc = this.sim.repairCost();
+    const rb = this.repairBtn, rc = this.sim.repairCost();
     const rs = rc === null ? 'full' : `${rc}`;
-    if (rs !== this.repairBtn.shown || (rc !== null && (this.sim.coins >= rc) !== (this.repairBtn.c.alpha === 1))) {
-      this.repairBtn.shown = rs;
-      this.repairBtn.cost.setText(rc === null ? 'Full' : String(rc));
-      this.repairBtn.c.setAlpha(rc !== null && this.sim.coins >= rc ? 1 : 0.5);
+    if (rb && (rs !== rb.shown || (rc !== null && (this.sim.coins >= rc) !== (rb.c.alpha === 1)))) {
+      rb.shown = rs;
+      rb.cost.setText(rc === null ? 'Full' : String(rc));
+      rb.c.setAlpha(rc !== null && this.sim.coins >= rc ? 1 : 0.5);
     }
     if (this.sim.wallHp !== this.shown.wall) {
       this.shown.wall = this.sim.wallHp;
@@ -203,11 +209,16 @@ export class DefenseScene extends Phaser.Scene {
   // ── Street ───────────────────────────────────────────────────────────────────────────────────────
   /** Tap zones on the kit's grid squares (the squares themselves are part of the street art). */
   private drawSlots(): void {
+    for (let l = 0; l < LANES; l++) if (!this.sim.laneOpen(l)) {
+      this.add.rectangle(0, laneCenter(l), GAME_W, LANE_H, 0x10141a, 0.62).setOrigin(0, 0.5).setDepth(D.slot - 1);
+    }
     for (let l = 0; l < LANES; l++) for (let c = 0; c < COLS; c++) {
+      if (!this.sim.laneOpen(l)) continue;
       const s = slotIndex(l, c);
       const tile = this.add.rectangle(SLOT_X[c], laneCenter(l), SLOT_SIZE + 10, LANE_H - 4, 0xffffff, 0)
         .setStrokeStyle(3, 0xffffff, 0).setDepth(D.slot).setInteractive({ useHandCursor: true });
       tile.on('pointerup', () => this.tapSlot(s));
+      tile.setData('slot', s);
       this.slotTiles.push(tile);
     }
   }
@@ -366,6 +377,7 @@ export class DefenseScene extends Phaser.Scene {
 
   private selectCard(def: Defender): void {
     this.selected = def;
+    this.tutStep('card');
     this.closeBubble();
     for (const c of this.cards) {
       const on = c.def === def;
@@ -380,7 +392,7 @@ export class DefenseScene extends Phaser.Scene {
     const placed = this.sim.slots[slot];
     if (placed) { this.openBubble(placed); return; }
     this.closeBubble();
-    if (!this.selected) return;
+    if (!this.selected) { this.flashHint('Tap a cat card first'); return; }
     const cost = this.sim.placeCost(this.selected);
     if (this.sim.coins < cost) { this.flashHint(`Need ${cost} coins`); return; }
     this.sim.place(slot, this.selected);
@@ -419,6 +431,7 @@ export class DefenseScene extends Phaser.Scene {
       });
     } else items.push(text(this, 0, 32, `Max level (${MAX_LEVEL})`, 22, '#ffd02a', 3).setOrigin(0.5));
     this.bubble = this.add.container(x, y, items).setDepth(D.bubble).setSize(270, 112);
+    if (this.tut?.step === 6 && cost !== null) this.pointAt(x, y + 14);
     bg.setInteractive(); // swallow taps on the bubble itself
     this.time.delayedCall(4000, () => { if (this.bubble?.getData('slot') === p.slot) this.closeBubble(); });
     this.bubble.setData('slot', p.slot);
@@ -437,9 +450,95 @@ export class DefenseScene extends Phaser.Scene {
     this.tweens.add({ targets: all, alpha: 1, duration: 200, yoyo: true, hold: 1300, onComplete: () => all.forEach((o) => o.destroy()) });
   }
 
+  // ── Tutorial (level 1) and one-time tips ───────────────────────────────────────────────────────────
+  private startTutorial(): void {
+    const msg = text(this, 0, 0, '', 28, '#ffffff', 5).setOrigin(0.5);
+    const box = this.add.container(GAME_W / 2, 168, [this.add.rectangle(0, 0, 760, 74, 0x16131d, 0.88).setStrokeStyle(3, 0xffd02a), msg]).setDepth(D.bubble + 10);
+    const hand = text(this, 0, 0, '👇', 64, '#ffffff', 0).setOrigin(0.5, 1).setDepth(D.bubble + 11);
+    this.tweens.add({ targets: hand, y: '+=14', yoyo: true, repeat: -1, duration: 380, ease: 'Sine.InOut' });
+    this.tut = { step: 0, hand, box, msg };
+    this.hint.setVisible(false);
+    this.tutShow();
+  }
+
+  /** Point the hand at (x, y) from above. */
+  private pointAt(x: number, y: number): void {
+    if (!this.tut) return;
+    this.tweens.killTweensOf(this.tut.hand);
+    this.tut.hand.setVisible(true).setPosition(x, y);
+    this.tweens.add({ targets: this.tut.hand, y: y + 14, yoyo: true, repeat: -1, duration: 380, ease: 'Sine.InOut' });
+  }
+
+  private tutShow(): void {
+    const t = this.tut;
+    if (!t) return;
+    const card = this.cards[0]?.c, square = (lane: number) => [SLOT_X[1], laneCenter(lane) - 30] as const;
+    const say = (s: string) => { t.msg.setText(s); if (t.msg.width > 730) t.msg.setScale(730 / t.msg.width); else t.msg.setScale(1); };
+    t.hand.setVisible(false);
+    switch (t.step) {
+      case 0: say('Tap the cat card'); if (card) this.pointAt(card.x, TRAY_Y - 50); break;
+      case 1: say('Now tap a square by the wall'); this.pointAt(...square(2)); break;
+      case 2: say('Zombies! Your cat shoots along its lane. Each zombie drops coins.'); break;
+      case 3: say('Zombies come down every lane: put a cat in this one too'); this.pointAt(...square(1)); break;
+      case 4: say('And one in the last lane'); this.pointAt(...square(3)); break;
+      case 5: say('Good! Coins keep coming in, a few every second.'); break;
+      case 6: { say('Tap one of your cats to upgrade it'); const v = this.cats.get(slotIndex(2, 1)) ?? [...this.cats.values()][0]; if (v) this.pointAt(v.spr.x, v.spr.y - 66); break; }
+      case 7:
+        say('Upgraded! Now hold the street.');
+        this.time.delayedCall(3000, () => this.endTutorial());
+        break;
+    }
+  }
+
+  /** Something happened that may finish the current step. */
+  private tutStep(what: 'card' | 'place' | 'upgrade'): void {
+    const t = this.tut;
+    if (!t) return;
+    const next = (t.step === 0 && what === 'card') || ((t.step === 1 || t.step === 3 || t.step === 4) && what === 'place') || (t.step === 6 && what === 'upgrade');
+    if (next) { t.step++; this.tutShow(); }
+  }
+
+  /** Steps that wait on coins. */
+  private tutTick(): void {
+    const t = this.tut!;
+    if (t.step === 2 && this.sim.stats.kills > 0 && this.selected && this.sim.coins >= this.sim.placeCost(this.selected)) { t.step = 3; this.tutShow(); }
+    else if (t.step === 5 && this.sim.coins >= 35) { t.step = 6; this.tutShow(); }
+  }
+
+  private endTutorial(): void {
+    const t = this.tut;
+    if (!t) return;
+    this.tut = null;
+    this.tweens.killTweensOf(t.hand);
+    this.tweens.add({ targets: [t.box, t.hand], alpha: 0, duration: 400, onComplete: () => { t.box.destroy(); t.hand.destroy(); } });
+  }
+
+  /** The first fight with Repair or add-ons explains them once. */
+  private showTips(): void {
+    const s = player.save, tips: [string, string, number, number][] = [];
+    if (this.repairBtn && !s.tips.includes('repair')) tips.push(['repair', 'New: Repair Wall. Tap it to fix a quarter of the wall (costs coins).', this.repairBtn.c.x, TRAY_Y - 60]);
+    const a = this.addonBtns[0];
+    if (a && !s.tips.includes('addons')) tips.push(['addons', 'Add-ons: tap one, then tap a lane. Big Bomb and Coins ×2 go off at once.', a.c.x, TRAY_Y - 60]);
+    if (!tips.length) return;
+    for (const [k] of tips) s.tips.push(k);
+    player.persist();
+    tips.forEach(([, msg, x, y], i) => this.time.delayedCall(2000 + i * 5500, () => {
+      if (this.ended) return;
+      const m = text(this, GAME_W / 2, 168, msg, 26, '#ffd02a', 5).setOrigin(0.5).setDepth(D.bubble + 10);
+      if (m.width > 1100) m.setScale(1100 / m.width);
+      const hand = text(this, x, y, '👇', 56, '#ffffff', 0).setOrigin(0.5, 1).setDepth(D.bubble + 11);
+      this.tweens.add({ targets: hand, y: y + 12, yoyo: true, repeat: 6, duration: 380 });
+      this.tweens.add({ targets: [m, hand], alpha: 0, delay: 4800, duration: 400, onComplete: () => { m.destroy(); hand.destroy(); } });
+    }));
+  }
+
   // ── Repair and add-ons ───────────────────────────────────────────────────────────────────────────
   /** Bottom left, beside the cards: Repair Wall, then one button per equipped add-on. */
   private drawAddons(): void {
+    this.repairBtn = null;
+    const x0 = this.sim.canRepair ? 196 : 80;
+    this.sim.addons.forEach((a, i) => this.addonButton(a, i, x0 + i * 108));
+    if (!this.sim.canRepair) return;
     const cost = text(this, 0, 40, '', 22).setOrigin(0.5);
     const c = this.add.container(80, TRAY_Y, [
       this.add.image(0, 0, 'ui.addon-slot').setScale(0.62),
@@ -455,22 +554,22 @@ export class DefenseScene extends Phaser.Scene {
       if (!this.sim.repair()) this.flashHint(`Need ${rc} coins to repair`);
     });
     text(this, 80, TRAY_Y - 58, 'Repair', 18, COLORS.text, 4).setOrigin(0.5).setDepth(D.tray);
+  }
 
-    this.sim.addons.forEach((a, i) => {
-      const x = 196 + i * 108;
-      const glow = this.add.rectangle(0, 0, 100, 100, 0xffee00, 0.85).setVisible(false);
-      const count = text(this, 30, 32, String(a.uses), 26).setOrigin(0.5);
-      const items: Phaser.GameObjects.GameObject[] = [glow, this.add.image(0, 0, 'ui.addon-slot').setScale(0.62), this.add.image(0, -4, `ui.addon-${a.id}`).setScale(0.56), count];
-      if (a.awi) items.push(this.add.rectangle(0, -40, 56, 6, 0xffd02a), text(this, -26, 32, 'AWI', 16, '#ffd02a', 4).setOrigin(0.5));
-      const c = this.add.container(x, TRAY_Y, items).setSize(94, 94).setDepth(D.tray);
-      tappable(c, () => this.tapAddon(i));
-      this.addonBtns.push({ c, count, glow, shown: -1 });
-    });
+  private addonButton(a: Equipped, i: number, x: number): void {
+    const glow = this.add.rectangle(0, 0, 100, 100, 0xffee00, 0.85).setVisible(false);
+    const count = text(this, 30, 32, String(a.uses), 26).setOrigin(0.5);
+    const items: Phaser.GameObjects.GameObject[] = [glow, this.add.image(0, 0, 'ui.addon-slot').setScale(0.62), this.add.image(0, -4, `ui.addon-${a.id}`).setScale(0.56), count];
+    if (a.awi) items.push(this.add.rectangle(0, -40, 56, 6, 0xffd02a), text(this, -26, 32, 'AWI', 16, '#ffd02a', 4).setOrigin(0.5));
+    const c = this.add.container(x, TRAY_Y, items).setSize(94, 94).setDepth(D.tray);
+    tappable(c, () => this.tapAddon(i));
+    this.addonBtns.push({ c, count, glow, shown: -1 });
   }
 
   private drawLaneZones(): void {
     const x0 = STOP_X - 20;
     for (let l = 0; l < LANES; l++) {
+      if (!this.sim.laneOpen(l)) { this.laneZones.push(this.add.rectangle(0, 0, 1, 1).setVisible(false)); continue; }
       const z = this.add.rectangle(x0, laneCenter(l), GAME_W - x0, LANE_H - 6, 0xffee00, 0).setOrigin(0, 0.5)
         .setStrokeStyle(3, 0xffee00, 0).setDepth(D.fx - 1);
       z.on('pointerover', () => { if (this.armed >= 0) z.setFillStyle(0xffee00, 0.22); });
@@ -490,7 +589,7 @@ export class DefenseScene extends Phaser.Scene {
     this.disarm();
     this.armed = i;
     this.addonBtns[i].glow.setVisible(true);
-    for (const z of this.laneZones) z.setInteractive({ useHandCursor: true }).setFillStyle(0xffee00, 0.08).setStrokeStyle(3, 0xffee00, 0.6);
+    for (const z of this.laneZones.filter((z) => z.visible)) z.setInteractive({ useHandCursor: true }).setFillStyle(0xffee00, 0.08).setStrokeStyle(3, 0xffee00, 0.6);
     this.hint.setText(`${ADDONS[a.id].name}: tap a lane`).setVisible(true).setAlpha(1).setColor('#ffd02a');
     this.tweens.killTweensOf(this.hint);
   }
@@ -618,11 +717,12 @@ export class DefenseScene extends Phaser.Scene {
 
   private endRun(won: boolean): void {
     this.ended = true;
+    this.endTutorial();
     this.closeBubble();
     this.disarm();
     const st = this.sim.stats, s = player.save, n = this.def.n;
     const cleared = won ? this.sim.totalWaves : this.sim.wave;
-    let gems = 0, stars = 0, first = false, better = false;
+    let gems = 0, stars = 0, first = false, better = false, got: Unlock[] = [];
     if (n === FULL_ALLEY) {
       gems = alleyGems(cleared, won);
       const best = s.alley, wave = this.sim.wave + 1, time = this.sim.time;
@@ -632,7 +732,7 @@ export class DefenseScene extends Phaser.Scene {
       stars = starsFor(this.sim.wallHp / this.sim.wallMax);
       first = s.stars[n] === 0;
       gems = levelGems(n, stars, first);
-      s.stars[n] = Math.max(s.stars[n], stars);
+      got = clearLevel(s, player.awis, n, stars);
     }
     s.gems += gems;
     spendAddons(s, this.startAddons, this.sim.addons);
@@ -669,8 +769,47 @@ export class DefenseScene extends Phaser.Scene {
       );
       const c = this.add.container(0, 0, items).setDepth(D.overlay).setAlpha(0);
       this.tweens.add({ targets: c, alpha: 1, duration: 300 });
+      if (got.length) void this.reveal(got);
       if (BOT) this.time.delayedCall(4000, () => this.scene.restart({ level: this.levelN }));
     });
+  }
+
+  /** "NEW!" cards for what this clear unlocked, over the win screen; OK closes them. */
+  private async reveal(got: Unlock[]): Promise<void> {
+    await ensureLoaded(this, got.flatMap((u) => (u.kind === 'cat' ? [`cat.c${u.cat}.idle`] : [])));
+    if (!this.scene.isActive()) return;
+    const cx = GAME_W / 2, w = 300, gap = 24, x0 = cx - ((got.length - 1) * (w + gap)) / 2;
+    const items: Phaser.GameObjects.GameObject[] = [
+      this.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.7).setOrigin(0).setInteractive(),
+      this.add.image(cx, 110, 'ui.ribbon').setScale(0.8), text(this, cx, 96, got.length > 1 ? 'NEW UNLOCKS!' : 'NEW UNLOCK!', 42).setOrigin(0.5),
+    ];
+    got.forEach((u, i) => {
+      const x = x0 + i * (w + gap), y = 360;
+      const card = this.add.rectangle(x, y, w, 330, 0xf4e3c3).setStrokeStyle(5, 0xffd02a);
+      let pic: Phaser.GameObjects.Image, title: string, blurb: string;
+      if (u.kind === 'cat') {
+        const d = guestCat(u.cat);
+        pic = this.add.image(x, y + 4, `cat.c${u.cat}.idle`, 0).setOrigin(0.5, 1).setScale(asset(`cat.c${u.cat}.idle`).displayScale * 2);
+        title = `New cat: ${catName(u.cat)}`;
+        blurb = `${family(u.cat).name} · ${ATTACKS[d.attack].name}: ${ATTACKS[d.attack].blurb.toLowerCase()}`;
+      } else if (u.kind === 'addon') {
+        pic = this.add.image(x, y - 80, `ui.addon-${u.id}`).setScale(0.9);
+        title = ADDONS[u.id].name; blurb = ADDONS[u.id].blurb;
+      } else {
+        pic = this.add.image(x, y - 80, FEATURE_ICON[u.id]).setScale(0.9);
+        title = FEATURES[u.id].name; blurb = FEATURES[u.id].blurb;
+      }
+      const t = text(this, x, y + 30, title, 28, '#3a2a1c', 0).setOrigin(0.5);
+      if (t.width > w - 24) t.setScale((w - 24) / t.width);
+      const b = this.add.text(x, y + 62, blurb, { fontFamily: '"Passion One", sans-serif', fontSize: '21px', color: '#5a4a3a', align: 'center', wordWrap: { width: w - 30 } }).setOrigin(0.5, 0);
+      items.push(card, pic, t, b);
+      card.setScale(0.2).setAlpha(0);
+      this.tweens.add({ targets: card, scale: 1, alpha: 1, duration: 300, delay: 150 * i, ease: 'Back.Out' });
+    });
+    const box = this.add.container(0, 0, items).setDepth(D.overlay + 5);
+    box.add(button(this, cx, 620, 'OK', () => box.destroy(), 'ui.btn-green', 0.6, 42));
+    sfx.finish();
+    if (BOT) this.time.delayedCall(1500, () => box.destroy());
   }
 
   /** Straight into another level: load its art, free what it doesn't need. */

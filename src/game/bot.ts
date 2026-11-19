@@ -7,7 +7,7 @@ import { COLS, LANES, SPAWN_X, slotIndex } from './layout.ts';
 
 export function think(d: Defense): void {
   const threat = Array.from({ length: LANES }, (_, l) => d.enemies.filter((e) => e.lane === l).reduce((s, e) => s + e.hp + (SPAWN_X - e.x) / 2, 0));
-  const lanes = [...Array(LANES).keys()].sort((a, b) => threat[b] - threat[a]);
+  const lanes = [...Array(LANES).keys()].filter((l) => d.laneOpen(l)).sort((a, b) => threat[b] - threat[a]);
 
   // Wall below 40%: repair if there's money.
   const repair = d.repairCost();

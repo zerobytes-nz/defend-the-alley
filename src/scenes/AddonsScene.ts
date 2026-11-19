@@ -5,7 +5,8 @@ import { COLORS } from '../config.ts';
 import { player } from '../save.ts';
 import { RARITY_COLOR } from '../game/cats.ts';
 import { ADDONS, ADDON_IDS, ADDON_MAX, ADDON_PRICE, AWI_ADDON_POWER, AWI_ADDON_USES, SLOTS_MAX, type AddonId } from '../game/addons.ts';
-import { addonAwis, buyAddon, buySlot, slotPrice, stockOf, toggleLoadout } from '../game/progress.ts';
+import { addonAwis, addonUnlocked, buyAddon, buySlot, slotPrice, stockOf, toggleLoadout } from '../game/progress.ts';
+import { addonLevel } from '../game/unlocks.ts';
 import { tappable, text } from '../ui.ts';
 import { sfx } from '../systems/audio.ts';
 import { ADDON_PANEL as P, SIDE_W, drawFrame, type Frame } from './menuFrame.ts';
@@ -126,6 +127,9 @@ export class AddonsScene extends Phaser.Scene {
         this.add.rectangle(140, 94, 52, 24, 0x2b1d14), text(this, 140, 93, 'AWI', 18, '#ffd02a', 0).setOrigin(0.5),
         text(this, 172, 94, `${r} · ${AWI_ADDON_USES[r]} free a level · ×${AWI_ADDON_POWER[r]}`, 15, COLORS.text, 3).setOrigin(0, 0.5),
       ]);
+    } else if (!addonUnlocked(s, player.awis, it.id)) {
+      c.setAlpha(0.6);
+      c.add(text(this, 114, 94, `Clear level ${addonLevel(it.id)} to unlock`, 20, '#ffd02a', 4).setOrigin(0, 0.5));
     } else {
       const n = stockOf(s, it.id);
       c.add([this.add.image(150, 94, 'ui.addon-count').setScale(0.6), text(this, 150, 92, `${n} / ${ADDON_MAX}`, 22).setOrigin(0.5)]);
@@ -142,6 +146,7 @@ export class AddonsScene extends Phaser.Scene {
     }
     bg.setInteractive({ useHandCursor: true }).on('pointerup', () => {
       if (this.dragged) return;
+      if (!on && !it.awi && !addonUnlocked(s, player.awis, it.id)) { this.frame.flash(`Clear level ${addonLevel(it.id)} to unlock ${def.name}`); return; }
       if (!on && !it.awi && stockOf(s, it.id) === 0) { this.frame.flash('Buy one first (25 gems)'); return; }
       if (!toggleLoadout(s, it.key)) { this.frame.flash(`All ${s.slots} slots are full: tap one on the left to empty it`); return; }
       player.persist(); sfx.tap(); this.redraw();

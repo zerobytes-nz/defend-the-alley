@@ -4,7 +4,8 @@ import Phaser from 'phaser';
 import { COLORS, GAME_W, GAME_H } from '../config.ts';
 import { addonArt, areaArt, catArt, ensureLoaded } from '../assets.ts';
 import { player } from '../save.ts';
-import { claimDaily, dailyReady } from '../game/progress.ts';
+import { claimDaily, dailyReady, featureUnlocked } from '../game/progress.ts';
+import { featureLevel } from '../game/unlocks.ts';
 import { tappable, text } from '../ui.ts';
 import { sfx } from '../systems/audio.ts';
 
@@ -34,7 +35,10 @@ export function drawFrame(scene: Phaser.Scene, active: Tab, title: string, bg = 
     const ix = on ? SIDE_W - 50 : SIDE_W - 58;
     scene.add.image(ix, y - 10, t.icon).setScale(0.62);
     text(scene, ix, y + 34, t.label, 20, COLORS.text, 4).setOrigin(0.5);
-    if (!on) tappable(tab, () => scene.scene.start(t.tab));
+    const feature = t.tab === 'Cats' ? 'cats' : t.tab === 'Addons' ? 'addons' : null;
+    const open = !feature || featureUnlocked(player.save, player.awis, feature);
+    if (!open) { tab.setAlpha(0.55); scene.add.image(ix + 30, y - 34, 'ui.lvl-locked').setScale(0.3); }
+    if (!on) tappable(tab, () => (open ? scene.scene.start(t.tab) : flash(`Clear level ${featureLevel(feature!)} to open ${t.label}`)));
   });
 
   // Gems, top left of the panel.

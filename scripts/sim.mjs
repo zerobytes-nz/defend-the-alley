@@ -9,7 +9,7 @@ import { think } from '../src/game/bot.ts';
 import { FULL_ALLEY, LEVEL_COUNT, levelDef, starsFor, tune } from '../src/game/levels.ts';
 import { awisFromItems } from '../src/game/awi.ts';
 import { PROFILES } from '../src/game/demo.ts';
-import { buyAddon, buyCatStep, buyIncome, buyWall, catStepCost, deckOf, equipped, fightBonus, levelGems, newSave, rowStepCost, spendAddons, toggleLoadout } from '../src/game/progress.ts';
+import { addonUnlocked, featureUnlocked, buyAddon, buyCatStep, buyIncome, buyWall, catStepCost, clearLevel, deckOf, equipped, fightSetup, levelGems, newSave, rowStepCost, spendAddons, toggleLoadout } from '../src/game/progress.ts';
 
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? Number(process.argv[i + 1]) : d; };
 const seeds = arg('--seeds', 60);
@@ -19,7 +19,9 @@ if (t > 0) tune(...process.argv[t + 1].split(',').map(Number));
 
 /** One fight; returns the sim at the end. */
 function fight(save, awis, n, seed) {
-  const d = new Defense({ deck: deckOf(save, awis), level: levelDef(n), seed, ...fightBonus(save), addons: equipped(save, awis) });
+  const setup = fightSetup(save, awis, n);
+  const d = new Defense({ ...setup, seed });
+  d.used = setup.addons; // as they were at the start (the sim works on a copy)
   let k = 0;
   while (d.state === 'playing' && d.time < 900) { if (k++ % 30 === 0) think(d); d.step(); d.events.length = 0; }
   return d;
@@ -60,14 +62,13 @@ function campaign() {
       let t = 0;
       for (;;) {
         shop(s, awis);
-        const used = equipped(s, awis);
         const d = fight(s, awis, n, ++seed);
-        spendAddons(s, used, d.addons);
+        spendAddons(s, d.used, d.addons);
         t++;
         if (d.state === 'won') { award(s, n, d); break; }
         if (t >= 40) break;
         // Lost: replay the last cleared level for gems, like a player would.
-        if (n > 0) { const f = fight(s, awis, n - 1, ++seed); if (f.state === 'won') award(s, n - 1, f); t++; }
+        if (n > 0) { const f = fight(s, awis, n - 1, ++seed); spendAddons(s, f.used, f.addons); if (f.state === 'won') award(s, n - 1, f); t++; }
       }
       tries[n] += t;
       if (s.stars[n] === 0) { stuck++; break; }
@@ -83,11 +84,12 @@ function campaign() {
 function award(s, n, d) {
   const stars = starsFor(d.wallHp / d.wallMax);
   s.gems += levelGems(n, stars, s.stars[n] === 0);
-  s.stars[n] = Math.max(s.stars[n], stars);
+  clearLevel(s, [], n, stars);
 }
 
 /** Spend gems like a sensible player: deck cats' upgrades, then wall and income, keep 2 add-ons stocked. */
 function shop(s, awis) {
+  if (!featureUnlocked(s, awis, 'cats')) return; // the Cats screen opens after level 3
   for (let guard = 0; guard < 50; guard++) {
     const deck = deckOf(s, awis);
     const cat = deck.map((d) => d.cat).sort((a, b) => s.cat[a - 1] - s.cat[b - 1])[0];
@@ -98,6 +100,9 @@ function shop(s, awis) {
     ].filter(([c]) => c !== null).sort((a, b) => a[0] - b[0]);
     if (!options.length || !options[0][1]()) break;
   }
-  for (const id of ['bomb', 'rocket']) if (!s.loadout.includes(id)) toggleLoadout(s, id);
-  for (const id of ['bomb', 'rocket']) while ((s.stock[id] ?? 0) < 2 && buyAddon(s, id));
+  for (const id of ['bomb', 'rocket']) {
+    if (!addonUnlocked(s, awis, id)) continue;
+    if (!s.loadout.includes(id)) toggleLoadout(s, id);
+    while ((s.stock[id] ?? 0) < 2 && buyAddon(s, id));
+  }
 }

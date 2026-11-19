@@ -70,8 +70,6 @@ export const GUEST_ATTACK = (cat: number): Attack => (['blast', 'venom', 'rapid'
 /** The free Common version of a cat (everyone gets these as levels unlock them). */
 export const guestCat = (cat: number): Defender => makeDefender(cat, GUEST_ATTACK(cat), 'Common');
 
-/** The three cats everyone starts with: one of each family and attack (Ginger · Blast, Smokey · Venom, Snowy · Rapid). */
-export const GUEST_DECK: Defender[] = [guestCat(1), guestCat(6), guestCat(11)];
 
 /** Cat upgrades (Cats screen): 5 steps per cat, bought with gems. Each step adds damage and a little fire rate. */
 export const CAT_STEPS = 5;

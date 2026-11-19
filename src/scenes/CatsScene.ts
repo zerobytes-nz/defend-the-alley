@@ -4,8 +4,9 @@ import Phaser from 'phaser';
 import { COLORS } from '../config.ts';
 import { player } from '../save.ts';
 import { ATTACKS, CAT_STEPS, RARITY_COLOR, catName, guestCat, upgraded, type Defender } from '../game/cats.ts';
-import { buyCatStep, buyIncome, buyWall, cards, catStepCost, catUnlocked, deckOf, fightBonus, rowStepCost, toggleDeck, unlockLevel, UNLOCK_ORDER, DECK_MAX, WALL_PER_STEP, START_PER_STEP, INCOME_PER_STEP } from '../game/progress.ts';
+import { buyCatStep, buyIncome, buyWall, cards, catStepCost, catUnlocked, deckOf, fightBonus, rowStepCost, toggleDeck, DECK_MAX, WALL_PER_STEP, START_PER_STEP, INCOME_PER_STEP } from '../game/progress.ts';
 import { ensureLoaded, release } from '../assets.ts';
+import { CAT_ORDER, catLevel } from '../game/unlocks.ts';
 import { tappable, text } from '../ui.ts';
 import { sfx } from '../systems/audio.ts';
 import { PANEL, drawFrame, type Frame } from './menuFrame.ts';
@@ -101,7 +102,7 @@ export class CatsScene extends Phaser.Scene {
     const nft = cards(s, awis).filter((d) => d.source === 'nft');
     if (nft.length) { rows.push('Your AWIs (Altered World Items)'); rows.push(...nft.map((def): Row => ({ kind: 'awi', def, cat: def.cat }))); }
     rows.push('Free cats');
-    rows.push(...UNLOCK_ORDER.map((c): Row => ({ kind: 'cat', cat: c })));
+    rows.push(...CAT_ORDER.map((c): Row => ({ kind: 'cat', cat: c })));
     rows.push('Street');
     rows.push({ kind: 'wall' }, { kind: 'income' });
 
@@ -131,7 +132,7 @@ export class CatsScene extends Phaser.Scene {
       locked = r.kind === 'cat' && !catUnlocked(s, awis, cat);
       steps = s.cat[cat - 1]; cost = catStepCost(s, cat); buy = () => buyCatStep(s, cat);
       title = r.kind === 'awi' ? def.name : catName(cat);
-      sub = locked ? `Clear level ${unlockLevel(cat)} to unlock` : `${def.rarity} · ${ATTACKS[def.attack].name} · ${def.dmg} dmg · ${def.rate}/s`;
+      sub = locked ? `Clear level ${catLevel(cat)} to unlock` : `${def.rarity} · ${ATTACKS[def.attack].name} · ${def.dmg} dmg · ${def.rate}/s`;
     } else if (r.kind === 'wall') {
       steps = s.wall; cost = rowStepCost(s.wall); buy = () => buyWall(s);
       title = 'Wall'; sub = `+${WALL_PER_STEP} health a step · now ${fightBonus(s).wallMax}`;
@@ -178,7 +179,7 @@ export class CatsScene extends Phaser.Scene {
     if (def) {
       bg.setInteractive({ useHandCursor: !locked }).on('pointerup', () => {
         if (this.dragged) return;
-        if (locked) { this.frame.flash(`Clear level ${unlockLevel(def.cat)} to unlock ${catName(def.cat)}`); return; }
+        if (locked) { this.frame.flash(`Clear level ${catLevel(def.cat)} to unlock ${catName(def.cat)}`); return; }
         if (!toggleDeck(player.save, player.awis, def.uid)) { this.frame.flash(inDeck ? 'The deck needs at least one cat' : 'The deck is full (5): tap a cat in it to take it out'); return; }
         player.persist(); sfx.tap(); this.redraw();
       });

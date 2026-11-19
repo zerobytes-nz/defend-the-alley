@@ -14,6 +14,10 @@ export interface LevelDef {
   title: string;
   area: number;
   waves: WavePlan[];
+  /** Open lanes (0–4); all 5 when left out. */
+  lanes?: number[];
+  /** Level 1: guided, waves wait for the first cat, and the wall can't fall below 1. */
+  tutorial?: boolean;
 }
 
 export const LEVEL_COUNT = 15;
@@ -26,8 +30,16 @@ export const FULL_ALLEY = LEVEL_COUNT;
 /** Extra bosses on the last levels: level 14 ends with Boss 6, level 15 with Boss 5 and Boss 7. */
 const EXTRA_BOSS: Record<number, number[]> = { 13: [6], 14: [7] };
 
+/** Level 1, the tutorial: 3 lanes, 3 small waves, no boss. */
+export const TUTORIAL_LANES = [1, 2, 3];
+const tutorial = (): LevelDef => ({
+  n: 0, title: 'Level 1', area: 0, lanes: TUTORIAL_LANES, tutorial: true,
+  waves: [0.3, 0.8, 1.4].map((g) => ({ area: 0, g, bosses: [] })),
+});
+
 export function levelDef(n: number): LevelDef {
   if (n === FULL_ALLEY) return fullAlley();
+  if (n === 0) return tutorial();
   const area = Math.floor(n / 3), step = n % 3;
   const count = 4 + Math.round((n * 6) / 14);          // 4 waves on level 1 … 10 on level 15
   // Coins start from scratch every level, so each level ramps from easy waves up to its peak.

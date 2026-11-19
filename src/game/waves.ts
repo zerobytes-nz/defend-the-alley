@@ -1,5 +1,4 @@
 // Zombies, bosses, areas and how a wave is made. Which waves a fight has is up to src/game/levels.ts.
-import { LANES } from './layout.ts';
 import type { WavePlan } from './levels.ts';
 
 export interface EnemyType {
@@ -55,19 +54,19 @@ export function rng(seed: number): () => number {
 }
 
 /** The spawns of one wave, times in seconds from the wave's start. */
-export function makeWave(w: WavePlan, rand: () => number): Spawn[] {
+export function makeWave(w: WavePlan, rand: () => number, open: number[] = [0, 1, 2, 3, 4]): Spawn[] {
   const area = AREAS[w.area], g = w.g;
   const count = Math.round((5 + g * 0.8) * (w.bosses.length ? 0.6 : 1));
   const gap = Math.max(0.38, 0.85 - g * 0.035);
   const out: Spawn[] = [];
   let lastLane = -1;
   for (let i = 0; i < count; i++) {
-    let lane = Math.floor(rand() * LANES);
-    if (lane === lastLane) lane = Math.floor(rand() * LANES); // fewer same-lane streaks
+    let lane = open[Math.floor(rand() * open.length)];
+    if (lane === lastLane) lane = open[Math.floor(rand() * open.length)]; // fewer same-lane streaks
     lastLane = lane;
     out.push({ at: i * gap + rand() * gap * 0.5, type: ENEMIES[area.pool[Math.floor(rand() * area.pool.length)]], lane });
   }
-  const lanes = [1, 2, 3, 0, 4].sort(() => rand() - 0.5);
-  w.bosses.forEach((b, i) => out.push({ at: 1 + i * 2.5, type: BOSSES[b], lane: lanes[i] }));
+  const lanes = [1, 2, 3, 0, 4].filter((l) => open.includes(l)).sort(() => rand() - 0.5);
+  w.bosses.forEach((b, i) => out.push({ at: 1 + i * 2.5, type: BOSSES[b], lane: lanes[i % lanes.length] }));
   return out.sort((a, b) => a.at - b.at);
 }
