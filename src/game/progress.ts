@@ -3,7 +3,7 @@
 import { CAT_STEPS, dps, guestCat, upgraded, type Defender } from './cats.ts';
 import { ADDON_MAX, ADDON_PRICE, AWI_ADDON_POWER, AWI_ADDON_USES, SLOTS_MAX, SLOT_PRICES, type AddonId, type Equipped } from './addons.ts';
 import { INCOME_PER_S, START_COINS, WALL_HP } from './sim.ts';
-import { FULL_ALLEY, LEVEL_COUNT, levelDef } from './levels.ts';
+import { FULL_ALLEY, HARD_BASE, LEVEL_COUNT, isHard, levelDef } from './levels.ts';
 import { CAT_ORDER, UNLOCKS, addonOpen, catOpen, featureOpen, type Feature, type Unlock } from './unlocks.ts';
 import type { FightSetup } from './sim.ts';
 import type { AWI, AddonAwi, CatAwi } from './awi.ts';
@@ -24,19 +24,20 @@ export interface Save {
   alley: Best | null;        // Full Alley best run
   tips: string[];            // one-time tips already shown (repair, addons, merge…)
   seen: string[];            // zombie and boss types met (New zombie cards, the Almanac)
+  hard: number[];            // Hard mode stars per level
 }
 
 export const DECK_MAX = 5;
 export const START_GEMS = 50;
 export const newSave = (): Save => ({
   v: 1, gems: START_GEMS, stars: Array(LEVEL_COUNT).fill(0), cat: Array(15).fill(0), wall: 0, income: 0,
-  stock: {}, slots: 2, loadout: [], deck: [], daily: { day: '', streak: 0 }, alley: null, tips: [], seen: [],
+  stock: {}, slots: 2, loadout: [], deck: [], daily: { day: '', streak: 0 }, alley: null, tips: [], seen: [], hard: Array(LEVEL_COUNT).fill(0),
 });
 /** A stored save, repaired if it is from an older build or damaged. */
 export function fixSave(raw: unknown): Save {
   const s = { ...newSave(), ...(raw && typeof raw === 'object' ? raw : {}) } as Save;
   const arr = (a: unknown, n: number) => Array.from({ length: n }, (_, i) => (Array.isArray(a) && Number.isFinite(a[i]) ? Math.max(0, a[i]) : 0));
-  s.stars = arr(s.stars, LEVEL_COUNT); s.cat = arr(s.cat, 15);
+  s.stars = arr(s.stars, LEVEL_COUNT); s.cat = arr(s.cat, 15); s.hard = arr(s.hard, LEVEL_COUNT);
   s.slots = Math.min(SLOTS_MAX, Math.max(2, s.slots | 0));
   if (!Array.isArray(s.loadout)) s.loadout = [];
   if (!Array.isArray(s.deck)) s.deck = [];
@@ -52,11 +53,19 @@ export const WALL_PER_STEP = 15, START_PER_STEP = 15, INCOME_PER_STEP = 0.3;
 
 // ── Levels and gems ──────────────────────────────────────────────────────────────────────────────────
 export const levelsCleared = (s: Save) => { let n = 0; while (n < LEVEL_COUNT && s.stars[n] > 0) n++; return n; };
-export const levelOpen = (s: Save, n: number) => (n === FULL_ALLEY ? featureOpen(levelsCleared(s), 'alley') : n === 0 || s.stars[n - 1] > 0);
+export function levelOpen(s: Save, n: number): boolean {
+  if (n === FULL_ALLEY) return featureOpen(levelsCleared(s), 'alley');
+  if (isHard(n)) { const h = n - HARD_BASE; return featureOpen(levelsCleared(s), 'hard') && (h === 0 || s.hard[h - 1] > 0); }
+  return n === 0 || s.stars[n - 1] > 0;
+}
+/** Stars on a map level (normal or Hard). */
+export const starsAt = (s: Save, n: number) => (isHard(n) ? s.hard[n - HARD_BASE] : s.stars[n]);
 
-/** Gems for clearing level n with `stars` (more on the first clear). */
+/** Gems for clearing level n with `stars` (more on the first clear; Hard mode pays 1.5×). */
 export function levelGems(n: number, stars: number, first: boolean): number {
-  const base = 15 + 5 * n;
+  const k = isHard(n) ? 1.5 : 1;
+  if (isHard(n)) n -= HARD_BASE;
+  const base = (15 + 5 * n) * k;
   return Math.round((base * [0, 1, 1.5, 2][stars] + (first ? 20 : 0)) / 5) * 5;
 }
 /** Gems for a Full Alley run: per wave cleared, plus a prize for winning. */
@@ -96,6 +105,7 @@ export function featureUnlocked(s: Save, awis: AWI[], f: Feature): boolean {
  * cards) and adds new cats to a hand-picked deck while there is room.
  */
 export function clearLevel(s: Save, awis: AWI[], n: number, stars: number): Unlock[] {
+  if (isHard(n)) { s.hard[n - HARD_BASE] = Math.max(s.hard[n - HARD_BASE], stars); return []; }
   const before = levelsCleared(s);
   s.stars[n] = Math.max(s.stars[n], stars);
   const after = levelsCleared(s);

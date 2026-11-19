@@ -9,7 +9,7 @@ import { featureLevel } from '../game/unlocks.ts';
 import { tappable, text } from '../ui.ts';
 import { sfx } from '../systems/audio.ts';
 
-export type Tab = 'Map' | 'Cats' | 'Addons';
+export type Tab = 'Map' | 'Cats' | 'Addons' | 'Almanac';
 /** The side menu's width, and the grey panels of the two kit screen backgrounds (game px). */
 export const SIDE_W = 281;
 export const PANEL = { x: 370, y: 174, w: 904, h: 445 };
@@ -19,6 +19,7 @@ const TABS: { tab: Tab; icon: string; label: string }[] = [
   { tab: 'Map', icon: 'ui.icon-home', label: 'Map' },
   { tab: 'Cats', icon: 'ui.icon-cat', label: 'Cats' },
   { tab: 'Addons', icon: 'ui.icon-addon', label: 'Add-ons' },
+  { tab: 'Almanac', icon: '📖', label: 'Almanac' },
 ];
 
 export interface Frame { refreshGems(): void; flash(msg: string, bad?: boolean): void }
@@ -30,10 +31,11 @@ export function drawFrame(scene: Phaser.Scene, active: Tab, title: string, bg = 
   text(scene, cx, 88, title, 40).setOrigin(0.5);
 
   TABS.forEach((t, i) => {
-    const y = 300 + i * 125, on = t.tab === active;
-    const tab = on ? scene.add.image(SIDE_W + 46, y, 'ui.tab-on').setOrigin(1, 0.5).setScale(0.74) : scene.add.image(SIDE_W, y, 'ui.tab').setOrigin(1, 0.5).setScale(0.74);
+    const y = 262 + i * 112, on = t.tab === active;
+    const tab = on ? scene.add.image(SIDE_W + 46, y, 'ui.tab-on').setOrigin(1, 0.5).setScale(0.66) : scene.add.image(SIDE_W, y, 'ui.tab').setOrigin(1, 0.5).setScale(0.66);
     const ix = on ? SIDE_W - 50 : SIDE_W - 58;
-    scene.add.image(ix, y - 10, t.icon).setScale(0.62);
+    if (t.icon.startsWith('ui.')) scene.add.image(ix, y - 10, t.icon).setScale(0.62);
+    else text(scene, ix, y - 10, t.icon, 40, '#ffffff', 0).setOrigin(0.5);
     text(scene, ix, y + 34, t.label, 20, COLORS.text, 4).setOrigin(0.5);
     const feature = t.tab === 'Cats' ? 'cats' : t.tab === 'Addons' ? 'addons' : null;
     const open = !feature || featureUnlocked(player.save, player.awis, feature);

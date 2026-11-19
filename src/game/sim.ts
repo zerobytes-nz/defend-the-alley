@@ -4,7 +4,7 @@ import { CROSS_EVERY, KNOCKBACK, LEVEL_DMG, MAX_LEVEL, PIERCE, PLACE_COST, PLACE
 import { COLS, LANES, SLOT_X, SPAWN_X, STOP_X, U, slotLane } from './layout.ts';
 import { AREAS, ENEMIES, MINION, SPLIT_CHILD, makeWave, rng, waveHp, type EnemyType, type Spawn } from './waves.ts';
 import { ADDON_TUNING as T, type AddonId, type Equipped } from './addons.ts';
-import type { LevelDef } from './levels.ts';
+import { HARD_HP, type LevelDef } from './levels.ts';
 
 export const STEP = 1 / 60;
 const BULLET_SPEED = 900 * U;
@@ -78,7 +78,7 @@ export type SimEvent =
   | { t: 'trapGone'; trap: Trap }
   | { t: 'end'; won: boolean };
 
-export interface Stats { kills: number; bossKills: number; coinsEarned: number; placed: number; upgrades: number; repairs: number; addonsUsed: number; merges: number; sold: number }
+export interface Stats { kills: number; bossKills: number; coinsEarned: number; placed: number; upgrades: number; repairs: number; addonsUsed: number; merges: number; sold: number; maxCats: number }
 
 export interface FightSetup {
   deck: Defender[];
@@ -110,7 +110,7 @@ export class Defense {
   units: Unit[] = [];
   traps: Trap[] = [];
   events: SimEvent[] = [];
-  stats: Stats = { kills: 0, bossKills: 0, coinsEarned: 0, placed: 0, upgrades: 0, repairs: 0, addonsUsed: 0, merges: 0, sold: 0 };
+  stats: Stats = { kills: 0, bossKills: 0, coinsEarned: 0, placed: 0, upgrades: 0, repairs: 0, addonsUsed: 0, merges: 0, sold: 0, maxCats: 0 };
   /** How many copies of each card (by uid) are on the street. */
   copies = new Map<string, number>();
   /** Coins ×2 add-on: kill coins are doubled until this time. */
@@ -122,6 +122,9 @@ export class Defense {
   readonly seed: number;
   readonly canRepair: boolean;
   readonly canMerge: boolean;
+  /** Rush rule: zombies walk faster. Hard mode: more health. */
+  private readonly walkK: number;
+  private readonly hpK: number;
   private readonly incomePerS: number;
   private rand: () => number;
   private queue: Spawn[] = [];
@@ -136,11 +139,14 @@ export class Defense {
     this.seed = setup.seed ?? 1;
     this.rand = rng(this.seed);
     this.wallMax = this.wallHp = setup.wallMax ?? WALL_HP;
-    this.coins = setup.startCoins ?? START_COINS;
-    this.incomePerS = setup.income ?? INCOME_PER_S;
+    const poor = setup.level.rule === 'poor';
+    this.coins = Math.round((setup.startCoins ?? START_COINS) * (poor ? 0.6 : 1));
+    this.incomePerS = (setup.income ?? INCOME_PER_S) * (poor ? 0.65 : 1);
     this.addons = (setup.addons ?? []).map((a) => ({ ...a }));
     this.area = setup.level.waves[0].area;
-    this.canRepair = setup.repair ?? true;
+    this.canRepair = (setup.repair ?? true) && setup.level.rule !== 'norepair';
+    this.walkK = setup.level.rule === 'fast' ? 1.33 : 1;
+    this.hpK = setup.level.hard ? HARD_HP : 1;
     this.canMerge = setup.merge ?? true;
   }
 
@@ -163,6 +169,7 @@ export class Defense {
     this.slots[slot] = p;
     this.copies.set(def.uid, (this.copies.get(def.uid) ?? 0) + 1);
     this.stats.placed++;
+    this.stats.maxCats = Math.max(this.stats.maxCats, this.slots.filter(Boolean).length);
     this.events.push({ t: 'place', cat: p });
     return p;
   }
@@ -329,6 +336,7 @@ export class Defense {
   }
 
   private spawn(type: EnemyType, lane: number, x: number, hp: number, child = false): Enemy {
+    hp = Math.round(hp * this.hpK);
     const e: Enemy = {
       id: this.ids++, type, lane, x, hp, maxHp: hp, slowUntil: 0, hitTimer: 0, state: 'walk', blockedBy: 0,
       shield: type.ability === 'shield' ? hp * SHIELD_SHARE : 0, used: false, nextAt: this.time + (type.boss ? 4 : HEAL_EVERY), speedMul: 1, until: 0, rage: 1, child,
@@ -413,7 +421,7 @@ export class Defense {
         for (const u of this.units) if (u.lane === e.lane && u.x < e.x && u.x + UNIT_REACH > stop) { stop = u.x + UNIT_REACH; by = u.id; }
         // A Slugger jumps the first add-on cat in its way and lands behind it.
         if (by && e.type.ability === 'jump' && !e.used && e.x - e.type.speed * U * dt <= stop) { e.used = true; e.x = stop - UNIT_REACH - 50; this.events.push({ t: 'jump', enemy: e }); continue; }
-        e.x -= e.type.speed * U * slow * e.speedMul * dt;
+        e.x -= e.type.speed * U * slow * e.speedMul * this.walkK * dt;
         if (e.x <= stop) { e.x = stop; e.state = 'attack'; e.blockedBy = by; e.hitTimer = e.type.hitEvery * 0.5; }
       } else if (e.state === 'attack') {
         const u = this.unitById(e.blockedBy);

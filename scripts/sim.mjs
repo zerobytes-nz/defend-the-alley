@@ -6,7 +6,7 @@
 // Node runs the game's own TypeScript (src/game/) directly (type stripping, Node ≥ 22.18).
 import { Defense } from '../src/game/sim.ts';
 import { think } from '../src/game/bot.ts';
-import { FULL_ALLEY, LEVEL_COUNT, levelDef, starsFor, tune } from '../src/game/levels.ts';
+import { FULL_ALLEY, LEVEL_COUNT, levelDef, starsOf, tune } from '../src/game/levels.ts';
 import { awisFromItems } from '../src/game/awi.ts';
 import { PROFILES } from '../src/game/demo.ts';
 import { addonUnlocked, featureUnlocked, buyAddon, buyCatStep, buyIncome, buyWall, catStepCost, clearLevel, deckOf, equipped, fightSetup, levelGems, newSave, rowStepCost, spendAddons, toggleLoadout } from '../src/game/progress.ts';
@@ -82,7 +82,7 @@ function campaign() {
 }
 
 function award(s, n, d) {
-  const stars = starsFor(d.wallHp / d.wallMax);
+  const stars = starsOf(d.level, { wallShare: d.wallHp / d.wallMax, ...d.stats });
   s.gems += levelGems(n, stars, s.stars[n] === 0);
   clearLevel(s, [], n, stars);
 }

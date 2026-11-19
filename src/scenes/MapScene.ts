@@ -1,9 +1,9 @@
 // Level select: the kit's winding road map, dragged sideways, with the 15 levels on it (and Full Alley after).
 import Phaser from 'phaser';
-import { COLORS } from '../config.ts';
+import { COLORS, GAME_W } from '../config.ts';
 import { player } from '../save.ts';
-import { FULL_ALLEY, LEVEL_COUNT, MAP_MARKERS, levelDef } from '../game/levels.ts';
-import { levelOpen, levelsCleared } from '../game/progress.ts';
+import { FULL_ALLEY, GOALS, HARD_BASE, LEVEL_COUNT, MAP_MARKERS, RULES, levelDef } from '../game/levels.ts';
+import { featureUnlocked, levelOpen, levelsCleared, starsAt } from '../game/progress.ts';
 import { AREAS } from '../game/waves.ts';
 import { asset } from '../assets.ts';
 import { button, text } from '../ui.ts';
@@ -18,13 +18,21 @@ export class MapScene extends Phaser.Scene {
   private selected = 0;
   private info!: Phaser.GameObjects.Text;
   private markers: Phaser.GameObjects.Image[] = [];
+  private sub!: Phaser.GameObjects.Text;
+  /** Showing Hard mode (kept while the game runs). */
+  private static hard = false;
+  /** Level number for map position n in the current mode. */
+  private id(n: number): number { return MapScene.hard ? HARD_BASE + n : n; }
 
   constructor() { super('Map'); }
 
   create(): void {
-    this.frame = drawFrame(this, 'Map', 'Level Select');
     const s = player.save;
-    this.selected = Math.min(levelsCleared(s), LEVEL_COUNT - 1);
+    if (!featureUnlocked(s, player.awis, 'hard')) MapScene.hard = false;
+    this.frame = drawFrame(this, 'Map', MapScene.hard ? 'Hard Mode' : 'Level Select');
+    let firstOpen = 0;
+    while (firstOpen < LEVEL_COUNT - 1 && starsAt(s, this.id(firstOpen)) > 0) firstOpen++;
+    this.selected = MapScene.hard ? firstOpen : Math.min(levelsCleared(s), LEVEL_COUNT - 1);
     this.markers = [];
 
     // The map, clipped to the panel.
@@ -38,13 +46,14 @@ export class MapScene extends Phaser.Scene {
     for (let n = 0; n < LEVEL_COUNT; n++) {
       const [mx, my] = MAP_MARKERS[n];
       const x = mx * MAP_SCALE, y = my * MAP_SCALE;
-      const open = levelOpen(s, n), done = s.stars[n] > 0, next = open && !done;
+      const id = this.id(n), open = levelOpen(s, id), stars = starsAt(s, id), done = stars > 0, next = open && !done;
       const img = this.add.image(x, y - 26, done ? 'ui.lvl-done' : next ? 'ui.lvl-next' : 'ui.lvl-locked').setScale(0.7);
       this.markers.push(img);
       this.map.add(img);
       if (open) this.map.add(text(this, x, y - 34, String(n + 1), 34, '#ffffff', 6).setOrigin(0.5));
-      if (done) this.map.add(text(this, x, y + 22, '★★★'.slice(0, s.stars[n]) + '☆☆☆'.slice(0, 3 - s.stars[n]), 24, '#ffd02a', 5).setOrigin(0.5));
-      if (levelDef(n).waves.some((w) => w.bosses.length)) this.map.add(text(this, x, y - 72, 'BOSS', 18, '#ff6a5a', 4).setOrigin(0.5));
+      if (done) this.map.add(text(this, x, y + 22, '★★★'.slice(0, stars) + '☆☆☆'.slice(0, 3 - stars), 24, '#ffd02a', 5).setOrigin(0.5));
+      const d = levelDef(id), tag = d.waves.some((w) => w.bosses.length) ? 'BOSS' : d.rule ? RULES[d.rule].name.toUpperCase() : '';
+      if (tag) this.map.add(text(this, x, y - 72, tag, 18, tag === 'BOSS' ? '#ff6a5a' : '#9fd8ff', 4).setOrigin(0.5));
       img.setInteractive({ useHandCursor: open });
       img.on('pointerup', () => { if (!this.dragged) this.tapLevel(n); });
     }
@@ -70,8 +79,13 @@ export class MapScene extends Phaser.Scene {
     this.input.on('wheel', (_p: unknown, _o: unknown, dx: number, dy: number) => { this.map.x = clampX(this.map.x - (dx || dy)); });
 
     // Below the panel: what's selected, PLAY, and Full Alley.
-    this.info = text(this, PANEL.x, 656, '', 26, COLORS.text, 5).setOrigin(0, 0.5);
-    button(this, PANEL.x + PANEL.w - 300, 656, 'PLAY', () => startFight(this, this.selected), 'ui.btn-green', 0.52, 50);
+    this.info = text(this, PANEL.x, 644, '', 26, COLORS.text, 5).setOrigin(0, 0.5);
+    this.sub = text(this, PANEL.x, 676, '', 19, COLORS.dim, 4).setOrigin(0, 0.5);
+    button(this, PANEL.x + PANEL.w - 300, 656, 'PLAY', () => startFight(this, this.id(this.selected)), 'ui.btn-green', 0.52, 50);
+    if (featureUnlocked(s, player.awis, 'hard')) {
+      const t = button(this, GAME_W - 330, 44, MapScene.hard ? 'Normal' : 'Hard mode', () => { MapScene.hard = !MapScene.hard; this.scene.restart(); }, MapScene.hard ? 'ui.btn-green' : 'ui.btn-orange', 0.42, 64);
+      t.setDepth(10);
+    }
     const alleyOpen = levelOpen(s, FULL_ALLEY);
     const alley = button(this, PANEL.x + PANEL.w - 70, 656, alleyOpen ? 'Full Alley' : '🔒 Alley', () => {
       if (alleyOpen) startFight(this, FULL_ALLEY); else this.frame.flash('Full Alley opens after level 15');
@@ -80,14 +94,14 @@ export class MapScene extends Phaser.Scene {
     const best = s.alley;
     text(this, PANEL.x + PANEL.w + 60, 656, best ? (best.won ? `Best: won in ${Math.round(best.time)} s` : `Best: wave ${best.wave}/15`) : 'All 5 areas\nin one run', 20, COLORS.dim, 4).setOrigin(0, 0.5);
     this.showInfo();
-    this.input.keyboard?.on('keydown-SPACE', () => startFight(this, this.selected));
+    this.input.keyboard?.on('keydown-SPACE', () => startFight(this, this.id(this.selected)));
   }
 
   private dragged = false;
 
   private tapLevel(n: number): void {
-    if (!levelOpen(player.save, n)) { this.frame.flash(`Clear level ${n} first`); return; }
-    if (n === this.selected) { startFight(this, n); return; }
+    if (!levelOpen(player.save, this.id(n))) { this.frame.flash(`Clear ${MapScene.hard ? 'Hard ' : 'level '}${n} first`); return; }
+    if (n === this.selected) { startFight(this, this.id(n)); return; }
     this.selected = n;
     this.highlight();
     this.showInfo();
@@ -98,9 +112,11 @@ export class MapScene extends Phaser.Scene {
   }
 
   private showInfo(): void {
-    const d = levelDef(this.selected);
-    const stars = player.save.stars[this.selected];
-    this.info.setText(`Level ${this.selected + 1} · ${AREAS[d.area].name} · ${d.waves.length} waves${stars ? `  ${'★'.repeat(stars)}` : ''}`);
+    const d = levelDef(this.id(this.selected));
+    const stars = starsAt(player.save, this.id(this.selected));
+    this.info.setText(`${d.title} · ${AREAS[d.area].name} · ${d.waves.length} waves${stars ? `  ${'★'.repeat(stars)}` : ''}`);
+    this.sub.setText(`${d.rule ? `${RULES[d.rule].name}: ${RULES[d.rule].blurb} · ` : ''}★3: ${GOALS[d.goal]}`);
+    if (this.sub.width > 600) this.sub.setScale(600 / this.sub.width); else this.sub.setScale(1);
   }
 }
 

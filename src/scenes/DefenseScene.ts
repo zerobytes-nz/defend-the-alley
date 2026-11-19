@@ -8,7 +8,7 @@ import { ATTACKS, MAX_LEVEL, RARITY_COLOR, ROLE, catName, family, guestCat, muzz
 import { COLS, LANES, SLOT_SIZE, SLOT_X, SPAWN_X, STOP_X, WALL_BAR, WALL_X0, WALL_X1, LANE_H, LANE_TOP, laneCenter, laneFeet, slotIndex, slotLane } from '../game/layout.ts';
 import { Defense, STEP, type Bullet, type Enemy, type Placed, type SimEvent, type Trap, type Unit } from '../game/sim.ts';
 import { ABILITIES, AREAS, ENEMY_NAMES } from '../game/waves.ts';
-import { FULL_ALLEY, LEVEL_COUNT, starsFor, type LevelDef } from '../game/levels.ts';
+import { FULL_ALLEY, GOALS, HARD_BASE, LEVEL_COUNT, RULES, isHard, starGoals, type LevelDef } from '../game/levels.ts';
 import { ADDONS, type Equipped } from '../game/addons.ts';
 import { alleyGems, clearLevel, levelGems, spendAddons } from '../game/progress.ts';
 import { FEATURES, type Feature, type Unlock } from '../game/unlocks.ts';
@@ -17,6 +17,8 @@ import { button, tappable, text } from '../ui.ts';
 import { buzz, isMuted, musicOn, sfx, soundOn, toggleMusic, toggleMute, toggleSound, toggleVibra, vibraOn } from '../systems/audio.ts';
 
 const BOT = new URLSearchParams(location.search).has('bot');
+/** Fog rule: zombies fade out beyond this x. */
+const FOG_X = 860;
 const FEATURE_ICON: Record<Feature, string> = { repair: 'ui.wall', cats: 'ui.icon-cat', addons: 'ui.icon-addon', merge: 'ui.up1', alley: 'ui.icon-home', hard: 'ui.up3' };
 const D = { bg: 0, slot: 10, wall: 20, actors: 100, fx: 900, hud: 1000, tray: 1100, bubble: 1200, overlay: 2000 };
 
@@ -99,6 +101,7 @@ export class DefenseScene extends Phaser.Scene {
 
     this.add.rectangle(0, 0, GAME_W, GAME_H, COLORS.bg).setOrigin(0).setDepth(-1);
     this.bg = this.add.image(0, 0, AREAS[area].bg).setOrigin(0).setDepth(D.bg);
+    if (this.def.rule === 'fog') for (let i = 0; i < 12; i++) this.add.rectangle(FOG_X - 140 + i * 30, LANE_TOP - 30, 30, GAME_H, 0xd8dde4, Math.min(0.9, 0.08 * i)).setOrigin(0).setDepth(D.fx + 4);
     this.drawSlots();
     this.drawLaneZones();
     this.drawWall();
@@ -106,7 +109,8 @@ export class DefenseScene extends Phaser.Scene {
     this.drawTray(f.deck);
     this.drawAddons();
     if (this.def.tutorial) this.startTutorial(); else { this.selectCard(f.deck[0]); this.showTips(); }
-    this.banner(this.def.n === FULL_ALLEY ? `Area 1 · ${AREAS[0].name}` : `${this.def.title} · ${AREAS[area].name}`, 'Place your cats!');
+    const rule = this.def.rule ? RULES[this.def.rule] : null;
+    this.banner(this.def.n === FULL_ALLEY ? `Area 1 · ${AREAS[0].name}` : `${this.def.title} · ${AREAS[area].name}`, rule ? `${rule.name}: ${rule.blurb}` : 'Place your cats!');
 
     this.input.on('pointerdown', (_p: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => { if (!over.length) this.closeBubble(); });
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => this.dragMove(p));
@@ -184,6 +188,7 @@ export class DefenseScene extends Phaser.Scene {
       else if (now < e.slowUntil) v.spr.setTint(0x9dff8a);
       else if (e.rage > 1 || e.speedMul > 1) v.spr.setTint(0xff8a7a);
       else v.spr.clearTint();
+      if (this.def.rule === 'fog') { const a = Phaser.Math.Clamp((FOG_X - e.x) / 140, 0, 1); v.spr.setAlpha(a); v.bar.setAlpha(a); v.barBg.setAlpha(a); v.shield?.setAlpha(a); }
       if (v.shield) { if (e.shield > 0) v.shield.setPosition(e.x - 30, v.spr.y - 44); else { v.shield.destroy(); v.shield = null; } }
       const show = e.hp < e.maxHp;
       v.bar.setVisible(show); v.barBg.setVisible(show);
@@ -885,15 +890,16 @@ export class DefenseScene extends Phaser.Scene {
     this.disarm();
     const st = this.sim.stats, s = player.save, n = this.def.n;
     const cleared = won ? this.sim.totalWaves : this.sim.wave;
-    let gems = 0, stars = 0, first = false, better = false, got: Unlock[] = [];
+    let gems = 0, stars = 0, first = false, better = false, got: Unlock[] = [], goals: boolean[] = [];
     if (n === FULL_ALLEY) {
       gems = alleyGems(cleared, won);
       const best = s.alley, wave = this.sim.wave + 1, time = this.sim.time;
       better = !best || (won && (!best.won || time < best.time)) || (!won && !best.won && wave > best.wave);
       if (better) s.alley = { won, wave, time: Math.round(time * 10) / 10 };
     } else if (won) {
-      stars = starsFor(this.sim.wallHp / this.sim.wallMax);
-      first = s.stars[n] === 0;
+      goals = starGoals(this.def, { wallShare: this.sim.wallHp / this.sim.wallMax, addonsUsed: st.addonsUsed, repairs: st.repairs, maxCats: st.maxCats });
+      stars = goals.filter(Boolean).length;
+      first = (isHard(n) ? s.hard[n - HARD_BASE] : s.stars[n]) === 0;
       gems = levelGems(n, stars, first);
       got = clearLevel(s, player.awis, n, stars);
     }
@@ -913,16 +919,17 @@ export class DefenseScene extends Phaser.Scene {
         line(320, won ? `All 5 areas cleared in ${Math.round(this.sim.time)} s` : `Fell in Area ${this.sim.area + 1} · wave ${this.sim.wave + 1} of ${this.sim.totalWaves}`);
         if (better) line(368, 'New best!', 32, '#ffd02a');
       } else if (won) {
-        const row = '★'.repeat(stars) + '☆'.repeat(3 - stars);
-        line(318, row, 64, '#ffd02a');
-        line(370, stars === 3 ? 'Perfect wall!' : stars === 2 ? 'Keep the wall above 99% for 3 stars' : 'Keep half the wall for 2 stars', 22, COLORS.dim);
+        line(300, '★'.repeat(stars) + '☆'.repeat(3 - stars), 56, '#ffd02a');
+        const names = ['Win', 'Keep half the wall', GOALS[this.def.goal]];
+        names.forEach((g, i) => items.push(text(this, cx - 200 + i * 200, 352, `${goals[i] ? '✓' : '✗'} ${g}`, 19, goals[i] ? '#8cff6a' : '#ff9a8a', 4).setOrigin(0.5)));
       } else line(320, `Wave ${this.sim.wave + 1} of ${this.sim.totalWaves}: upgrade your cats and try again`);
       line(418, `${st.kills} zombies · ${st.bossKills} bosses · ${st.addonsUsed} add-ons`, 26, COLORS.dim);
       if (gems) {
         items.push(this.add.image(cx, 486, 'ui.winbonus').setScale(0.75), this.add.image(cx - 50, 486, 'ui.gem').setScale(0.7));
         items.push(text(this, cx - 22, 484, `+${gems}${first ? ' first clear' : ''}`, 30).setOrigin(0, 0.5));
       }
-      const nextOpen = won && n < LEVEL_COUNT - 1;
+      const last = isHard(n) ? HARD_BASE + LEVEL_COUNT - 1 : LEVEL_COUNT - 1;
+      const nextOpen = won && n !== FULL_ALLEY && n < last;
       items.push(
         button(this, cx - 200, 610, won ? 'Map' : 'Restart', () => (won ? this.leave() : this.scene.restart({ level: this.levelN })), 'ui.btn-orange', 0.7),
         button(this, cx + 200, 610, nextOpen ? 'Next' : won ? 'Again' : 'Map', () => {

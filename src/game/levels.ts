@@ -20,7 +20,37 @@ export interface LevelDef {
   tutorial?: boolean;
   /** Only these zombies (the tutorial uses plain ones). */
   pool?: string[];
+  /** A rule that changes how the level plays. */
+  rule?: Rule;
+  /** The third star's goal (the first two: win, and keep half the wall). */
+  goal: Goal;
+  /** Hard mode: the same levels with a rule each and tougher zombies. */
+  hard?: boolean;
 }
+
+export type Rule = 'fog' | 'fast' | 'norepair' | 'lanes3' | 'poor';
+export const RULES: Record<Rule, { name: string; blurb: string }> = {
+  fog: { name: 'Fog', blurb: 'Zombies only show up near the wall' },
+  fast: { name: 'Rush', blurb: 'Zombies walk a third faster' },
+  norepair: { name: 'No Repair', blurb: 'The wall can\'t be repaired' },
+  lanes3: { name: 'Narrow street', blurb: 'Only the middle 3 lanes' },
+  poor: { name: 'Tight budget', blurb: 'Fewer starting coins and slower income' },
+};
+export type Goal = 'wall100' | 'noaddons' | 'cats6' | 'norepair';
+export const GOALS: Record<Goal, string> = {
+  wall100: 'Keep the whole wall',
+  noaddons: 'Win without add-ons',
+  cats6: 'Never more than 6 cats on the street',
+  norepair: 'Win without repairing',
+};
+/** Third-star goal and rule of each map level (normal mode). Hard mode puts a rule on every level. */
+const LEVEL_GOAL: Goal[] = ['wall100', 'wall100', 'cats6', 'norepair', 'noaddons', 'cats6', 'wall100', 'norepair', 'noaddons', 'cats6', 'wall100', 'noaddons', 'norepair', 'cats6', 'wall100'];
+const LEVEL_RULE: Partial<Record<number, Rule>> = { 4: 'poor', 7: 'fast', 10: 'fog', 12: 'lanes3', 13: 'norepair' };
+const HARD_RULE: Rule[] = ['fast', 'poor', 'fog', 'norepair', 'lanes3'];
+/** Hard mode levels are numbered after Full Alley: HARD_BASE + 0…14. */
+export const HARD_BASE = 100;
+/** Hard mode zombies have this much more health. */
+export const HARD_HP = 1.35;
 
 export const LEVEL_COUNT = 15;
 /** Level difficulty: the last wave of level n has g = PEAK_G0 + PEAK_STEP·n + PEAK_CURVE·n²; the first START_SHARE of that. */
@@ -36,11 +66,12 @@ const EXTRA_BOSS: Record<number, number[]> = { 13: [6], 14: [7] };
 export const TUTORIAL_LANES = [1, 2, 3];
 const tutorial = (): LevelDef => ({
   n: 0, title: 'Level 1', area: 0, lanes: TUTORIAL_LANES, tutorial: true, pool: ['reg1'],
-  waves: [0.3, 0.8, 1.4].map((g) => ({ area: 0, g, bosses: [] })),
+  waves: [0.3, 0.8, 1.4].map((g) => ({ area: 0, g, bosses: [] })), goal: 'wall100',
 });
 
 export function levelDef(n: number): LevelDef {
   if (n === FULL_ALLEY) return fullAlley();
+  if (n >= HARD_BASE) return hardLevel(n - HARD_BASE);
   if (n === 0) return tutorial();
   const area = Math.floor(n / 3), step = n % 3;
   const count = 4 + Math.round((n * 6) / 14);          // 4 waves on level 1 … 10 on level 15
@@ -50,8 +81,17 @@ export function levelDef(n: number): LevelDef {
   const last = waves[count - 1];
   if (step === 2) last.bosses.push(area + 1);            // every area's 3rd level ends with its boss
   last.bosses.push(...(EXTRA_BOSS[n] ?? []));
-  return { n, title: `Level ${n + 1}`, area, waves };
+  const rule = LEVEL_RULE[n];
+  return { n, title: `Level ${n + 1}`, area, waves, goal: LEVEL_GOAL[n], ...(rule ? { rule, lanes: rule === 'lanes3' ? [1, 2, 3] : undefined } : {}) };
 }
+
+/** Hard mode: level n again (the tutorial becomes a normal level), harder, with a rule. */
+function hardLevel(n: number): LevelDef {
+  const base = n === 0 ? { ...levelDef(1), waves: levelDef(1).waves.map((w) => ({ ...w, area: 0 })) } : levelDef(n);
+  const rule = HARD_RULE[n % HARD_RULE.length];
+  return { ...base, n: HARD_BASE + n, title: `Hard ${n + 1}`, rule, lanes: rule === 'lanes3' ? [1, 2, 3] : undefined, hard: true, goal: LEVEL_GOAL[n], tutorial: false, pool: undefined };
+}
+export const isHard = (n: number) => n >= HARD_BASE;
 
 function fullAlley(): LevelDef {
   const waves: WavePlan[] = [];
@@ -61,11 +101,17 @@ function fullAlley(): LevelDef {
   }
   waves[13].bosses.push(6);
   waves[14].bosses.push(7);
-  return { n: FULL_ALLEY, title: 'Full Alley', area: 0, waves };
+  return { n: FULL_ALLEY, title: 'Full Alley', area: 0, waves, goal: 'wall100' };
 }
 
-/** Stars for a cleared level, from the wall's health left (share of its maximum). */
-export const starsFor = (wallShare: number) => (wallShare >= 0.999 ? 3 : wallShare >= 0.5 ? 2 : 1);
+/** What the star goals look at. */
+export interface Result { wallShare: number; addonsUsed: number; repairs: number; maxCats: number }
+/** The three star goals of a won level: won, half the wall kept, the level's own goal. */
+export function starGoals(def: LevelDef, r: Result): boolean[] {
+  const third = { wall100: r.wallShare >= 0.999, noaddons: r.addonsUsed === 0, cats6: r.maxCats <= 6, norepair: r.repairs === 0 }[def.goal];
+  return [true, r.wallShare >= 0.5, third];
+}
+export const starsOf = (def: LevelDef, r: Result) => starGoals(def, r).filter(Boolean).length;
 
 // ── The map ───────────────────────────────────────────────────────────────────────────────────────────
 /** The road on the kit's LevelMap.png (7782×785 source px): its centre line, start to end. */
