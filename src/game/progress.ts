@@ -265,11 +265,13 @@ export function spendAddons(s: Save, used: Equipped[], left: Equipped[]): void {
 
 /** Everything a fight on level n needs except the seed (the game and `npm run sim` both use this). */
 export function fightSetup(s: Save, awis: AWI[], n: number): Omit<FightSetup, 'seed'> & { addons: Equipped[] } {
-  const deck = withCollectionBonus(deckOf(s, awis)), bonus = fightBonus(s);
+  // The tutorial (level 1) teaches with one card and no add-ons, even for players whose AWIs bring more.
+  const tutorial = !!levelDef(n).tutorial;
+  const deck = withCollectionBonus(deckOf(s, awis)).slice(0, tutorial ? 1 : DECK_MAX), bonus = fightBonus(s);
   const bricks = deck.filter((d) => d.awiPerk === 'brick').length * BRICK_PERK;
-  const addons = featureUnlocked(s, awis, 'addons') ? equipped(s, awis) : [];
+  const addons = featureUnlocked(s, awis, 'addons') && !tutorial ? equipped(s, awis) : [];
   const lucky = bestBoost(awis, 'luckybox');
-  if (lucky && featureUnlocked(s, awis, 'addons')) {
+  if (lucky && featureUnlocked(s, awis, 'addons') && !tutorial) {
     // A Lucky Box AWI: a free add-on, a different one each level (picked from the AWI's token and the level).
     let h = n * 7;
     for (const ch of lucky.uid) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
