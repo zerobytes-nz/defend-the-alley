@@ -1,4 +1,4 @@
-// Cat defenders: what an AWI (Altered World Item) becomes in Altered Alley.
+// Cat defenders: what an AWI (Altered World Item) becomes in Defend the Alley.
 //
 // Every defender is one of the kit's 15 cats (C1–C15) plus an attack type (the bullet colour) and a rarity.
 // Milestone 2 reads these from TheoSwap: each NFT's seed picks a leaf of the game's AWI config tree, which
@@ -18,16 +18,16 @@ export const ATTACKS: Record<Attack, { name: string; blurb: string; dmg: number;
   rapid: { name: 'Rapid', blurb: 'Fast fire', dmg: 0.6, rate: 1.8 },
   venom: { name: 'Venom', blurb: 'Slows enemies', dmg: 0.85, rate: 1 },
 };
-/** Blast bullets hurt every enemy this close to the hit, at this share of the damage. */
+/** Blast bullets hurt every enemy this close to the hit (street units), at this share of the damage. */
 export const SPLASH_R = 70, SPLASH_SHARE = 0.6;
 /** Venom: enemies walk at this share of their speed for this many seconds. */
 export const SLOW_FACTOR = 0.55, SLOW_TIME = 1.6;
 
 /** The three cat families in the kit: bazooka tabbies (C1–5), blaster greys (C6–10), rifle whites (C11–15). */
 const FAMILIES = [
-  { name: 'Bazooka', dmg: 30, rate: 0.8, range: 520, muzzle: [44, -60] },
-  { name: 'Blaster', dmg: 19, rate: 1.25, range: 470, muzzle: [56, -62] },
-  { name: 'Rifle', dmg: 14, rate: 1.75, range: 600, muzzle: [56, -46] },
+  { name: 'Bazooka', dmg: 30, rate: 0.8, range: 520, muzzle: [25, -34] },
+  { name: 'Blaster', dmg: 19, rate: 1.25, range: 470, muzzle: [32, -35] },
+  { name: 'Rifle', dmg: 14, rate: 1.75, range: 600, muzzle: [32, -26] },
 ] as const;
 const CAT_NAMES = ['Ginger', 'Beanie', 'Bandana', 'Pinky', 'Hoodie', 'Smokey', 'Bandit', 'Goggles', 'Top Hat', 'Captain', 'Snowy', 'Violet', 'Racer', 'Viking', 'Ninja'];
 
@@ -39,7 +39,7 @@ export interface Defender {
   rarity: Rarity;
   dmg: number;          // per hit, level 1
   rate: number;         // shots per second
-  range: number;        // pixels in front of the cat
+  range: number;        // street units in front of the cat (× layout U = game px)
   source: 'guest' | 'nft';
 }
 

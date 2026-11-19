@@ -37,7 +37,7 @@ async function draw(c, key, n, x, y, w, h) {
 async function scene(pad) {
   const S = 512, cv = createCanvas(S, S), c = cv.getContext('2d');
   const { img } = await art('bg.area1');
-  c.drawImage(img, 0, 190, 620, 620, 0, 0, S, S); // a square of road
+  c.drawImage(img, 560, 130, 460, 460, 0, 0, S, S); // a square of road past the wall
   c.fillStyle = 'rgba(29,26,38,0.2)'; c.fillRect(0, 0, S, S);
   const k = 1 - pad;
   await draw(c, 'enemy.reg2.walk', 0, 256 + 140 * k, 256 + 60 * k, 260 * k, 220 * k);

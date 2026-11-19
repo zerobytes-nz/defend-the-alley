@@ -1,6 +1,6 @@
-# Altered Alley
+# Defend the Alley
 
-A portrait lane-defense game for the phone browser (Phaser 3 + TypeScript + Vite), and TheoSwap showcase game #3.
+A landscape lane-defense game for the phone browser (Phaser 3 + TypeScript + Vite), and TheoSwap showcase game #3.
 Cats hold a street against zombie waves across 5 areas, with a boss at the end of each. Players' NFTs become
 **AWIs (Altered World Items)**: **cat defenders** with a cat (one of 15), an attack (Blast, Rapid or Venom), a rarity,
 and damage / fire rate / range. Guests play with three free cats. See [PLAN.md](PLAN.md) for the design and milestones.
@@ -42,7 +42,7 @@ npm run assets:import -- "/path/to/craftpix-net-397030-free-cartoon-cat-defense-
 
 ## Install on a phone
 
-`npm run build` writes a service worker (offline play) and `manifest.webmanifest` (portrait, full screen). On Android,
+`npm run build` writes a service worker (offline play) and `manifest.webmanifest` (landscape, full screen). On Android,
 **Install app** on the menu uses Chrome's install (other Android browsers trigger a Play Protect warning, so the game offers
 "Open in Chrome" instead). On iPhone it shows the Share → Add to Home Screen steps.
 

@@ -114,27 +114,40 @@ const bullet = (color, glow) => (c, w, h) => {
 
 // ── Backgrounds ─────────────────────────────────────────────────────────────────────────────────────
 const AREA = [['#56687a', '#c9a24a'], ['#8a7058', '#e0b060'], ['#5a4660', '#c8c0d0'], ['#5e6266', '#d0a040'], ['#4f6a5e', '#c8b050']];
-const area = (k) => (c, w, h) => {
-  const [road, line] = AREA[k];
-  c.fillStyle = '#3a3440'; c.fillRect(0, 0, w, h);
-  rr(c, -4, 60, w + 8, 120, 0, '#6a6070'); // top sidewalk
-  c.fillStyle = road; c.fillRect(0, 186, w, 626);
-  c.fillStyle = 'rgba(255,255,255,0.05)';
-  for (let y = 186; y < 812; y += 124) c.fillRect(0, y, w, 2);
-  c.fillStyle = line; for (let x = 10; x < w; x += 120) c.fillRect(x, 494, 70, 10);
-  rr(c, -4, 812, w + 8, 110, 0, '#6a6070'); // bottom sidewalk
-  c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, 922, w, h - 922);
+// Same layout as the kit's Area art (see src/game/layout.ts): measured in kit pixels, drawn at 720/1062.
+const K = 720 / 1062;
+const area = (n) => (c, w, h) => {
+  const [road, line] = AREA[n];
+  c.save(); c.scale(K, K);
+  const W = w / K;
+  c.fillStyle = '#3a3440'; c.fillRect(0, 0, W, 1062);
+  c.fillStyle = '#6a6070'; c.fillRect(0, 90, W, 105);              // top sidewalk
+  c.fillStyle = road; c.fillRect(0, 195, W, 685);                  // road
+  c.fillStyle = line; for (let x = 820; x < W; x += 180) c.fillRect(x, 512, 110, 14);
+  c.fillStyle = 'rgba(255,255,255,0.18)'; for (let y = 230; y < 860; y += 70) c.fillRect(760, y, 160, 34); // crossing
+  c.fillStyle = '#6a6070'; c.fillRect(0, 880, W, 90);              // bottom sidewalk
+  c.fillStyle = 'rgba(0,0,0,0.35)'; c.fillRect(0, 970, W, 92);
+  for (let r = 0; r < 5; r++) for (const x of [225, 363]) rr(c, x, 253 + r * 115, 95, 94, 6, 'rgba(255,255,255,0.12)'); // cat grid
+  for (let r = 0; r < 5; r++) { // crate wall
+    const y = 215 + r * 119;
+    rr(c, 520 + (r % 2) * 8, y, 118, 112, 6, '#c68a52', '#5a3418', 4);
+    c.strokeStyle = '#8a5a2a'; c.lineWidth = 3; c.beginPath(); c.moveTo(560 + (r % 2) * 8, y + 6); c.lineTo(560 + (r % 2) * 8, y + 106); c.stroke();
+  }
+  rr(c, 652, 250, 66, 455, 30, '#c8c8d0', OUT, 4);                 // wall bar housing
+  rr(c, 670, 268, 22, 410, 10, '#2a3436');                         // bar channel (the game draws the fill)
+  c.restore();
 };
 const menu = (c, w, h) => {
   const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#2d2540'); g.addColorStop(1, '#4a5a6a'); c.fillStyle = g; c.fillRect(0, 0, w, h);
-  for (let k = 0; k < 14; k++) { // paw prints
-    const x = (k * 157) % w, y = 120 + k * 83;
+  for (let k = 0; k < 18; k++) { // paw prints
+    const x = (k * 233) % w, y = 60 + ((k * 137) % (h - 80));
     ell(c, x, y, 16, 13, 'rgba(255,255,255,0.07)');
     for (let j = 0; j < 4; j++) ell(c, x - 15 + j * 10, y - 18 - (j % 3 === 0 ? 0 : 5), 5, 6, 'rgba(255,255,255,0.07)');
   }
-  c.save(); c.translate(-40, 260); c.scale(2.4, 2.4); cat(1, 'idle')(c, 140, 126, 0, 20); c.restore();
-  c.save(); c.translate(200, 620); c.scale(2.2, 2.2); cat(8, 'idle')(c, 140, 126, 0, 20); c.restore();
-  c.save(); c.translate(-20, 860); c.scale(2.3, 2.3); cat(13, 'idle')(c, 140, 126, 0, 20); c.restore();
+  c.save(); c.translate(40, 300); c.scale(2.2, 2.2); cat(1, 'idle')(c, 140, 126, 0, 20); c.restore();
+  c.save(); c.translate(160, 420); c.scale(2.0, 2.0); cat(8, 'idle')(c, 140, 126, 0, 20); c.restore();
+  c.save(); c.translate(1000, 300); c.scale(2.2, 2.2); zombie('#c8282e', 'walk')(c, 176, 130, 0, 14); c.restore();
+  c.save(); c.translate(1120, 430); c.scale(2.0, 2.0); zombie('#f07b22', 'walk')(c, 176, 130, 3, 14); c.restore();
 };
 
 // ── UI ──────────────────────────────────────────────────────────────────────────────────────────────

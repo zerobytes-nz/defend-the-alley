@@ -1,14 +1,14 @@
-# Altered Alley: plan
+# Defend the Alley: plan
 
 TheoSwap showcase game #3. The same NFTs that are hero skins in [Altered Run](https://github.com/zerobytes-nz/altered-run)
 and unit cards in [Altered Arena](https://github.com/zerobytes-nz/altered-arena) become **cat defenders** here:
 **AWIs (Altered World Items)**, the in-game items TheoSwap maps an NFT to.
 
-- **Genre:** lane defense, portrait, taps only, for the phone browser (installable PWA).
+- **Genre:** lane defense, **landscape only**, taps only, for the phone browser (installable PWA). Portrait phones get a "turn your phone sideways" screen.
 - **Stack:** Phaser 3.90 + TypeScript + Vite, the same setup as Altered Run and Altered Arena.
 - **Art:** CraftPix [Free Cartoon Cat Defense Game Asset Kit](https://craftpix.net/freebies/free-cartoon-cat-defense-game-asset-kit/).
   It is never committed: see [ASSETS.md](ASSETS.md). The font is Passion One (OFL), which is committed.
-- **Name:** "Altered Alley" (working name was "Altered Defense"): alley cats hold the street. It is easy to rename
+- **Name:** "Defend the Alley" (earlier working names: "Altered Defense", "Altered Alley"). It is easy to rename
   while there is no GitHub repo yet.
 
 ## The game
@@ -18,7 +18,7 @@ wall. When the wall breaks, the run is over. Clear **5 areas** of the street to 
 
 | | |
 |---|---|
-| Screen | 720×1280 portrait: HUD (coins, wave, pause, ×1/×2 speed), the street (5 lanes × 2 cat spots), the card tray |
+| Screen | 1440×720 landscape (2:1). The kit's Area art fills it and already has the 2×5 cat grid, the crate wall and the wall's health bar on the left, so the game uses them as drawn (`src/game/layout.ts` measures them). HUD on the top sidewalk (coins, area, wave, ×1/×2, pause), card tray bottom right. |
 | Run | 5 areas × 3 waves: two zombie waves, then a **boss** wave. About 2½–3 minutes. |
 | Areas | Main Street, Sand Lot, Overpass, Rush Hour, Park Lane (the kit's Area1–5). Each brings tougher zombie types and its own boss (kit Boss 1–5). |
 | Taps | Tap a cat card, then tap an empty spot to place it (the card stays picked, so placing several is quick). Tap a placed cat for its stats and **Upgrade** (levels 1–4). |
@@ -49,10 +49,11 @@ A bot plays whole runs headless (`src/game/bot.ts`, the same code as `?bot` in t
 
 | Deck | Wins | Typical end | Median run |
 |---|---|---|---|
-| Guest (3 Common) | 0% | area 4–5 | 165 s |
-| Rare ×3 | 73% | win / area 5 | 191 s |
-| Epic ×3 | 100% | win, wall 85 | 166 s |
-| Legendary ×3 | 100% | win, wall 100 | 145 s |
+| Guest (3 Common) | 1% | area 4–5 | 185 s |
+| Rare ×3 | 90% | win / area 5 | 189 s |
+| Epic ×3 | 100% | win, wall 95 | 162 s |
+| Legendary ×3 | 100% | win, wall 100 | 142 s |
+| `?nft` sample deck | 100% | win, wall 90 | 159 s |
 
 That is the pitch: guests get far and see every area but rarely win; NFTs make the difference. A human may play worse
 than the bot, so check on a phone with real players in milestone 3 (and maybe give guests a little more).
@@ -76,7 +77,7 @@ than the bot, so check on a phone with real players in milestone 3 (and maybe gi
 - `npm run assets:import -- <kit>` packs everything in one go (3 s): frames sampled evenly (e.g. zombie walk 35 → 14),
   one fixed scale per character, sheets wrapped into rows to stay ≤ 4096 px.
 - Memory: only the deck's cats are loaded; streets and bosses load one area ahead and are released after.
-  Real art is 16 MB on disk for all 94 sheets; with the guest deck the game downloads 5.7 MB before the menu and 3.5 MB more during a full run.
+  Real art is 9.9 MB on disk for all 94 sheets (placeholders 4.4 MB).
 - Not used yet: Cat Guardian and CatBoxing (melee cats: candidates for Legendary-only AWIs), Boss 6–7, most UI screens.
 
 ## Milestones
@@ -86,13 +87,14 @@ than the bot, so check on a phone with real players in milestone 3 (and maybe gi
 - 5 lanes, place/upgrade cats, 8 zombie kinds, 5 areas with bosses, Blast/Rapid/Venom, win/lose, best run, pause, ×2.
 - Guest deck; `?nft` sample NFT deck; `?bot` autoplay; `?seed=N`; `?debug` FPS meter.
 - PWA manifest, service worker, install button (from Arena).
-- **Measured** in the Claude browser pane (desktop CPU, WebGL, 375×812): a full bot run (5 areas, 185 s) with no errors
-  or warnings; 2.5 ms median, 3.0 ms p95 per frame (update + render). The pane throttles rendering, so **60 FPS on a
+- **Landscape only** (switched from portrait after the first build): 1440×720 on the kit's own street art.
+- **Measured** in the Claude browser pane (desktop CPU, WebGL, 812×375): full bot runs with no errors (portrait build:
+  2.5 ms median, 3.0 ms p95 per frame; landscape: well under that). The pane throttles rendering, so **60 FPS on a
   real phone is not measured yet**.
 
 ### 2. TheoSwap
-- **Ask first:** create the hidden game "Altered Alley" and its config with the theoswap MCP (dry run → approval).
-- Config tree "Altered Alley Cat Defenders": leaves `cat_c1` … `cat_c15`, each with attack and rarity weights,
+- **Ask first:** create the hidden game "Defend the Alley" and its config with the theoswap MCP (dry run → approval).
+- Config tree "Defend the Alley Cat Defenders": leaves `cat_c1` … `cat_c15`, each with attack and rarity weights,
   so an NFT's seed picks e.g. `{ itemId: 'cat_c9', attack: 'blast', Rarity: 'Epic' }`; stats come from `makeDefender`
   (optional `damage` / `fireRate` / `range` overrides in itemData win, so the config can tune single AWIs).
 - Port from Arena: Connect scene (8-letter code + `?userCode=` deep link), Reveal scene (one AWI card per NFT), demo
@@ -102,9 +104,9 @@ than the bot, so check on a phone with real players in milestone 3 (and maybe gi
   that needs the user's explicit OK.
 
 ### 3. Polish and deploy
-- Fill tall phones (19.5:9) instead of letterboxing (Phaser `Scale.EXPAND`, tray anchored to the bottom).
+- Fill wide phones (19.5:9) instead of letterboxing (Phaser `Scale.EXPAND`, extend the street art to the sides).
 - Measure FPS and memory on a real Android phone and an iPhone; trim texture sizes if needed.
 - Hit/death juice, coin fly-to-HUD, tutorial hint on the first run, music per area.
 - Balance with real players; Cat Guardian / CatBoxing AWIs.
-- **Ask first:** GitHub repo (zerobytes-nz/altered-alley), Jira epic (THEOS), push; then deploy to
-  `games.theoswap.io/altered-alley` with the nginx key proxy (same as Arena).
+- **Ask first:** GitHub repo (zerobytes-nz/defend-the-alley), Jira epic (THEOS), push; then deploy to
+  `games.theoswap.io/defend-the-alley` with the nginx key proxy (same as Arena).

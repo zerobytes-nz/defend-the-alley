@@ -14,7 +14,7 @@ export interface ApiItem {
 }
 
 const PROXY = './api/user-items';
-const LS_ITEMS = 'altered-alley.items.v1.'; // + code
+const LS_ITEMS = 'defend-the-alley.items.v1.'; // + code
 
 const store = {
   get<T>(k: string): T | null { try { const v = localStorage.getItem(k); return v ? (JSON.parse(v) as T) : null; } catch { return null; } },

@@ -4,7 +4,7 @@ import { LANES } from './layout.ts';
 export interface EnemyType {
   key: string;        // art: enemy.<key>.walk / .attack / .dead
   hp: number;         // at wave 1; scaled by waveHp()
-  speed: number;      // px per second
+  speed: number;      // street units per second (× layout U = game px)
   dmg: number;        // wall damage per hit
   hitEvery: number;   // seconds between hits
   coins: number;      // reward

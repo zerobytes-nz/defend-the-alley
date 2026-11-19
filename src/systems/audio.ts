@@ -3,7 +3,7 @@
 // Mute is remembered in localStorage; M toggles it on a keyboard.
 
 type Wave = OscillatorType;
-const MUTE_KEY = 'altered-alley.muted.v1';
+const MUTE_KEY = 'defend-the-alley.muted.v1';
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
@@ -90,7 +90,7 @@ let coinStreak = 0, lastCoinAt = 0, lastPewAt = 0, lastThudAt = 0;
 const COIN_STEPS = [0, 2, 4, 7, 9, 12, 14, 16]; // pentatonic climb for quick pickups
 
 export const sfx = {
-  // Altered Alley: cats firing, hits and the wall. Shots are throttled so a full street doesn't clip.
+  // Defend the Alley: cats firing, hits and the wall. Shots are throttled so a full street doesn't clip.
   pew: (kind: 'blast' | 'rapid' | 'venom') => {
     const now = performance.now();
     if (now - lastPewAt < 45) return;

@@ -1,10 +1,10 @@
 // A simple player for `npm run sim` (balance) and ?bot (hands-free demo / soak test in the browser).
 // Call think() about twice a second: it fills the most threatened lane, else upgrades a cat there.
 import type { Defense } from './sim.ts';
-import { COLS, LANES, slotIndex } from './layout.ts';
+import { COLS, LANES, SPAWN_X, slotIndex } from './layout.ts';
 
 export function think(d: Defense): void {
-  const threat = Array.from({ length: LANES }, (_, l) => d.enemies.filter((e) => e.lane === l).reduce((s, e) => s + e.hp + (800 - e.x), 0));
+  const threat = Array.from({ length: LANES }, (_, l) => d.enemies.filter((e) => e.lane === l).reduce((s, e) => s + e.hp + (SPAWN_X - e.x) / 2, 0));
   const lanes = [...Array(LANES).keys()].sort((a, b) => threat[b] - threat[a]);
   const best = [...d.deck].sort((a, b) => b.dmg * b.rate - a.dmg * a.rate);
   for (const l of lanes) {

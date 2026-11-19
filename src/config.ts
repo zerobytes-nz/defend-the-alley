@@ -1,6 +1,6 @@
-// Screen size, the street layout and switches. Portrait 720×1280 (9:16), scaled to fit the phone (Scale.FIT).
-export const GAME_W = 720;
-export const GAME_H = 1280;
+// Screen size and switches. Landscape 1440×720 (2:1, like most phones held sideways), scaled to fit (Scale.FIT).
+export const GAME_W = 1440;
+export const GAME_H = 720;
 
 const params = new URLSearchParams(location.search);
 /** ?debug: FPS meter, window.__game and window.__sim. */
@@ -24,7 +24,5 @@ export const COLORS = {
   stroke: '#2b1d14',
 };
 
-/** Where the street art sits; see src/game/layout.ts for lanes and slots. */
-export const BG_Y = 80;
-export const BG_H = 988;
-export const TRAY_Y = BG_Y + BG_H; // 1068: card tray below the street
+/** The card tray sits on the bottom sidewalk of the street art (see src/game/layout.ts for lanes and spots). */
+export const TRAY_Y = 652;

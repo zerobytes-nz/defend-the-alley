@@ -1,11 +1,11 @@
 // The defense, as pure TypeScript: fixed 60 Hz steps, seeded, no Phaser. The scene sends commands
 // (place, upgrade) and draws what happened from `events`; `npm run sim` plays it with a bot to balance it.
 import { ATTACKS, LEVEL_DMG, MAX_LEVEL, PLACE_COST, PLACE_STEP, SLOW_FACTOR, SLOW_TIME, SPLASH_R, SPLASH_SHARE, UPGRADE_COST, type Defender } from './cats.ts';
-import { COLS, LANES, SLOT_X, SPAWN_X, STOP_X, slotLane } from './layout.ts';
+import { COLS, LANES, SLOT_X, SPAWN_X, STOP_X, U, slotLane } from './layout.ts';
 import { AREAS, TOTAL_WAVES, WAVES_PER_AREA, makeWave, rng, waveHp, type EnemyType, type Spawn } from './waves.ts';
 
 export const STEP = 1 / 60;
-const BULLET_SPEED = 900;
+const BULLET_SPEED = 900 * U;
 const START_COINS = 150, INCOME_PER_S = 3;
 const FIRST_WAVE_AT = 3;          // seconds to place the first cats
 const WAVE_TIMEOUT = 2.5;          // next wave starts this long after the last spawn even if enemies remain
@@ -144,7 +144,7 @@ export class Defense {
   private moveEnemies(dt: number): void {
     for (const e of this.enemies) {
       if (e.state === 'walk') {
-        const v = e.type.speed * (this.time < e.slowUntil ? SLOW_FACTOR : 1);
+        const v = e.type.speed * U * (this.time < e.slowUntil ? SLOW_FACTOR : 1);
         e.x -= v * dt;
         if (e.x <= STOP_X) { e.x = STOP_X; e.state = 'attack'; e.hitTimer = e.type.hitEvery * 0.5; }
       } else if (e.state === 'attack') {
@@ -163,7 +163,7 @@ export class Defense {
     const lane = slotLane(p.slot), x0 = SLOT_X[p.slot % COLS];
     let best: Enemy | null = null;
     for (const e of this.enemies) {
-      if (e.lane !== lane || e.state === 'dead' || e.x > x0 + p.def.range || e.x > SPAWN_X - 20) continue;
+      if (e.lane !== lane || e.state === 'dead' || e.x > x0 + p.def.range * U || e.x > SPAWN_X - 45) continue;
       if (!best || e.x < best.x) best = e;
     }
     return best;
@@ -176,7 +176,7 @@ export class Defense {
       if (p.cooldown > 0) continue;
       if (!this.target(p)) { p.cooldown = 0; continue; }
       p.cooldown += 1 / p.def.rate;
-      const b: Bullet = { id: this.ids++, lane: slotLane(p.slot), x: SLOT_X[p.slot % COLS] + 40, dmg: this.dmgOf(p), attack: p.def.attack, from: p.slot };
+      const b: Bullet = { id: this.ids++, lane: slotLane(p.slot), x: SLOT_X[p.slot % COLS] + 25, dmg: this.dmgOf(p), attack: p.def.attack, from: p.slot };
       this.bullets.push(b);
       this.events.push({ t: 'shoot', slot: p.slot, bullet: b });
     }
@@ -186,7 +186,7 @@ export class Defense {
     const keep: Bullet[] = [];
     for (const b of this.bullets) {
       b.x += BULLET_SPEED * dt;
-      const hit = this.enemies.find((e) => e.lane === b.lane && e.state !== 'dead' && Math.abs(e.x - b.x) < 26);
+      const hit = this.enemies.find((e) => e.lane === b.lane && e.state !== 'dead' && Math.abs(e.x - b.x) < 24);
       if (hit) { this.hit(b, hit); continue; }
       if (b.x < SPAWN_X + 40) keep.push(b);
     }
@@ -197,7 +197,7 @@ export class Defense {
     this.damage(e, b.dmg, b, false);
     if (b.attack === 'venom') e.slowUntil = this.time + SLOW_TIME;
     if (b.attack === 'blast') {
-      for (const o of this.enemies) if (o !== e && o.lane === b.lane && o.state !== 'dead' && Math.abs(o.x - e.x) < SPLASH_R) this.damage(o, Math.round(b.dmg * SPLASH_SHARE), b, true);
+      for (const o of this.enemies) if (o !== e && o.lane === b.lane && o.state !== 'dead' && Math.abs(o.x - e.x) < SPLASH_R * U) this.damage(o, Math.round(b.dmg * SPLASH_SHARE), b, true);
     }
   }
 

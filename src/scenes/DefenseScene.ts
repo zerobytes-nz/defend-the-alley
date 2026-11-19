@@ -1,11 +1,11 @@
 // The run: draws the simulation (src/game/sim.ts) and turns taps into its commands.
 // The sim steps at a fixed 60 Hz; this scene only creates/destroys sprites from sim events and moves them.
 import Phaser from 'phaser';
-import { BG_Y, COLORS, DEBUG, GAME_H, GAME_W, SEED, TRAY_Y } from '../config.ts';
+import { COLORS, DEBUG, GAME_H, GAME_W, SEED, TRAY_Y } from '../config.ts';
 import { areaArt, asset, ensureLoaded, release } from '../assets.ts';
 import { currentDeck } from '../deck.ts';
 import { ATTACKS, MAX_LEVEL, RARITY_COLOR, muzzleOffset, type Defender } from '../game/cats.ts';
-import { COLS, LANES, LANE_H, SLOT_X, WALL_X, laneCenter, laneFeet, slotIndex, slotLane } from '../game/layout.ts';
+import { COLS, LANES, SLOT_SIZE, SLOT_X, WALL_BAR, WALL_X0, WALL_X1, LANE_H, LANE_TOP, laneCenter, laneFeet, slotIndex, slotLane } from '../game/layout.ts';
 import { Defense, STEP, WALL_HP, type Enemy, type Placed, type SimEvent } from '../game/sim.ts';
 import { AREAS, TOTAL_WAVES } from '../game/waves.ts';
 import { think } from '../game/bot.ts';
@@ -38,13 +38,14 @@ export class DefenseScene extends Phaser.Scene {
   private cards: CardView[] = [];
   private selected: Defender | null = null;
   private slotTiles: Phaser.GameObjects.Rectangle[] = [];
-  private wallG!: Phaser.GameObjects.Graphics;
+  private wallFlash!: Phaser.GameObjects.Rectangle;
   private bubble: Phaser.GameObjects.Container | null = null;
 
   private coinText!: Phaser.GameObjects.Text;
   private waveText!: Phaser.GameObjects.Text;
   private areaText!: Phaser.GameObjects.Text;
   private wallBar!: Phaser.GameObjects.Rectangle;
+  private wallText!: Phaser.GameObjects.Text;
   private hint!: Phaser.GameObjects.Text;
   private fpsText: Phaser.GameObjects.Text | null = null;
   private shown = { coins: -1, wall: -1 };
@@ -61,9 +62,8 @@ export class DefenseScene extends Phaser.Scene {
     void ensureLoaded(this, areaArt(1));
 
     this.add.rectangle(0, 0, GAME_W, GAME_H, COLORS.bg).setOrigin(0).setDepth(-1);
-    this.bg = this.add.image(0, BG_Y, AREAS[0].bg).setOrigin(0).setDepth(D.bg);
+    this.bg = this.add.image(0, 0, AREAS[0].bg).setOrigin(0).setDepth(D.bg);
     this.drawSlots();
-    this.wallG = this.add.graphics().setDepth(D.wall);
     this.drawWall();
     this.drawHud();
     this.drawTray(deck);
@@ -74,7 +74,7 @@ export class DefenseScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-P', () => this.togglePause());
     this.input.keyboard?.on('keydown-ESC', () => this.togglePause());
     if (DEBUG) {
-      this.fpsText = text(this, GAME_W - 12, TRAY_Y - 34, '', 22, '#9fffa0', 4).setOrigin(1, 0.5).setDepth(D.overlay);
+      this.fpsText = text(this, 12, 108, '', 20, '#9fffa0', 4).setOrigin(0, 0.5).setDepth(D.overlay);
       (window as unknown as { __sim: Defense }).__sim = this.sim;
     }
   }
@@ -143,35 +143,31 @@ export class DefenseScene extends Phaser.Scene {
     if (this.sim.wallHp !== this.shown.wall) {
       this.shown.wall = this.sim.wallHp;
       const f = this.sim.wallHp / WALL_HP;
-      this.wallBar.width = 196 * f;
+      this.wallBar.height = (WALL_BAR.h - 4) * f; // the bar empties from the top, like the kit's
       this.wallBar.setFillStyle(f > 0.5 ? COLORS.good : f > 0.25 ? COLORS.gold : COLORS.bad);
+      this.wallText.setText(`${this.sim.wallHp}`);
     }
   }
 
   // ── Street ───────────────────────────────────────────────────────────────────────────────────────
+  /** Tap zones on the kit's grid squares (the squares themselves are part of the street art). */
   private drawSlots(): void {
     for (let l = 0; l < LANES; l++) for (let c = 0; c < COLS; c++) {
       const s = slotIndex(l, c);
-      const tile = this.add.rectangle(SLOT_X[c], laneCenter(l) + 4, 100, LANE_H - 14, 0xffffff, 0.1)
-        .setStrokeStyle(3, 0xffffff, 0.22).setDepth(D.slot).setInteractive({ useHandCursor: true });
+      const tile = this.add.rectangle(SLOT_X[c], laneCenter(l), SLOT_SIZE + 10, LANE_H - 4, 0xffffff, 0)
+        .setStrokeStyle(3, 0xffffff, 0).setDepth(D.slot).setInteractive({ useHandCursor: true });
       tile.on('pointerup', () => this.tapSlot(s));
       this.slotTiles.push(tile);
     }
   }
 
-  /** A column of crates per lane. Redrawn (with a red flash) when hit. */
-  private drawWall(flash = false): void {
-    const g = this.wallG;
-    g.clear();
-    for (let l = 0; l < LANES; l++) {
-      const top = laneCenter(l) - LANE_H / 2 + 6;
-      for (let k = 0; k < 2; k++) {
-        const y = top + k * ((LANE_H - 10) / 2);
-        g.fillStyle(flash ? 0xe07a5a : 0xc68a52).fillRoundedRect(WALL_X - 24, y, 44, (LANE_H - 14) / 2, 6);
-        g.lineStyle(3, 0x5a3418).strokeRoundedRect(WALL_X - 24, y, 44, (LANE_H - 14) / 2, 6);
-        g.lineStyle(2, 0x8a5a2a).lineBetween(WALL_X - 18, y + 8, WALL_X + 14, y + (LANE_H - 14) / 2 - 8);
-      }
-    }
+  /** The crate wall is in the art; the game draws its health into the bar beside it and flashes it when hit. */
+  private drawWall(): void {
+    const b = WALL_BAR;
+    this.add.rectangle(b.x, b.y, b.w, b.h, 0x1d2628).setOrigin(0).setDepth(D.wall); // covers the art's own (static) fill
+    this.wallBar = this.add.rectangle(b.x + 2, b.y + b.h - 2, b.w - 4, b.h - 4, COLORS.good).setOrigin(0, 1).setDepth(D.wall + 1);
+    this.wallText = text(this, b.x + b.w / 2, b.y + b.h + 34, '100', 22).setOrigin(0.5).setDepth(D.wall + 2);
+    this.wallFlash = this.add.rectangle(WALL_X0, LANE_TOP - 20, WALL_X1 - WALL_X0, LANE_H * LANES + 40, 0xff3020, 0).setOrigin(0).setDepth(D.wall + 3);
   }
 
   private changeArea(a: number): void {
@@ -182,7 +178,7 @@ export class DefenseScene extends Phaser.Scene {
       return;
     }
     if (a + 1 < AREAS.length) void ensureLoaded(this, areaArt(a + 1));
-    const next = this.add.image(0, BG_Y, AREAS[a].bg).setOrigin(0).setDepth(D.bg + 1).setAlpha(0);
+    const next = this.add.image(0, 0, AREAS[a].bg).setOrigin(0).setDepth(D.bg + 1).setAlpha(0);
     const old = this.bg;
     // Free the previous area's street and boss once its street is off screen (area 1 stays for the next run).
     this.tweens.add({ targets: next, alpha: 1, duration: 700, onComplete: () => { old.destroy(); next.setDepth(D.bg); if (a - 1 >= 1) release(this, areaArt(a - 1)); } });
@@ -208,9 +204,9 @@ export class DefenseScene extends Phaser.Scene {
     }
     if (p.level > 1) {
       v.badge?.destroy();
-      v.badge = this.add.image(v.spr.x - 40, v.spr.y - 96, `ui.up${Math.min(3, p.level - 1)}`).setScale(0.6).setDepth(D.actors + 900);
+      v.badge = this.add.image(v.spr.x - 30, v.spr.y - 62, `ui.up${Math.min(3, p.level - 1)}`).setScale(0.42).setDepth(D.actors + 900);
       this.tweens.add({ targets: v.spr, scaleY: v.spr.scaleY * 1.12, yoyo: true, duration: 120 });
-      this.fx(v.spr.x, v.spr.y - 50, 0.5);
+      this.fx(v.spr.x, v.spr.y - 34, 0.35);
       sfx.buff();
     } else if (isNew) sfx.place();
   }
@@ -236,9 +232,9 @@ export class DefenseScene extends Phaser.Scene {
     const spr = this.add.sprite(e.x, y + 4, `${key}.walk`).setOrigin(0.5, 1).setScale(asset(`${key}.walk`).displayScale)
       .setDepth(D.actors + y + (e.type.boss ? 0.5 : 0)).play(`${key}.walk`);
     spr.anims.setProgress(Math.random());
-    const w = e.type.boss ? 120 : 64, top = y - (e.type.boss ? 170 : 116);
-    const barBg = this.add.rectangle(e.x, top, w, e.type.boss ? 14 : 10, 0x000000, 0.65).setDepth(D.fx + 1).setVisible(false);
-    const bar = this.add.rectangle(e.x, top, w - 4, e.type.boss ? 10 : 6, e.type.boss ? 0xff5040 : 0x8cff6a).setOrigin(0, 0.5).setDepth(D.fx + 2).setVisible(false);
+    const w = e.type.boss ? 90 : 48, top = y - (e.type.boss ? 150 : 92);
+    const barBg = this.add.rectangle(e.x, top, w, e.type.boss ? 12 : 8, 0x000000, 0.65).setDepth(D.fx + 1).setVisible(false);
+    const bar = this.add.rectangle(e.x, top, w - 4, e.type.boss ? 8 : 4, e.type.boss ? 0xff5040 : 0x8cff6a).setOrigin(0, 0.5).setDepth(D.fx + 2).setVisible(false);
     this.enemies.set(e.id, { spr, bar, barBg, state: 'walk', flashUntil: 0 });
     if (e.type.boss) { spr.setAlpha(0); this.tweens.add({ targets: spr, alpha: 1, duration: 400 }); }
   }
@@ -249,7 +245,7 @@ export class DefenseScene extends Phaser.Scene {
     if (splash) return;
     const b = this.bullets.get(bulletId);
     if (b) { b.destroy(); this.bullets.delete(bulletId); }
-    if (attack === 'blast') { this.fx(e.x - 10, laneFeet(e.lane) - 50, 0.55); sfx.boom(); }
+    if (attack === 'blast') { this.fx(e.x - 8, laneFeet(e.lane) - 34, 0.45); sfx.boom(); }
   }
 
   private onKill(e: Enemy, coins: number): void {
@@ -259,16 +255,16 @@ export class DefenseScene extends Phaser.Scene {
     v.bar.destroy(); v.barBg.destroy();
     v.spr.clearTint().play(`enemy.${e.type.key}.dead`);
     v.spr.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => this.tweens.add({ targets: v.spr, alpha: 0, duration: 250, onComplete: () => v.spr.destroy() }));
-    const t = text(this, e.x, laneFeet(e.lane) - 110, `+${coins}`, e.type.boss ? 44 : 30, '#ffd02a', 5).setOrigin(0.5).setDepth(D.fx + 5);
+    const t = text(this, e.x, laneFeet(e.lane) - 84, `+${coins}`, e.type.boss ? 38 : 26, '#ffd02a', 5).setOrigin(0.5).setDepth(D.fx + 5);
     this.tweens.add({ targets: t, y: t.y - 50, alpha: 0, duration: 700, onComplete: () => t.destroy() });
-    if (e.type.boss) { this.fx(e.x, laneFeet(e.lane) - 70, 1.2); this.cameras.main.shake(250, 0.006); sfx.boom(); }
+    if (e.type.boss) { this.fx(e.x, laneFeet(e.lane) - 60, 0.9); this.cameras.main.shake(250, 0.006); sfx.boom(); }
     sfx.coin();
   }
 
   private onWallHit(e: Enemy): void {
     sfx.thud();
-    this.drawWall(true);
-    this.time.delayedCall(90, () => this.drawWall(false));
+    this.wallFlash.setFillStyle(0xff3020, 0.35);
+    this.tweens.add({ targets: this.wallFlash, fillAlpha: 0, duration: 160 });
     if (e.type.boss) this.cameras.main.shake(120, 0.003);
   }
 
@@ -281,45 +277,34 @@ export class DefenseScene extends Phaser.Scene {
   }
 
   // ── HUD and tray ─────────────────────────────────────────────────────────────────────────────────
+  /** HUD on the top sidewalk, cards on the bottom one, like the kit's own screens. */
   private drawHud(): void {
-    this.add.rectangle(0, 0, GAME_W, BG_Y, 0x16131d).setOrigin(0).setDepth(D.hud - 1);
-    this.add.image(110, 40, 'ui.coinbar').setDepth(D.hud);
-    this.add.image(40, 40, 'ui.coin').setScale(0.85).setDepth(D.hud + 1);
-    this.coinText = text(this, 120, 38, '0', 36).setOrigin(0.5).setDepth(D.hud + 2);
-    this.add.image(GAME_W / 2 + 20, 40, 'ui.wavebar').setDepth(D.hud);
-    this.waveText = text(this, GAME_W / 2 + 40, 38, `Wave 0/${TOTAL_WAVES}`, 28).setOrigin(0.5).setDepth(D.hud + 1);
-    const pause = this.add.image(GAME_W - 46, 40, 'ui.settings').setScale(0.62).setDepth(D.hud);
-    tappable(pause, () => this.togglePause());
-    const spd = text(this, GAME_W - 122, 40, '×1', 34).setOrigin(0.5).setDepth(D.hud);
+    this.add.image(118, 46, 'ui.coinbar').setDepth(D.hud);
+    this.add.image(44, 46, 'ui.coin').setScale(0.85).setDepth(D.hud + 1);
+    this.coinText = text(this, 128, 44, '0', 34).setOrigin(0.5).setDepth(D.hud + 2);
+    this.areaText = text(this, 240, 46, `Area 1 · ${AREAS[0].name}`, 30).setOrigin(0, 0.5).setDepth(D.hud);
+    this.add.image(GAME_W - 270, 46, 'ui.wavebar').setDepth(D.hud);
+    this.waveText = text(this, GAME_W - 250, 44, `Wave 0/${TOTAL_WAVES}`, 28).setOrigin(0.5).setDepth(D.hud + 1);
+    const spd = text(this, GAME_W - 132, 46, '×1', 34).setOrigin(0.5).setDepth(D.hud);
     tappable(spd, () => { this.speed = this.speed === 1 ? 2 : 1; spd.setText(`×${this.speed}`); });
-
-    // Wall health and the area name on the top sidewalk.
-    const y = BG_Y + 44;
-    this.add.rectangle(20, y, 240, 54, 0x000000, 0.45).setOrigin(0, 0.5).setDepth(D.hud);
-    this.add.image(46, y, 'ui.wall').setScale(0.55).setDepth(D.hud + 1);
-    this.add.rectangle(78, y, 200, 22, 0x000000, 0.6).setOrigin(0, 0.5).setDepth(D.hud + 1);
-    this.wallBar = this.add.rectangle(80, y, 196, 18, COLORS.good).setOrigin(0, 0.5).setDepth(D.hud + 2);
-    this.areaText = text(this, GAME_W - 20, y, `Area 1 · ${AREAS[0].name}`, 30).setOrigin(1, 0.5).setDepth(D.hud);
-    this.hint = text(this, GAME_W / 2, TRAY_Y - 40, 'Pick a cat, then tap a spot by the wall', 26, COLORS.text, 5).setOrigin(0.5).setDepth(D.hud);
+    const pause = this.add.image(GAME_W - 52, 46, 'ui.settings').setScale(0.62).setDepth(D.hud);
+    tappable(pause, () => this.togglePause());
+    this.hint = text(this, 30, TRAY_Y, 'Pick a cat card, then tap a square by the wall', 26, COLORS.text, 5).setOrigin(0, 0.5).setDepth(D.hud);
   }
 
   private drawTray(deck: Defender[]): void {
-    this.add.rectangle(0, TRAY_Y, GAME_W, GAME_H - TRAY_Y, COLORS.tray).setOrigin(0).setDepth(D.tray - 1);
-    this.add.rectangle(0, TRAY_Y, GAME_W, 6, 0x000000, 0.4).setOrigin(0).setDepth(D.tray - 1);
-    const gap = 138, y = TRAY_Y + 104;
+    const gap = 112, x0 = GAME_W - 70 - (deck.length - 1) * gap;
     deck.forEach((def, i) => {
-      const x = GAME_W / 2 + (i - (deck.length - 1) / 2) * gap;
-      const glow = this.add.rectangle(0, 0, 140, 140, 0xffffff, 0.9).setVisible(false);
-      const box = this.add.image(0, 0, 'ui.cardbox').setScale(0.8);
-      const stripe = this.add.rectangle(0, -50, 100, 8, RARITY_COLOR[def.rarity]);
-      const cat = this.add.image(-4, 34, `cat.c${def.cat}.idle`, 0).setOrigin(0.5, 1).setScale(0.62);
-      const bullet = this.add.image(40, -34, `bullet.${def.attack}`).setScale(0.55);
-      const coin = this.add.image(-22, 58, 'ui.coin').setScale(0.38);
-      const cost = text(this, 6, 56, '', 26).setOrigin(0, 0.5);
-      const c = this.add.container(x, y, [glow, box, stripe, cat, bullet, coin, cost]).setSize(130, 130).setDepth(D.tray);
+      const x = x0 + i * gap;
+      const glow = this.add.rectangle(0, 0, 108, 108, 0xffffff, 0.9).setVisible(false);
+      const box = this.add.image(0, 0, 'ui.cardbox').setScale(0.62);
+      const stripe = this.add.rectangle(0, -38, 76, 6, RARITY_COLOR[def.rarity]);
+      const cat = this.add.image(-2, 28, `cat.c${def.cat}.idle`, 0).setOrigin(0.5, 1).setScale(0.5);
+      const bullet = this.add.image(30, -24, `bullet.${def.attack}`).setScale(0.5);
+      const coin = this.add.image(-16, 44, 'ui.coin').setScale(0.3);
+      const cost = text(this, 2, 42, '', 22, COLORS.text, 4).setOrigin(0, 0.5);
+      const c = this.add.container(x, TRAY_Y, [glow, box, stripe, cat, bullet, coin, cost]).setSize(100, 100).setDepth(D.tray);
       tappable(c, () => this.selectCard(def));
-      const name = text(this, x, y + 84, def.source === 'nft' ? def.name : `${def.name} · ${ATTACKS[def.attack].name}`, 18, COLORS.dim, 3).setOrigin(0.5).setDepth(D.tray);
-      if (name.width > gap - 6) name.setScale((gap - 6) / name.width);
       this.cards.push({ def, c, cost, glow, afford: null });
     });
   }
@@ -330,7 +315,7 @@ export class DefenseScene extends Phaser.Scene {
     for (const c of this.cards) {
       const on = c.def === def;
       c.glow.setVisible(on);
-      this.tweens.add({ targets: c.c, y: TRAY_Y + (on ? 92 : 104), duration: 120 });
+      this.tweens.add({ targets: c.c, y: TRAY_Y - (on ? 10 : 0), duration: 120 });
     }
   }
 
@@ -362,7 +347,7 @@ export class DefenseScene extends Phaser.Scene {
     const v = this.cats.get(p.slot);
     if (!v) return;
     const cost = this.sim.upgradeCost(p);
-    const x = Math.max(150, v.spr.x + 90), y = v.spr.y - 120;
+    const x = v.spr.x + 150, y = Math.max(70, v.spr.y - 70);
     const bg = this.add.rectangle(0, 0, 270, 112, 0x16131d, 0.92).setStrokeStyle(3, RARITY_COLOR[p.def.rarity]);
     const title = text(this, 0, -36, `${p.def.name} · Lv ${p.level}`, 26).setOrigin(0.5);
     if (title.width > 250) title.setScale(250 / title.width);
@@ -386,7 +371,7 @@ export class DefenseScene extends Phaser.Scene {
   private closeBubble(): void { this.bubble?.destroy(); this.bubble = null; }
 
   private banner(title: string, sub: string): void {
-    const y = 560;
+    const y = 300;
     const rib = this.add.image(GAME_W / 2, y, 'ui.ribbon').setDepth(D.overlay - 10);
     const t = text(this, GAME_W / 2, y - 14, title, 46, '#ffffff', 8).setOrigin(0.5).setDepth(D.overlay - 9);
     if (t.width > 400) t.setScale(400 / t.width);
@@ -405,12 +390,12 @@ export class DefenseScene extends Phaser.Scene {
     this.paused = true;
     this.anims.pauseAll(); this.tweens.pauseAll();
     const shade = this.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.6).setOrigin(0).setInteractive();
-    const t = text(this, GAME_W / 2, 420, 'Paused', 80).setOrigin(0.5);
+    const t = text(this, GAME_W / 2, 150, 'Paused', 80).setOrigin(0.5);
     const items = [shade, t,
-      button(this, GAME_W / 2, 600, 'Resume', () => this.togglePause()),
-      button(this, GAME_W / 2, 750, 'Restart', () => this.scene.restart(), 'ui.btn-orange'),
-      button(this, GAME_W / 2, 900, 'Menu', () => this.scene.start('Menu'), 'ui.btn-orange'),
-      muteButton(this, GAME_W / 2, 1040, 36)];
+      button(this, GAME_W / 2, 310, 'Resume', () => this.togglePause(), 'ui.btn-green', 0.85),
+      button(this, GAME_W / 2 - 200, 450, 'Restart', () => this.scene.restart(), 'ui.btn-orange', 0.75),
+      button(this, GAME_W / 2 + 200, 450, 'Menu', () => this.scene.start('Menu'), 'ui.btn-orange', 0.75),
+      muteButton(this, GAME_W / 2, 580, 36)];
     this.overlay = this.add.container(0, 0, items).setDepth(D.overlay);
   }
 
@@ -425,15 +410,15 @@ export class DefenseScene extends Phaser.Scene {
     (won ? sfx.finish : sfx.die)();
     this.time.delayedCall(won ? 300 : 900, () => {
       const shade = this.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.65).setOrigin(0).setInteractive();
-      const ban = this.add.image(GAME_W / 2, 380, won ? 'ui.win' : 'ui.lose').setScale(0.95);
+      const ban = this.add.image(GAME_W / 2, 170, won ? 'ui.win' : 'ui.lose').setScale(0.9);
       const lines = [
         won ? `All 5 areas cleared in ${Math.round(time)} s` : `Fell in Area ${this.sim.area + 1} · wave ${wave} of ${TOTAL_WAVES}`,
         `${st.kills} zombies · ${st.bossKills} bosses · wall ${this.sim.wallHp}%`,
         better ? 'New best!' : best ? (best.won ? `Best: cleared in ${Math.round(best.time)} s` : `Best: wave ${best.wave}`) : '',
       ];
-      const ts = lines.map((l, i) => text(this, GAME_W / 2, 600 + i * 56, l, i === 2 ? 34 : 32, i === 2 ? '#ffd02a' : '#ffffff', 6).setOrigin(0.5));
-      const again = button(this, GAME_W / 2, 860, 'Play again', () => this.scene.restart());
-      const menu = button(this, GAME_W / 2, 1010, 'Menu', () => this.scene.start('Menu'), 'ui.btn-orange');
+      const ts = lines.map((l, i) => text(this, GAME_W / 2, 360 + i * 50, l, i === 2 ? 34 : 32, i === 2 ? '#ffd02a' : '#ffffff', 6).setOrigin(0.5));
+      const again = button(this, GAME_W / 2 - 200, 600, 'Play again', () => this.scene.restart(), 'ui.btn-green', 0.8);
+      const menu = button(this, GAME_W / 2 + 200, 600, 'Menu', () => this.scene.start('Menu'), 'ui.btn-orange', 0.8);
       const c = this.add.container(0, 0, [shade, ban, ...ts, again, menu]).setDepth(D.overlay).setAlpha(0);
       this.tweens.add({ targets: c, alpha: 1, duration: 300 });
       if (BOT) this.time.delayedCall(4000, () => this.scene.restart());

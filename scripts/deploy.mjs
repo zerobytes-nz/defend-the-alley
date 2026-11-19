@@ -3,7 +3,7 @@
 //   npm run deploy:check   → build, then show what would change (rsync --dry-run)
 //   npm run deploy         → build, then upload for real
 // The target comes from DEPLOY_TARGET (environment or .env, which is gitignored), e.g.
-//   DEPLOY_TARGET=user@host:/var/www/games.example.com/altered-alley/
+//   DEPLOY_TARGET=user@host:/var/www/games.example.com/defend-the-alley/
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -25,7 +25,7 @@ function fromDotEnv(name) {
 
 let target = process.env.DEPLOY_TARGET || fromDotEnv('DEPLOY_TARGET');
 if (!/^[^\s:]+:\/\S+$/.test(target)) {
-  console.error('✘ Set DEPLOY_TARGET in .env, e.g. DEPLOY_TARGET=user@host:/var/www/games.example.com/altered-alley/');
+  console.error('✘ Set DEPLOY_TARGET in .env, e.g. DEPLOY_TARGET=user@host:/var/www/games.example.com/defend-the-alley/');
   process.exit(1);
 }
 if (!target.endsWith('/')) target += '/';

@@ -14,7 +14,7 @@
       "licenceUrl": "https://craftpix.net/file-licenses/"
     },
     "own": {
-      "name": "Altered Alley original (placeholder generator)",
+      "name": "Defend the Alley original (placeholder generator)",
       "url": "scripts/placeholder-art.mjs",
       "licence": "MIT, same as the code. Fine to commit."
     }
@@ -24,13 +24,12 @@
       "key": "cat.c1.idle",
       "type": "spritesheet",
       "path": "cats/c1-idle.png",
-      "width": 1880,
-      "height": 340,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 3200,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 20,
-      "columns": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 24,
         "repeat": -1
@@ -39,19 +38,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C1/Idle",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c1.shoot",
       "type": "spritesheet",
       "path": "cats/c1-shoot.png",
-      "width": 1880,
-      "height": 170,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 1600,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 30,
         "repeat": 0
@@ -60,20 +59,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C1/Shoot",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c2.idle",
       "type": "spritesheet",
       "path": "cats/c2-idle.png",
-      "width": 1880,
-      "height": 340,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 3200,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 20,
-      "columns": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 24,
         "repeat": -1
@@ -82,19 +80,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C2/Idle",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c2.shoot",
       "type": "spritesheet",
       "path": "cats/c2-shoot.png",
-      "width": 1880,
-      "height": 170,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 1600,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 30,
         "repeat": 0
@@ -103,20 +101,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C2/Shoot",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c3.idle",
       "type": "spritesheet",
       "path": "cats/c3-idle.png",
-      "width": 1880,
-      "height": 340,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 3200,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 20,
-      "columns": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 24,
         "repeat": -1
@@ -125,19 +122,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C3/Idle",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c3.shoot",
       "type": "spritesheet",
       "path": "cats/c3-shoot.png",
-      "width": 1880,
-      "height": 170,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 1600,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 30,
         "repeat": 0
@@ -146,20 +143,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C3/Shoot",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c4.idle",
       "type": "spritesheet",
       "path": "cats/c4-idle.png",
-      "width": 1880,
-      "height": 340,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 3200,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 20,
-      "columns": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 24,
         "repeat": -1
@@ -168,19 +164,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C4/Idle",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c4.shoot",
       "type": "spritesheet",
       "path": "cats/c4-shoot.png",
-      "width": 1880,
-      "height": 170,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 1600,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 30,
         "repeat": 0
@@ -189,20 +185,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C4/Shoot",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c5.idle",
       "type": "spritesheet",
       "path": "cats/c5-idle.png",
-      "width": 1880,
-      "height": 340,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 3200,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 20,
-      "columns": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 24,
         "repeat": -1
@@ -211,19 +206,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C5/Idle",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c5.shoot",
       "type": "spritesheet",
       "path": "cats/c5-shoot.png",
-      "width": 1880,
-      "height": 170,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 1600,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 30,
         "repeat": 0
@@ -232,20 +227,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C5/Shoot",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c6.idle",
       "type": "spritesheet",
       "path": "cats/c6-idle.png",
-      "width": 1880,
-      "height": 340,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 3200,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 20,
-      "columns": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 24,
         "repeat": -1
@@ -254,19 +248,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C6/Idle",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c6.shoot",
       "type": "spritesheet",
       "path": "cats/c6-shoot.png",
-      "width": 1880,
-      "height": 170,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 1600,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 30,
         "repeat": 0
@@ -275,20 +269,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C6/Shoot",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c7.idle",
       "type": "spritesheet",
       "path": "cats/c7-idle.png",
-      "width": 1880,
-      "height": 340,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 3200,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 20,
-      "columns": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 24,
         "repeat": -1
@@ -297,19 +290,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C7/Idle",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c7.shoot",
       "type": "spritesheet",
       "path": "cats/c7-shoot.png",
-      "width": 1880,
-      "height": 170,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 1600,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 30,
         "repeat": 0
@@ -318,20 +311,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C7/Shoot",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c8.idle",
       "type": "spritesheet",
       "path": "cats/c8-idle.png",
-      "width": 1880,
-      "height": 340,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 3200,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 20,
-      "columns": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 24,
         "repeat": -1
@@ -340,19 +332,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C8/Idle",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c8.shoot",
       "type": "spritesheet",
       "path": "cats/c8-shoot.png",
-      "width": 1880,
-      "height": 170,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 1600,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 30,
         "repeat": 0
@@ -361,20 +353,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C8/Shoot",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c9.idle",
       "type": "spritesheet",
       "path": "cats/c9-idle.png",
-      "width": 1880,
-      "height": 340,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 3200,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 20,
-      "columns": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 24,
         "repeat": -1
@@ -383,19 +374,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C9/Idle",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c9.shoot",
       "type": "spritesheet",
       "path": "cats/c9-shoot.png",
-      "width": 1880,
-      "height": 170,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 1600,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 30,
         "repeat": 0
@@ -404,20 +395,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C9/Shoot",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c10.idle",
       "type": "spritesheet",
       "path": "cats/c10-idle.png",
-      "width": 1880,
-      "height": 340,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 3200,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 20,
-      "columns": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 24,
         "repeat": -1
@@ -426,19 +416,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C10/Idle",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c10.shoot",
       "type": "spritesheet",
       "path": "cats/c10-shoot.png",
-      "width": 1880,
-      "height": 170,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 1600,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 30,
         "repeat": 0
@@ -447,20 +437,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C10/Shoot",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c11.idle",
       "type": "spritesheet",
       "path": "cats/c11-idle.png",
-      "width": 1880,
-      "height": 340,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 3200,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 20,
-      "columns": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 24,
         "repeat": -1
@@ -469,19 +458,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C11/Idle",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c11.shoot",
       "type": "spritesheet",
       "path": "cats/c11-shoot.png",
-      "width": 1880,
-      "height": 170,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 1600,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 30,
         "repeat": 0
@@ -490,20 +479,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C11/Shoot",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c12.idle",
       "type": "spritesheet",
       "path": "cats/c12-idle.png",
-      "width": 1880,
-      "height": 340,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 3200,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 20,
-      "columns": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 24,
         "repeat": -1
@@ -512,19 +500,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C12/Idle",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c12.shoot",
       "type": "spritesheet",
       "path": "cats/c12-shoot.png",
-      "width": 1880,
-      "height": 170,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 1600,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 30,
         "repeat": 0
@@ -533,20 +521,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C12/Shoot",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c13.idle",
       "type": "spritesheet",
       "path": "cats/c13-idle.png",
-      "width": 1880,
-      "height": 340,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 3200,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 20,
-      "columns": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 24,
         "repeat": -1
@@ -555,19 +542,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C13/Idle",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c13.shoot",
       "type": "spritesheet",
       "path": "cats/c13-shoot.png",
-      "width": 1880,
-      "height": 170,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 1600,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 30,
         "repeat": 0
@@ -576,20 +563,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C13/Shoot",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c14.idle",
       "type": "spritesheet",
       "path": "cats/c14-idle.png",
-      "width": 1880,
-      "height": 340,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 3200,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 20,
-      "columns": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 24,
         "repeat": -1
@@ -598,19 +584,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C14/Idle",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c14.shoot",
       "type": "spritesheet",
       "path": "cats/c14-shoot.png",
-      "width": 1880,
-      "height": 170,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 1600,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 30,
         "repeat": 0
@@ -619,20 +605,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C14/Shoot",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c15.idle",
       "type": "spritesheet",
       "path": "cats/c15-idle.png",
-      "width": 1880,
-      "height": 340,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 3200,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 20,
-      "columns": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 24,
         "repeat": -1
@@ -641,19 +626,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C15/Idle",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "cat.c15.shoot",
       "type": "spritesheet",
       "path": "cats/c15-shoot.png",
-      "width": 1880,
-      "height": 170,
-      "frameWidth": 188,
-      "frameHeight": 170,
+      "width": 1600,
+      "height": 144,
+      "frameWidth": 160,
+      "frameHeight": 144,
       "frameCount": 10,
-      "displayScale": 1,
+      "displayScale": 0.68,
       "animation": {
         "frameRate": 30,
         "repeat": 0
@@ -662,20 +647,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Characters/C15/Shoot",
-        "scale": 0.95
+        "scale": 0.8
       }
     },
     {
       "key": "enemy.reg1.walk",
       "type": "spritesheet",
       "path": "enemies/reg1-walk.png",
-      "width": 1722,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 2702,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 14,
-      "columns": 7,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -684,20 +668,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 1/Walk",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg1.attack",
       "type": "spritesheet",
       "path": "enemies/reg1-attack.png",
-      "width": 1230,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 1930,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 10,
-      "columns": 5,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -706,20 +689,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 1/Attack",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg1.dead",
       "type": "spritesheet",
       "path": "enemies/reg1-dead.png",
-      "width": 1230,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 1930,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 10,
-      "columns": 5,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": 0
@@ -728,20 +710,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 1/Dead",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg2.walk",
       "type": "spritesheet",
       "path": "enemies/reg2-walk.png",
-      "width": 1722,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 2702,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 14,
-      "columns": 7,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -750,20 +731,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 2/Walk",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg2.attack",
       "type": "spritesheet",
       "path": "enemies/reg2-attack.png",
-      "width": 1230,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 1930,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 10,
-      "columns": 5,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -772,20 +752,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 2/Attack",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg2.dead",
       "type": "spritesheet",
       "path": "enemies/reg2-dead.png",
-      "width": 1230,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 1930,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 10,
-      "columns": 5,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": 0
@@ -794,20 +773,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 2/Dead",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg3.walk",
       "type": "spritesheet",
       "path": "enemies/reg3-walk.png",
-      "width": 1722,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 2702,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 14,
-      "columns": 7,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -816,20 +794,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 3/Walk",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg3.attack",
       "type": "spritesheet",
       "path": "enemies/reg3-attack.png",
-      "width": 1230,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 1930,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 10,
-      "columns": 5,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -838,20 +815,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 3/Attack",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg3.dead",
       "type": "spritesheet",
       "path": "enemies/reg3-dead.png",
-      "width": 1230,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 1930,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 10,
-      "columns": 5,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": 0
@@ -860,20 +836,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 3/Dead",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg4.walk",
       "type": "spritesheet",
       "path": "enemies/reg4-walk.png",
-      "width": 1722,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 2702,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 14,
-      "columns": 7,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -882,20 +857,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 4/Walk",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg4.attack",
       "type": "spritesheet",
       "path": "enemies/reg4-attack.png",
-      "width": 1230,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 1930,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 10,
-      "columns": 5,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -904,20 +878,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 4/Attack",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg4.dead",
       "type": "spritesheet",
       "path": "enemies/reg4-dead.png",
-      "width": 1230,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 1930,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 10,
-      "columns": 5,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": 0
@@ -926,20 +899,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 4/Dead",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg5.walk",
       "type": "spritesheet",
       "path": "enemies/reg5-walk.png",
-      "width": 1722,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 2702,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 14,
-      "columns": 7,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -948,20 +920,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 5/Walk",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg5.attack",
       "type": "spritesheet",
       "path": "enemies/reg5-attack.png",
-      "width": 1230,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 1930,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 10,
-      "columns": 5,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -970,20 +941,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 5/Attack",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg5.dead",
       "type": "spritesheet",
       "path": "enemies/reg5-dead.png",
-      "width": 1230,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 1930,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 10,
-      "columns": 5,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": 0
@@ -992,20 +962,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 5/Dead",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg6.walk",
       "type": "spritesheet",
       "path": "enemies/reg6-walk.png",
-      "width": 1722,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 2702,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 14,
-      "columns": 7,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -1014,20 +983,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 6/Walk",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg6.attack",
       "type": "spritesheet",
       "path": "enemies/reg6-attack.png",
-      "width": 1230,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 1930,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 10,
-      "columns": 5,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -1036,20 +1004,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 6/Attack",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg6.dead",
       "type": "spritesheet",
       "path": "enemies/reg6-dead.png",
-      "width": 1230,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 1930,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 10,
-      "columns": 5,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": 0
@@ -1058,20 +1025,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 6/Dead",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg7.walk",
       "type": "spritesheet",
       "path": "enemies/reg7-walk.png",
-      "width": 1722,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 2702,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 14,
-      "columns": 7,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -1080,20 +1046,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 7/Walk",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg7.attack",
       "type": "spritesheet",
       "path": "enemies/reg7-attack.png",
-      "width": 1230,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 1930,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 10,
-      "columns": 5,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -1102,20 +1067,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 7/Attack",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg7.dead",
       "type": "spritesheet",
       "path": "enemies/reg7-dead.png",
-      "width": 1230,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 1930,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 10,
-      "columns": 5,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": 0
@@ -1124,20 +1088,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 7/Dead",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg8.walk",
       "type": "spritesheet",
       "path": "enemies/reg8-walk.png",
-      "width": 1722,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 2702,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 14,
-      "columns": 7,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -1146,20 +1109,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 8/Walk",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg8.attack",
       "type": "spritesheet",
       "path": "enemies/reg8-attack.png",
-      "width": 1230,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 1930,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 10,
-      "columns": 5,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -1168,20 +1130,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 8/Attack",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.reg8.dead",
       "type": "spritesheet",
       "path": "enemies/reg8-dead.png",
-      "width": 1230,
-      "height": 362,
-      "frameWidth": 246,
-      "frameHeight": 181,
+      "width": 1930,
+      "height": 142,
+      "frameWidth": 193,
+      "frameHeight": 142,
       "frameCount": 10,
-      "columns": 5,
-      "displayScale": 1.07,
+      "displayScale": 0.76,
       "animation": {
         "frameRate": 12,
         "repeat": 0
@@ -1190,20 +1151,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Reg 8/Dead",
-        "scale": 0.7
+        "scale": 0.55
       }
     },
     {
       "key": "enemy.boss1.walk",
       "type": "spritesheet",
       "path": "enemies/boss1-walk.png",
-      "width": 2282,
-      "height": 552,
-      "frameWidth": 326,
-      "frameHeight": 276,
+      "width": 3416,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
       "frameCount": 14,
-      "columns": 7,
-      "displayScale": 1,
+      "displayScale": 0.83,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -1212,20 +1172,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Boss 1/Walk",
-        "scale": 0.8
+        "scale": 0.6
       }
     },
     {
       "key": "enemy.boss1.attack",
       "type": "spritesheet",
       "path": "enemies/boss1-attack.png",
-      "width": 1956,
-      "height": 552,
-      "frameWidth": 326,
-      "frameHeight": 276,
+      "width": 2928,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
       "frameCount": 12,
-      "columns": 6,
-      "displayScale": 1,
+      "displayScale": 0.83,
       "animation": {
         "frameRate": 14,
         "repeat": -1
@@ -1234,20 +1193,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Boss 1/Attack",
-        "scale": 0.8
+        "scale": 0.6
       }
     },
     {
       "key": "enemy.boss1.dead",
       "type": "spritesheet",
       "path": "enemies/boss1-dead.png",
-      "width": 1956,
-      "height": 552,
-      "frameWidth": 326,
-      "frameHeight": 276,
+      "width": 2928,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
       "frameCount": 12,
-      "columns": 6,
-      "displayScale": 1,
+      "displayScale": 0.83,
       "animation": {
         "frameRate": 12,
         "repeat": 0
@@ -1256,20 +1214,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Boss 1/Dead",
-        "scale": 0.8
+        "scale": 0.6
       }
     },
     {
       "key": "enemy.boss2.walk",
       "type": "spritesheet",
       "path": "enemies/boss2-walk.png",
-      "width": 2282,
-      "height": 552,
-      "frameWidth": 326,
-      "frameHeight": 276,
+      "width": 3416,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
       "frameCount": 14,
-      "columns": 7,
-      "displayScale": 1,
+      "displayScale": 0.83,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -1278,20 +1235,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Boss 2/Walk",
-        "scale": 0.8
+        "scale": 0.6
       }
     },
     {
       "key": "enemy.boss2.attack",
       "type": "spritesheet",
       "path": "enemies/boss2-attack.png",
-      "width": 1956,
-      "height": 552,
-      "frameWidth": 326,
-      "frameHeight": 276,
+      "width": 2928,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
       "frameCount": 12,
-      "columns": 6,
-      "displayScale": 1,
+      "displayScale": 0.83,
       "animation": {
         "frameRate": 14,
         "repeat": -1
@@ -1300,20 +1256,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Boss 2/Attack",
-        "scale": 0.8
+        "scale": 0.6
       }
     },
     {
       "key": "enemy.boss2.dead",
       "type": "spritesheet",
       "path": "enemies/boss2-dead.png",
-      "width": 1956,
-      "height": 552,
-      "frameWidth": 326,
-      "frameHeight": 276,
+      "width": 2928,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
       "frameCount": 12,
-      "columns": 6,
-      "displayScale": 1,
+      "displayScale": 0.83,
       "animation": {
         "frameRate": 12,
         "repeat": 0
@@ -1322,20 +1277,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Boss 2/Dead",
-        "scale": 0.8
+        "scale": 0.6
       }
     },
     {
       "key": "enemy.boss3.walk",
       "type": "spritesheet",
       "path": "enemies/boss3-walk.png",
-      "width": 2282,
-      "height": 552,
-      "frameWidth": 326,
-      "frameHeight": 276,
+      "width": 3416,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
       "frameCount": 14,
-      "columns": 7,
-      "displayScale": 1,
+      "displayScale": 0.83,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -1344,20 +1298,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Boss 3/Walk",
-        "scale": 0.8
+        "scale": 0.6
       }
     },
     {
       "key": "enemy.boss3.attack",
       "type": "spritesheet",
       "path": "enemies/boss3-attack.png",
-      "width": 1956,
-      "height": 552,
-      "frameWidth": 326,
-      "frameHeight": 276,
+      "width": 2928,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
       "frameCount": 12,
-      "columns": 6,
-      "displayScale": 1,
+      "displayScale": 0.83,
       "animation": {
         "frameRate": 14,
         "repeat": -1
@@ -1366,20 +1319,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Boss 3/Attack",
-        "scale": 0.8
+        "scale": 0.6
       }
     },
     {
       "key": "enemy.boss3.dead",
       "type": "spritesheet",
       "path": "enemies/boss3-dead.png",
-      "width": 1956,
-      "height": 552,
-      "frameWidth": 326,
-      "frameHeight": 276,
+      "width": 2928,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
       "frameCount": 12,
-      "columns": 6,
-      "displayScale": 1,
+      "displayScale": 0.83,
       "animation": {
         "frameRate": 12,
         "repeat": 0
@@ -1388,20 +1340,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Boss 3/Dead",
-        "scale": 0.8
+        "scale": 0.6
       }
     },
     {
       "key": "enemy.boss4.walk",
       "type": "spritesheet",
       "path": "enemies/boss4-walk.png",
-      "width": 2282,
-      "height": 552,
-      "frameWidth": 326,
-      "frameHeight": 276,
+      "width": 3416,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
       "frameCount": 14,
-      "columns": 7,
-      "displayScale": 1,
+      "displayScale": 0.83,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -1410,20 +1361,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Boss 4/Walk",
-        "scale": 0.8
+        "scale": 0.6
       }
     },
     {
       "key": "enemy.boss4.attack",
       "type": "spritesheet",
       "path": "enemies/boss4-attack.png",
-      "width": 1956,
-      "height": 552,
-      "frameWidth": 326,
-      "frameHeight": 276,
+      "width": 2928,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
       "frameCount": 12,
-      "columns": 6,
-      "displayScale": 1,
+      "displayScale": 0.83,
       "animation": {
         "frameRate": 14,
         "repeat": -1
@@ -1432,20 +1382,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Boss 4/Attack",
-        "scale": 0.8
+        "scale": 0.6
       }
     },
     {
       "key": "enemy.boss4.dead",
       "type": "spritesheet",
       "path": "enemies/boss4-dead.png",
-      "width": 1956,
-      "height": 552,
-      "frameWidth": 326,
-      "frameHeight": 276,
+      "width": 2928,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
       "frameCount": 12,
-      "columns": 6,
-      "displayScale": 1,
+      "displayScale": 0.83,
       "animation": {
         "frameRate": 12,
         "repeat": 0
@@ -1454,20 +1403,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Boss 4/Dead",
-        "scale": 0.8
+        "scale": 0.6
       }
     },
     {
       "key": "enemy.boss5.walk",
       "type": "spritesheet",
       "path": "enemies/boss5-walk.png",
-      "width": 2282,
-      "height": 552,
-      "frameWidth": 326,
-      "frameHeight": 276,
+      "width": 3416,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
       "frameCount": 14,
-      "columns": 7,
-      "displayScale": 1,
+      "displayScale": 0.83,
       "animation": {
         "frameRate": 12,
         "repeat": -1
@@ -1476,20 +1424,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Boss 5/Walk",
-        "scale": 0.8
+        "scale": 0.6
       }
     },
     {
       "key": "enemy.boss5.attack",
       "type": "spritesheet",
       "path": "enemies/boss5-attack.png",
-      "width": 1956,
-      "height": 552,
-      "frameWidth": 326,
-      "frameHeight": 276,
+      "width": 2928,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
       "frameCount": 12,
-      "columns": 6,
-      "displayScale": 1,
+      "displayScale": 0.83,
       "animation": {
         "frameRate": 14,
         "repeat": -1
@@ -1498,20 +1445,19 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Boss 5/Attack",
-        "scale": 0.8
+        "scale": 0.6
       }
     },
     {
       "key": "enemy.boss5.dead",
       "type": "spritesheet",
       "path": "enemies/boss5-dead.png",
-      "width": 1956,
-      "height": 552,
-      "frameWidth": 326,
-      "frameHeight": 276,
+      "width": 2928,
+      "height": 207,
+      "frameWidth": 244,
+      "frameHeight": 207,
       "frameCount": 12,
-      "columns": 6,
-      "displayScale": 1,
+      "displayScale": 0.83,
       "animation": {
         "frameRate": 12,
         "repeat": 0
@@ -1520,20 +1466,20 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Enemies/Enemy Boss 5/Dead",
-        "scale": 0.8
+        "scale": 0.6
       }
     },
     {
       "key": "fx.explosion",
       "type": "spritesheet",
       "path": "fx/explosion.png",
-      "width": 2000,
-      "height": 400,
-      "frameWidth": 200,
-      "frameHeight": 200,
+      "width": 1600,
+      "height": 320,
+      "frameWidth": 160,
+      "frameHeight": 160,
       "frameCount": 20,
       "columns": 10,
-      "displayScale": 1,
+      "displayScale": 0.7,
       "animation": {
         "frameRate": 30,
         "repeat": 0
@@ -1550,12 +1496,12 @@
       "key": "fx.muzzle",
       "type": "spritesheet",
       "path": "fx/muzzle.png",
-      "width": 2070,
-      "height": 88,
-      "frameWidth": 138,
-      "frameHeight": 88,
+      "width": 1500,
+      "height": 64,
+      "frameWidth": 100,
+      "frameHeight": 64,
       "frameCount": 15,
-      "displayScale": 0.9,
+      "displayScale": 0.75,
       "animation": {
         "frameRate": 40,
         "repeat": 0
@@ -1564,7 +1510,7 @@
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/ShootFx",
-        "scale": 0.55,
+        "scale": 0.4,
         "align": "center"
       }
     },
@@ -1572,17 +1518,17 @@
       "key": "bullet.blast",
       "type": "image",
       "path": "fx/bullet-red.png",
-      "width": 68,
-      "height": 52,
-      "frameWidth": 68,
-      "frameHeight": 52,
+      "width": 52,
+      "height": 40,
+      "frameWidth": 52,
+      "frameHeight": 40,
       "frameCount": 1,
-      "displayScale": 0.9,
+      "displayScale": 0.8,
       "usedFor": "Blast bullet (red): splash damage.",
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Bullets/Artboard 1.png",
-        "scale": 0.6,
+        "scale": 0.46,
         "align": "center"
       }
     },
@@ -1590,17 +1536,17 @@
       "key": "bullet.venom",
       "type": "image",
       "path": "fx/bullet-green.png",
-      "width": 68,
-      "height": 52,
-      "frameWidth": 68,
-      "frameHeight": 52,
+      "width": 52,
+      "height": 40,
+      "frameWidth": 52,
+      "frameHeight": 40,
       "frameCount": 1,
-      "displayScale": 0.9,
+      "displayScale": 0.8,
       "usedFor": "Venom bullet (green): slows.",
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Bullets/Artboard 1 copy.png",
-        "scale": 0.6,
+        "scale": 0.46,
         "align": "center"
       }
     },
@@ -1608,17 +1554,17 @@
       "key": "bullet.rapid",
       "type": "image",
       "path": "fx/bullet-yellow.png",
-      "width": 68,
-      "height": 52,
-      "frameWidth": 68,
-      "frameHeight": 52,
+      "width": 52,
+      "height": 40,
+      "frameWidth": 52,
+      "frameHeight": 40,
       "frameCount": 1,
-      "displayScale": 0.9,
+      "displayScale": 0.8,
       "usedFor": "Rapid bullet (yellow): fast fire.",
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Bullets/Artboard 1 copy 2.png",
-        "scale": 0.6,
+        "scale": 0.46,
         "align": "center"
       }
     },
@@ -1626,20 +1572,20 @@
       "key": "bg.area1",
       "type": "image",
       "path": "bg/area1.png",
-      "width": 720,
-      "height": 988,
-      "frameWidth": 720,
-      "frameHeight": 988,
+      "width": 1440,
+      "height": 720,
+      "frameWidth": 1440,
+      "frameHeight": 720,
       "frameCount": 1,
       "displayScale": 1,
-      "usedFor": "Area 1 road (5 lanes).",
+      "usedFor": "Area 1: the street, the 2×5 cat grid, the crate wall and its health bar.",
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Area/Area1.png",
         "crop": [
-          1369,
           0,
-          774,
+          0,
+          2124,
           1062
         ],
         "align": "center"
@@ -1649,20 +1595,20 @@
       "key": "bg.area2",
       "type": "image",
       "path": "bg/area2.png",
-      "width": 720,
-      "height": 988,
-      "frameWidth": 720,
-      "frameHeight": 988,
+      "width": 1440,
+      "height": 720,
+      "frameWidth": 1440,
+      "frameHeight": 720,
       "frameCount": 1,
       "displayScale": 1,
-      "usedFor": "Area 2 road (5 lanes).",
+      "usedFor": "Area 2: the street, the 2×5 cat grid, the crate wall and its health bar.",
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Area/Area2.png",
         "crop": [
-          1369,
           0,
-          774,
+          0,
+          2124,
           1062
         ],
         "align": "center"
@@ -1672,20 +1618,20 @@
       "key": "bg.area3",
       "type": "image",
       "path": "bg/area3.png",
-      "width": 720,
-      "height": 988,
-      "frameWidth": 720,
-      "frameHeight": 988,
+      "width": 1440,
+      "height": 720,
+      "frameWidth": 1440,
+      "frameHeight": 720,
       "frameCount": 1,
       "displayScale": 1,
-      "usedFor": "Area 3 road (5 lanes).",
+      "usedFor": "Area 3: the street, the 2×5 cat grid, the crate wall and its health bar.",
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Area/Area3.png",
         "crop": [
-          1369,
           0,
-          774,
+          0,
+          2124,
           1062
         ],
         "align": "center"
@@ -1695,20 +1641,20 @@
       "key": "bg.area4",
       "type": "image",
       "path": "bg/area4.png",
-      "width": 720,
-      "height": 988,
-      "frameWidth": 720,
-      "frameHeight": 988,
+      "width": 1440,
+      "height": 720,
+      "frameWidth": 1440,
+      "frameHeight": 720,
       "frameCount": 1,
       "displayScale": 1,
-      "usedFor": "Area 4 road (5 lanes).",
+      "usedFor": "Area 4: the street, the 2×5 cat grid, the crate wall and its health bar.",
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Area/Area4.png",
         "crop": [
-          1369,
           0,
-          774,
+          0,
+          2124,
           1062
         ],
         "align": "center"
@@ -1718,20 +1664,20 @@
       "key": "bg.area5",
       "type": "image",
       "path": "bg/area5.png",
-      "width": 720,
-      "height": 988,
-      "frameWidth": 720,
-      "frameHeight": 988,
+      "width": 1440,
+      "height": 720,
+      "frameWidth": 1440,
+      "frameHeight": 720,
       "frameCount": 1,
       "displayScale": 1,
-      "usedFor": "Area 5 road (5 lanes).",
+      "usedFor": "Area 5: the street, the 2×5 cat grid, the crate wall and its health bar.",
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Area/Area5.png",
         "crop": [
-          1369,
           0,
-          774,
+          0,
+          2124,
           1062
         ],
         "align": "center"
@@ -1741,20 +1687,20 @@
       "key": "bg.menu",
       "type": "image",
       "path": "bg/menu.png",
-      "width": 720,
-      "height": 1280,
-      "frameWidth": 720,
-      "frameHeight": 1280,
+      "width": 1440,
+      "height": 720,
+      "frameWidth": 1440,
+      "frameHeight": 720,
       "frameCount": 1,
       "displayScale": 1,
-      "usedFor": "Menu backdrop: the cats from the landing screen.",
+      "usedFor": "Menu backdrop: cats vs zombies (the landing screen).",
       "source": "craftpix-cat-defense",
       "kit": {
         "files": "Png/Ui/LandingScreen.png",
         "crop": [
-          30,
           0,
-          598,
+          0,
+          2126,
           1063
         ],
         "align": "center"

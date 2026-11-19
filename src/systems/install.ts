@@ -2,7 +2,7 @@
 //
 // • Android Chrome / Edge / Samsung: the browser fires `beforeinstallprompt` once the page qualifies
 //   (manifest + service worker). We keep that event and show our own Install button; tapping it opens
-//   the browser's install dialog. Installed, the game opens full screen in portrait (manifest.webmanifest).
+//   the browser's install dialog. Installed, the game opens full screen in landscape (manifest.webmanifest).
 // • iPhone / iPad: Safari has no install prompt, so the button shows how to use Share → Add to Home Screen.
 // • Other Android browsers (Samsung Internet, Edge, Opera, Firefox…) build their own app package with an
 //   old Android target, and Play Protect then warns "built for an older version of Android" (2025-26 reports:
