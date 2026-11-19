@@ -31,12 +31,21 @@ Keyboard: Space = Play, P / Esc = pause, M = mute.
 ## Art: read [ASSETS.md](ASSETS.md)
 
 A fresh clone runs on **original placeholder art** (MIT, `public/assets/placeholder/`). The real art is the CraftPix
-**Free Cartoon Cat Defense Game Asset Kit**, which may **not** be redistributed, so it is never in this repo.
-Download it yourself, then:
+**Free Cartoon Cat Defense Game Asset Kit**, which may **not** be redistributed, so **no kit images are in this repo**.
+To play with the real art:
 
-```bash
-npm run assets:import -- "/path/to/craftpix-net-397030-free-cartoon-cat-defense-game-asset-kit"
-```
+1. **Download** the kit (free, needs a CraftPix account):
+   **https://craftpix.net/freebies/free-cartoon-cat-defense-game-asset-kit/**
+2. **Unzip it outside this repo**, anywhere you like. You get a folder named
+   `craftpix-net-397030-free-cartoon-cat-defense-game-asset-kit` with `Png/` inside. Don't move or rename files in it.
+3. **Import** it (this only reads the kit; it writes packed sheets into `public/assets/licensed/`, which git ignores):
+   ```bash
+   npm run assets:import -- "/path/to/craftpix-net-397030-free-cartoon-cat-defense-game-asset-kit"
+   ```
+4. **Check** with `npm run assets:status` (● = kit art in place), then `npm run dev`.
+
+Never copy kit images anywhere else in the repo: `npm run check-assets` (pre-commit hook) blocks commits that contain
+them. Full details per asset: [ASSETS.md](ASSETS.md).
 
 | Command | What it does |
 |---|---|
