@@ -74,8 +74,58 @@ Test codes (`AAAAAAAA`…) only return items once the config is published.
 **No API key is ever in the browser or in git.** The game only calls its own server: `./api/user-items?userCode=…`.
 - `npm run dev` / `npm run preview`: `vite.config.ts` forwards that to TheoSwap's `/api/public/user-items` and adds
   `THEOSWAP_API_KEY` from `.env` (copy `.env.example`; use the game's **test** key). The name has no `VITE_` prefix, so Vite never bundles it.
-- Production: an nginx proxy holds the live key (set up in milestone 5, like Altered Arena).
+- Production: the nginx proxy below holds the keys.
 - `check-assets` rejects key-like `VITE_*` names, any key use in `src/`, and hard-coded key values. `npm run deploy` refuses to upload a build that contains the key.
+
+## Deploy (games.theoswap.io/defend-the-alley/)
+
+Put the target in `.env` (gitignored): `DEPLOY_TARGET=user@host:/var/www/games.theoswap.io/defend-the-alley/`, then
+
+```bash
+npm run deploy:check   # build, then list what rsync would change (uploads nothing)
+npm run deploy         # build, then rsync dist/ to DEPLOY_TARGET (--delete removes files the build no longer has)
+```
+
+The folder must exist on the server and be writable by that SSH user. The build ships whichever art it finds
+(licensed → placeholder), so deploy from a checkout where `npm run assets:import` has been run. `npm run deploy`
+refuses to upload a build that contains the API key.
+
+### nginx: the API proxy and cache headers
+
+The game asks its own server for `/defend-the-alley/api/user-items?userCode=…`; nginx adds the key and forwards it to
+TheoSwap, so keys only live in the server's nginx config. **Defend the Alley has its own keys** (TheoSwap game 9,
+Developer page), not Altered Run's. The test codes AAAAAAAA / BBBBBBBB / CCCCCCCC use the game's **test** key (its test
+NFTs); every other code is a real player and uses the **live** key, so both work side by side.
+
+```nginx
+# Top of the site file, OUTSIDE server { } (next to Altered Run's map):
+map $arg_userCode $defend_alley_key {
+    default    "DEFEND_ALLEY_LIVE_KEY";
+    AAAAAAAA   "DEFEND_ALLEY_TEST_KEY";
+    BBBBBBBB   "DEFEND_ALLEY_TEST_KEY";
+    CCCCCCCC   "DEFEND_ALLEY_TEST_KEY";
+}
+
+# Inside the listen 443 server { }, e.g. after Altered Run's location:
+location = /defend-the-alley/api/user-items {
+    limit_except GET { deny all; }
+    if ($arg_userCode !~ "^[A-Za-z0-9]{4,16}$") { return 400; }
+    set $args "apiKey=$defend_alley_key&userCode=$arg_userCode";
+    proxy_pass https://www.theoswap.io/api/public/user-items;
+    proxy_ssl_server_name on;
+    proxy_set_header Host www.theoswap.io;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    add_header Cache-Control "no-store" always;
+}
+# So updates reach players straight away (only hashed JS is safe to cache forever):
+location = /defend-the-alley/sw.js                { add_header Cache-Control "no-cache"; }
+location = /defend-the-alley/index.html           { add_header Cache-Control "no-cache"; }
+location = /defend-the-alley/manifest.webmanifest { add_header Cache-Control "no-cache"; }
+location ~ ^/defend-the-alley/assets/.+-[\w-]{8}\.js$ { add_header Cache-Control "public, max-age=31536000, immutable"; }
+```
+
+Then `sudo nginx -t && sudo systemctl reload nginx` and check
+`https://games.theoswap.io/defend-the-alley/api/user-items?userCode=AAAAAAAA` answers with 12 items.
 
 ## Licence
 
