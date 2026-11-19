@@ -289,20 +289,32 @@ level 15 about 12 (the finale is a grind); 1 of 10 bot guests got stuck on level
 level 6 guest wins most Daily Challenges; Endless runs reach about 17 (4 upgrade steps) to 25 waves (Collector).
 Play-testing on phones in milestone 5 should decide whether level 15 needs softening.
 
-### 4. TheoSwap
-- **Ask first:** create the hidden game "Defend the Alley" and its config with the theoswap MCP (dry run → approval).
-- Config tree "Defend the Alley AWIs" with two branches:
-  - **Cat defenders**: leaves `cat_c1` … `cat_c15`, each with attack and rarity weights, so an NFT's seed picks e.g.
-    `{ itemId: 'cat_c9', attack: 'blast', Rarity: 'Epic' }`. Stats come from `makeDefender`; optional `damage` /
-    `fireRate` / `range` overrides in itemData win, so the config can tune single AWIs.
-  - **Add-ons**: leaves `addon_rocket` … `addon_spikes` (the 8 add-ons) with rarity weights. This branch is rarer,
-    e.g. 1 in 5 NFTs.
-- Swap the bundled demo profiles from milestone 2 for real test codes; `src/awi.ts` already reads TheoSwap-shaped data.
-- Port from Arena: Connect scene (8-letter code + `?userCode=` deep link), Reveal scene (one AWI card per NFT, both
-  kinds), `src/profile.ts`.
-- Collection bonus shown on the cards on the Cats screen.
-- Remember the Arena lesson: test codes only return items once the config is **published**, which is a live change
-  that needs the user's explicit OK.
+### 4. TheoSwap (in progress)
+- ✅ Hidden game **Defend the Alley** created (id 9, code `jpANeS3Z`) and a free draft config **Defend the Alley AWIs**
+  (id 18). The game has no ads and takes no money; AWIs (Altered World Items) only come from NFTs players already own.
+- Config tree, one item per NFT (each item is about equally likely, so roughly 60% cats, 20% add-ons, 20% boosts):
+
+  | Item | Attributes | Becomes |
+  |---|---|---|
+  | `cat_bazooka` / `cat_blaster` / `cat_rifle` | `cat` (1–5 / 6–10 / 11–15), `attack` blast·rapid·venom, `Rarity`, `perk` | a cat defender |
+  | `addon` | `addon` (rocket … spikes), `Rarity` | an add-on AWI: free uses every level |
+  | `boost` | `boost` coins·gems·wall·luckybox, `Rarity` | a boost in every fight |
+
+  Rarity 50 / 30 / 15 / 5% (Common / Rare / Epic / Legendary). Perks (half the cats): Hot Shot +15% damage, Quick Paws
+  +15% fire rate, Sharp Eye +20% range, Coin Cat +2 coins a kill, Brick Layer +10 wall health. Boosts by rarity:
+  Coin Purse +20/30/45/70 start coins, Gem Pouch +10/15/25/40% gems, Brick Pile +10/15/25/40 wall, Lucky Box 1 (2 at
+  Legendary) free use of a random add-on each fight. The best boost of each kind counts; they don't stack.
+  `src/game/awi.ts` also still reads the older `cat_c9` / `addon_tnt` shape.
+- ✅ Connect screen (player code, `?userCode=` deep link), Reveal screen (one card per AWI), `src/profile.ts`; the
+  connected player is "My NFTs" on the title screen with its own save. Demo players keep bundled sample data.
+- ✅ Collection bonus (2+ deck cards from one collection: +10% damage; 3+: +10% fire rate) shown on the Cats screen;
+  perks on the Cats rows and Reveal cards; boosts in the Almanac.
+- **Waiting on the user:**
+  - Put the game's **test** API key in `.env` (`THEOSWAP_API_KEY`, from the Developer page). Until then Connect shows
+    TheoSwap's "No data provided".
+  - Publish config 18 (a live change). Test codes return nothing until then, as with Arena.
+  - Then: check what test codes AAAAAAAA… return (item shares, perks), item images (`upload_config_image`), game icon
+    and banner, and assigning real NFT collections (confirm contract and chain first).
 
 ### 5. Polish and deploy
 - Fill wide phones (19.5:9) instead of letterboxing (Phaser `Scale.EXPAND`, extend the street art to the sides).

@@ -31,6 +31,19 @@ const FAMILIES = [
 ] as const;
 const CAT_NAMES = ['Ginger', 'Beanie', 'Bandana', 'Pinky', 'Hoodie', 'Smokey', 'Bandit', 'Goggles', 'Top Hat', 'Captain', 'Snowy', 'Violet', 'Racer', 'Viking', 'Ninja'];
 
+/** Perks a cat AWI can roll in the TheoSwap config. */
+export const AWI_PERKS = ['hot', 'quick', 'sharp', 'coin', 'brick'] as const;
+export type AwiPerk = (typeof AWI_PERKS)[number];
+export const AWI_PERK_INFO: Record<AwiPerk, { name: string; blurb: string }> = {
+  hot: { name: 'Hot Shot', blurb: '+15% damage' },
+  quick: { name: 'Quick Paws', blurb: '+15% fire rate' },
+  sharp: { name: 'Sharp Eye', blurb: '+20% range' },
+  coin: { name: 'Coin Cat', blurb: '+2 coins a kill' },
+  brick: { name: 'Brick Layer', blurb: '+10 wall health' },
+};
+/** Collection bonus: 2+ deck cards from one NFT collection get +10% damage; 3+ also +10% fire rate. */
+export const COLLECTION_DMG = 0.1, COLLECTION_RATE = 0.1;
+
 export interface Defender {
   uid: string;
   name: string;         // "Goggles", "Goggles #42" for an NFT
@@ -43,7 +56,9 @@ export interface Defender {
   source: 'guest' | 'nft';
   /** Upgraded all 5 steps: the cat's role gets stronger (PERK). */
   perk?: boolean;
-  /** The NFT's collection (contract), for the collection bonus in milestone 4. */
+  /** A cat AWI's perk from the TheoSwap config (hot / quick / sharp are already in the stats). */
+  awiPerk?: AwiPerk;
+  /** The NFT's collection (contract), for the collection bonus. */
   collection?: string;
 }
 

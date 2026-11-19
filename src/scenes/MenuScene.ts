@@ -1,8 +1,9 @@
-// Title screen: pick a demo player (their AWIs come from bundled sample data until TheoSwap sign-in), then PLAY.
+// Title screen: pick a demo player (sample AWIs) or connect TheoSwap so your own NFTs become AWIs, then PLAY.
 import Phaser from 'phaser';
 import { GAME_W, COLORS } from '../config.ts';
 import { button, muteButton, notice, tappable, text } from '../ui.ts';
 import { player } from '../save.ts';
+import { loadConnection } from '../profile.ts';
 import { PROFILES, type ProfileId } from '../game/demo.ts';
 import { awisFromItems } from '../game/awi.ts';
 import { RARITY_COLOR } from '../game/cats.ts';
@@ -21,11 +22,12 @@ export class MenuScene extends Phaser.Scene {
     text(this, GAME_W / 2, 245, 'Cats hold the street. Zombies want it.', 30, COLORS.text, 6).setOrigin(0.5);
 
     text(this, GAME_W / 2, 300, 'Play as', 28, COLORS.dim, 5).setOrigin(0.5);
-    (Object.keys(PROFILES) as ProfileId[]).forEach((id, i) => this.profileCard(id, GAME_W / 2 + (i - 1) * 330, 400));
+    (Object.keys(PROFILES) as ProfileId[]).forEach((id, i) => this.profileCard(id, GAME_W / 2 + (i - 1.5) * 320, 400));
+    this.myCard(GAME_W / 2 + 1.5 * 320, 400);
 
     button(this, GAME_W / 2, 560, 'PLAY', () => this.play(), 'ui.btn-green', 0.85, 56);
-    text(this, GAME_W / 2, 640, 'Demo players bring sample AWIs (Altered World Items): cat defenders and add-ons.', 22, COLORS.dim, 4).setOrigin(0.5);
-    text(this, GAME_W / 2, 674, 'TheoSwap sign-in, where your own NFTs become AWIs, comes in milestone 4.', 22, COLORS.dim, 4).setOrigin(0.5);
+    text(this, GAME_W / 2, 640, 'Free to play. Your NFTs become AWIs (Altered World Items): cat defenders, add-ons and boosts.', 22, COLORS.dim, 4).setOrigin(0.5);
+    text(this, GAME_W / 2, 674, 'Demo players bring sample AWIs; connect TheoSwap to bring your own.', 22, COLORS.dim, 4).setOrigin(0.5);
 
     muteButton(this, GAME_W - 50, 50);
     this.appButtons();
@@ -44,6 +46,34 @@ export class MenuScene extends Phaser.Scene {
     awis.slice(0, 9).forEach((a, k) => items.push(this.add.rectangle((k - (Math.min(9, awis.length) - 1) / 2) * 28, 22, 22, 8, RARITY_COLOR[a.rarity])));
     const c = this.add.container(x, y, items).setSize(300, 150);
     tappable(c, () => { if (player.id !== id) { player.use(id); this.scene.restart(); } });
+  }
+
+  /** Your own NFTs: connect TheoSwap, or (connected) play as yourself. */
+  private myCard(x: number, y: number): void {
+    const conn = loadConnection(), on = player.id === 'me';
+    const bg = this.add.rectangle(0, 0, 300, 150, on ? 0x000000 : 0x1d3a1a, on ? 0.7 : 0.6).setStrokeStyle(on ? 5 : 3, on ? 0xffee00 : 0x8cff6a, on ? 1 : 0.7);
+    const items: Phaser.GameObjects.GameObject[] = [bg];
+    if (conn) {
+      const save = player.peek('me'), awis = awisFromItems(conn.results);
+      items.push(
+        text(this, 0, -46, 'My NFTs', 36, on ? '#ffd02a' : '#ffffff').setOrigin(0.5),
+        text(this, 0, -8, `Code ${conn.code} · ${awis.length} AWI${awis.length === 1 ? '' : 's'}`, 20, COLORS.dim, 3).setOrigin(0.5),
+        text(this, 0, 50, `Level ${Math.min(15, levelsCleared(save) + 1)} · ${save.gems} gems`, 20, COLORS.text, 3).setOrigin(0.5),
+      );
+      awis.slice(0, 9).forEach((a, k) => items.push(this.add.rectangle((k - (Math.min(9, awis.length) - 1) / 2) * 28, 22, 22, 8, RARITY_COLOR[a.rarity])));
+    } else {
+      items.push(
+        text(this, 0, -40, 'Connect', 36, '#8cff6a').setOrigin(0.5),
+        text(this, 0, 4, 'TheoSwap', 28, '#ffffff').setOrigin(0.5),
+        text(this, 0, 46, 'Your NFTs become AWIs', 20, COLORS.dim, 3).setOrigin(0.5),
+      );
+    }
+    const c = this.add.container(x, y, items).setSize(300, 150);
+    tappable(c, () => {
+      if (!conn) { this.scene.start('Connect'); return; }
+      if (on) { this.scene.start('Connect'); return; } // tap again: reconnect / disconnect / show AWIs
+      player.use('me'); this.scene.restart();
+    });
   }
 
   private play(): void {

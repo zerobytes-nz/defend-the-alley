@@ -1,13 +1,13 @@
 // What a player keeps between fights: stars, gems, upgrades, add-ons, deck and loadout. Pure TS (the sim uses
 // it too); src/save.ts stores it in localStorage, one save per demo player.
-import { CAT_STEPS, dps, guestCat, upgraded, type Defender } from './cats.ts';
-import { ADDON_MAX, ADDON_PRICE, AWI_ADDON_POWER, AWI_ADDON_USES, SLOTS_MAX, SLOT_PRICES, type AddonId, type Equipped } from './addons.ts';
+import { CAT_STEPS, COLLECTION_DMG, COLLECTION_RATE, dps, guestCat, upgraded, type Defender } from './cats.ts';
+import { ADDON_IDS, ADDON_MAX, ADDON_PRICE, AWI_ADDON_POWER, AWI_ADDON_USES, SLOTS_MAX, SLOT_PRICES, type AddonId, type Equipped } from './addons.ts';
 import { INCOME_PER_S, START_COINS, WALL_HP } from './sim.ts';
 import { DAILY, ENDLESS, FULL_ALLEY, HARD_BASE, LEVEL_COUNT, dayKey, isHard, levelDef } from './levels.ts';
 export { dayKey };
 import { CAT_ORDER, UNLOCKS, addonOpen, catOpen, featureOpen, type Feature, type Unlock } from './unlocks.ts';
 import type { FightSetup } from './sim.ts';
-import type { AWI, AddonAwi, CatAwi } from './awi.ts';
+import { BOOSTS, type AWI, type AddonAwi, type BoostAwi, type BoostId, type CatAwi } from './awi.ts';
 
 export interface Best { won: boolean; wave: number; time: number }
 export interface Save {
@@ -124,6 +124,28 @@ export function claimDaily(s: Save, today: Date): number {
 // ── Unlocks (src/game/unlocks.ts) ────────────────────────────────────────────────────────────────────
 const catAwis = (awis: AWI[]) => awis.filter((a): a is CatAwi => a.kind === 'cat');
 export const addonAwis = (awis: AWI[]) => awis.filter((a): a is AddonAwi => a.kind === 'addon');
+export const boostAwis = (awis: AWI[]) => awis.filter((a): a is BoostAwi => a.kind === 'boost');
+/** The best boost AWI of a kind (they don't stack), or null. */
+export function bestBoost(awis: AWI[], id: BoostId): BoostAwi | null {
+  return boostAwis(awis).filter((a) => a.boost === id).sort((a, b) => BOOSTS[id].value[b.rarity] - BOOSTS[id].value[a.rarity])[0] ?? null;
+}
+export const boostValue = (awis: AWI[], id: BoostId) => { const b = bestBoost(awis, id); return b ? BOOSTS[id].value[b.rarity] : 0; };
+/** Gems from a fight, with a Gem Pouch AWI's bonus. */
+export const withGemBoost = (awis: AWI[], gems: number) => Math.round(gems * (1 + boostValue(awis, 'gems')));
+
+/**
+ * Collection bonus: deck cards from the same NFT collection (2+: +10% damage; 3+: also +10% fire rate).
+ * Returns the deck with the bonus in the stats, and `set` = how many share each card's collection.
+ */
+export function withCollectionBonus(deck: Defender[]): (Defender & { set?: number })[] {
+  const count = new Map<string, number>();
+  for (const d of deck) if (d.collection) count.set(d.collection, (count.get(d.collection) ?? 0) + 1);
+  return deck.map((d) => {
+    const n = d.collection ? count.get(d.collection) ?? 0 : 0;
+    if (n < 2) return d;
+    return { ...d, set: n, dmg: Math.round(d.dmg * (1 + COLLECTION_DMG)), rate: n >= 3 ? Math.round(d.rate * (1 + COLLECTION_RATE) * 100) / 100 : d.rate };
+  });
+}
 
 /** A cat is unlocked by clearing its level, or right away when the player owns an AWI of it. */
 export const catUnlocked = (s: Save, awis: AWI[], cat: number) => catOpen(levelsCleared(s), cat) || catAwis(awis).some((a) => a.def.cat === cat);
@@ -198,6 +220,9 @@ export const fightBonus = (s: Save) => ({
   income: Math.round((INCOME_PER_S + INCOME_PER_STEP * s.income) * 10) / 10,
 });
 
+/** Wall health each Brick Layer AWI in the deck adds. */
+export const BRICK_PERK = 10;
+
 // ── Add-ons ──────────────────────────────────────────────────────────────────────────────────────────
 export const slotPrice = (s: Save): number | null => (s.slots >= SLOTS_MAX ? null : SLOT_PRICES[s.slots - 2]);
 export const buySlot = (s: Save) => spend(s, slotPrice(s)) && !!++s.slots;
@@ -240,9 +265,23 @@ export function spendAddons(s: Save, used: Equipped[], left: Equipped[]): void {
 
 /** Everything a fight on level n needs except the seed (the game and `npm run sim` both use this). */
 export function fightSetup(s: Save, awis: AWI[], n: number): Omit<FightSetup, 'seed'> & { addons: Equipped[] } {
+  const deck = withCollectionBonus(deckOf(s, awis)), bonus = fightBonus(s);
+  const bricks = deck.filter((d) => d.awiPerk === 'brick').length * BRICK_PERK;
+  const addons = featureUnlocked(s, awis, 'addons') ? equipped(s, awis) : [];
+  const lucky = bestBoost(awis, 'luckybox');
+  if (lucky && featureUnlocked(s, awis, 'addons')) {
+    // A Lucky Box AWI: a free add-on, a different one each level (picked from the AWI's token and the level).
+    let h = n * 7;
+    for (const ch of lucky.uid) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    const id = ADDON_IDS[h % ADDON_IDS.length];
+    addons.push({ key: lucky.uid, id, uses: BOOSTS.luckybox.value[lucky.rarity], power: 1, awi: true });
+  }
   return {
-    level: levelDef(n), deck: deckOf(s, awis), ...fightBonus(s),
-    addons: featureUnlocked(s, awis, 'addons') ? equipped(s, awis) : [],
+    level: levelDef(n), deck,
+    wallMax: bonus.wallMax + bricks + boostValue(awis, 'wall'),
+    startCoins: bonus.startCoins + boostValue(awis, 'coins'),
+    income: bonus.income,
+    addons,
     repair: featureUnlocked(s, awis, 'repair'),
     merge: featureUnlocked(s, awis, 'merge'),
   };

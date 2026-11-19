@@ -12,6 +12,8 @@ export const START_COINS = 150, INCOME_PER_S = 3;
 const FIRST_WAVE_AT = 3;          // seconds to place the first cats
 const WAVE_TIMEOUT = 2.5;          // next wave starts this long after the last spawn even if enemies remain
 const AREA_BREAK = 2;             // after a boss wave or before a new area
+/** Extra coins for each zombie a Coin Cat AWI stops. */
+export const COIN_PERK = 2;
 export const WALL_HP = 100;
 /** Repair Wall: restores this share of the wall; the price starts at REPAIR_COST and rises by REPAIR_STEP each time. */
 export const REPAIR_SHARE = 0.25, REPAIR_COST = 40, REPAIR_STEP = 25;
@@ -566,7 +568,8 @@ export class Defense {
     this.events.push({ t: 'hit', bullet: b, enemy: e, dmg, splash });
     if (e.hp > 0) return;
     e.state = 'dead';
-    const coins = e.type.coins * (this.time < this.coinsUntil ? 2 : 1);
+    const coinCat = b && this.slots[b.from]?.def.awiPerk === 'coin' ? COIN_PERK : 0; // a Coin Cat AWI's kill pays more
+    const coins = (e.type.coins + coinCat) * (this.time < this.coinsUntil ? 2 : 1);
     this.coins += coins;
     this.stats.kills++;
     if (e.type.boss) this.stats.bossKills++;

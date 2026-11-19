@@ -56,8 +56,11 @@ npm run assets:import -- "/path/to/craftpix-net-397030-free-cartoon-cat-defense-
 
 ## TheoSwap and secrets
 
-TheoSwap sign-in arrives in milestone 4 (same flow as Altered Arena: player code or `?userCode=` link, AWI reveal cards,
-demo players). `src/theoswap.ts` already holds the client.
+TheoSwap game **Defend the Alley** (id 9, hidden) has the free config **Defend the Alley AWIs** (id 18, a draft until
+published). On the title screen, **Connect TheoSwap** takes a player code (or open the game with `?userCode=CODE`);
+each NFT becomes an AWI (Altered World Item) and gets a reveal card: a cat defender (with a perk half the time), an
+add-on, or a boost. The connected player has their own save. Demo players keep bundled sample AWIs.
+Test codes (`AAAAAAAA`…) only return items once the config is published.
 
 **No API key is ever in the browser or in git.** The game only calls its own server: `./api/user-items?userCode=…`.
 - `npm run dev` / `npm run preview`: `vite.config.ts` forwards that to TheoSwap's `/api/public/user-items` and adds

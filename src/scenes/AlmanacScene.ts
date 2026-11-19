@@ -9,10 +9,12 @@ import { ABILITIES, BOSSES, ENEMIES, ENEMY_NAMES } from '../game/waves.ts';
 import { addonUnlocked, catUnlocked } from '../game/progress.ts';
 import { CAT_ORDER, addonLevel, catLevel } from '../game/unlocks.ts';
 import { ACHIEVEMENTS, checkAchievements } from '../game/achievements.ts';
+import { BOOSTS, type BoostId } from '../game/awi.ts';
 import { asset, ensureLoaded, release } from '../assets.ts';
 import { text } from '../ui.ts';
 import { PANEL, drawFrame } from './menuFrame.ts';
 
+const BOOST_ICON: Record<BoostId, string> = { coins: 'ui.coin', gems: 'ui.gem', wall: 'ui.wall', luckybox: 'ui.daily' };
 const LIST = { x: PANEL.x + 10, y: PANEL.y + 10, w: PANEL.w - 20, h: PANEL.h - 20 };
 const TILE_W = 212, TILE_H = 176, GAP = 10, PER_ROW = 4;
 
@@ -53,6 +55,11 @@ export class AlmanacScene extends Phaser.Scene {
     return [
       'Cats', ...cats,
       'Add-ons', ...addons,
+      'Boosts (from NFTs only)', ...(Object.keys(BOOSTS) as BoostId[]).map((id): Entry => ({
+        key: `boost.${id}`, known: awis.some((a) => a.kind === 'boost' && a.boost === id), open: true, name: BOOSTS[id].name,
+        blurb: `${BOOSTS[id].blurb('Common')} (more when rarer)`, pic: BOOST_ICON[id], scale: 0.9,
+        hint: `${BOOSTS[id].blurb('Common')}. An NFT on TheoSwap can become one`,
+      })),
       'Zombies', ...Object.keys(ENEMIES).map((k) => zombie(k, false)),
       'Bosses', ...Object.values(BOSSES).map((b) => zombie(b.key, true)),
       `Achievements · ${s.ach.length} of ${ACHIEVEMENTS.length}`, ...ACHIEVEMENTS.map((a): Entry => {

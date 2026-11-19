@@ -23,6 +23,9 @@ export class BootScene extends Phaser.Scene {
     setupAssets(this);
     // Passion One is a CSS @font-face (index.html); wait for it so the first texts aren't drawn in the fallback.
     const ready = document.fonts?.load(`40px ${FONT.split(',')[0]}`).catch(() => null) ?? Promise.resolve();
-    Promise.race([ready, new Promise((r) => setTimeout(r, 2500))]).then(() => this.scene.start('Menu'));
+    // A ?userCode= link (from TheoSwap) connects straight away; the code is taken out of the address afterwards.
+    const q = new URLSearchParams(location.search), code = q.get('userCode');
+    if (code) { q.delete('userCode'); history.replaceState(null, '', `${location.pathname}${q.size ? `?${q}` : ''}${location.hash}`); }
+    Promise.race([ready, new Promise((r) => setTimeout(r, 2500))]).then(() => (code ? this.scene.start('Connect', { code }) : this.scene.start('Menu')));
   }
 }

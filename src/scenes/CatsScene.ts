@@ -3,8 +3,9 @@
 import Phaser from 'phaser';
 import { COLORS } from '../config.ts';
 import { player } from '../save.ts';
-import { ATTACKS, PERK_TEXT, ROLE, roleOf, CAT_STEPS, RARITY_COLOR, catName, guestCat, upgraded, type Defender } from '../game/cats.ts';
+import { ATTACKS, AWI_PERK_INFO, COLLECTION_DMG, COLLECTION_RATE, PERK_TEXT, ROLE, roleOf, CAT_STEPS, RARITY_COLOR, catName, guestCat, upgraded, type Defender } from '../game/cats.ts';
 import { checkAchievements } from '../game/achievements.ts';
+import { withCollectionBonus } from '../game/progress.ts';
 import { buyCatStep, buyIncome, buyWall, cards, catStepCost, catUnlocked, deckOf, fightBonus, rowStepCost, toggleDeck, DECK_MAX, WALL_PER_STEP, START_PER_STEP, INCOME_PER_STEP } from '../game/progress.ts';
 import { ensureLoaded, release } from '../assets.ts';
 import { CAT_ORDER, catLevel } from '../game/unlocks.ts';
@@ -83,9 +84,10 @@ export class CatsScene extends Phaser.Scene {
       ]);
       tappable(box, () => { if (toggleDeck(player.save, player.awis, d.uid)) { player.persist(); this.redraw(); } else this.frame.flash('The deck needs at least one cat'); });
     }
-    const b = fightBonus(player.save);
-    this.deckBar.add(text(this, PANEL.x + 580, y - 14, 'Tap a cat to add it to the deck', 20, COLORS.dim, 4).setOrigin(0, 0.5));
-    this.deckBar.add(text(this, PANEL.x + 580, y + 14, `Wall ${b.wallMax} · start ${b.startCoins} coins · ${b.income}/s`, 20, COLORS.dim, 4).setOrigin(0, 0.5));
+    // What a fight starts with: upgrades plus Brick Layer cats and boost AWIs (player.fight adds them all).
+    const f = player.fight(1), set = Math.max(0, ...withCollectionBonus(deck).map((d) => d.set ?? 0));
+    this.deckBar.add(text(this, PANEL.x + 580, y - 14, set >= 2 ? `Collection bonus (${set} cards): +${COLLECTION_DMG * 100}% damage${set >= 3 ? `, +${COLLECTION_RATE * 100}% fire rate` : ''}` : 'Tap a cat to add it to the deck', 20, set >= 2 ? '#8cff6a' : COLORS.dim, 4).setOrigin(0, 0.5));
+    this.deckBar.add(text(this, PANEL.x + 580, y + 14, `Wall ${f.wallMax} · start ${f.startCoins} coins · ${f.income}/s`, 20, COLORS.dim, 4).setOrigin(0, 0.5));
   }
 
   private redraw(): void {
@@ -155,14 +157,20 @@ export class CatsScene extends Phaser.Scene {
     const t = text(this, 106, 26, title, 26, locked ? '#ffffff' : '#3a2a1c', 0).setOrigin(0, 0.5);
     if (t.width > 185) t.setScale(185 / t.width);
     c.add(t);
-    if (r.kind === 'awi') c.add([this.add.rectangle(106 + Math.min(185, t.width) + 26, 26, 44, 22, 0x2b1d14), text(this, 106 + Math.min(185, t.width) + 26, 25, 'AWI', 18, '#ffd02a', 0).setOrigin(0.5)]);
+    if (r.kind === 'awi') {
+      const bx = 106 + Math.min(185, t.width) + 26;
+      c.add([this.add.rectangle(bx, 26, 44, 22, 0x2b1d14), text(this, bx, 25, 'AWI', 18, '#ffd02a', 0).setOrigin(0.5)]);
+      if (def?.collection) c.add(text(this, bx + 28, 25, inDeck && (withCollectionBonus(deckOf(s, awis)).find((d) => d.uid === def!.uid)?.set ?? 0) >= 2 ? 'SET ✓' : 'SET', 15, inDeck ? '#2a8a2a' : '#8a7a6a', 0).setOrigin(0, 0.5));
+    }
     const st = text(this, 106, 58, sub, 17, dark, 0).setOrigin(0, 0.5);
     if (st.width > 220) st.setScale(220 / st.width);
     c.add(st);
     if (inDeck) c.add(text(this, 106, 80, '✓ In deck', 16, '#2a8a2a', 0).setOrigin(0, 0.5));
     if (def && !locked) {
       const has = steps >= CAT_STEPS, px = 106 + (inDeck ? 74 : 0);
-      const pt = text(this, px, 80, has ? `★ ${PERK_TEXT[roleOf(def.cat)].replace('Max perk: ', '')}` : 'Step 5: role perk', 15, has ? '#b07a00' : '#8a7a6a', 0).setOrigin(0, 0.5);
+      const awiPerk = def.awiPerk ? `★ ${AWI_PERK_INFO[def.awiPerk].name}: ${AWI_PERK_INFO[def.awiPerk].blurb}` : '';
+      const label = awiPerk && has ? `${awiPerk} · max perk` : awiPerk || (has ? `★ ${PERK_TEXT[roleOf(def.cat)].replace('Max perk: ', '')}` : 'Step 5: role perk');
+      const pt = text(this, px, 80, label, 15, has || awiPerk ? '#b07a00' : '#8a7a6a', 0).setOrigin(0, 0.5);
       if (pt.width > 222 - (px - 106)) pt.setScale((222 - (px - 106)) / pt.width);
       c.add(pt);
     }
