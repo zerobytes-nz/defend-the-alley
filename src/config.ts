@@ -1,4 +1,4 @@
-// Screen size and switches. Landscape 1440×720 (2:1, like most phones held sideways), scaled to fit (Scale.FIT).
+// Screen size and switches. Landscape 1440×720 (2:1, like most phones held sideways), scaled with Scale.EXPAND: the design area stays centred and wider or taller screens see more (src/systems/wide.ts).
 export const GAME_W = 1440;
 export const GAME_H = 720;
 

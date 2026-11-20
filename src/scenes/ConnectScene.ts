@@ -1,7 +1,8 @@
 // Connect TheoSwap: enter the player code from your TheoSwap profile (or open the game with ?userCode=…), and your
 // NFTs become AWIs (Altered World Items): cat defenders, add-ons and boosts. Then the Reveal screen shows each one.
 import Phaser from 'phaser';
-import { GAME_W, COLORS } from '../config.ts';
+import { GAME_W, GAME_H, COLORS } from '../config.ts';
+import { BLEED, centreCamera, wideBackground } from '../systems/wide.ts';
 import { player } from '../save.ts';
 import { connect, forgetConnection, loadConnection } from '../profile.ts';
 import { normalizeCode } from '../theoswap.ts';
@@ -22,9 +23,10 @@ export class ConnectScene extends Phaser.Scene {
   }
 
   create(): void {
+    centreCamera(this);
     this.busy = false;
-    this.add.image(0, 0, 'bg.menu').setOrigin(0);
-    this.add.rectangle(0, 0, GAME_W, 720, 0x000000, 0.55).setOrigin(0);
+    wideBackground(this, 'bg.menu');
+    this.add.rectangle(-BLEED, -BLEED, GAME_W + 2 * BLEED, GAME_H + 2 * BLEED, 0x000000, 0.55).setOrigin(0);
     text(this, GAME_W / 2, 70, 'CONNECT THEOSWAP', 56, '#ffd02a', 10).setOrigin(0.5);
     text(this, GAME_W / 2, 132, 'Your NFTs become AWIs (Altered World Items): cat defenders, add-ons and boosts.', 26, COLORS.text, 5).setOrigin(0.5);
     text(this, GAME_W / 2, 200, 'Enter the player code from your TheoSwap profile', 26, COLORS.dim, 4).setOrigin(0.5);

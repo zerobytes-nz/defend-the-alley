@@ -1,6 +1,7 @@
 // Title screen: pick a demo player (sample AWIs) or connect TheoSwap so your own NFTs become AWIs, then PLAY.
 import Phaser from 'phaser';
-import { GAME_W, COLORS } from '../config.ts';
+import { GAME_W, GAME_H, COLORS } from '../config.ts';
+import { BLEED, centreCamera, wideBackground } from '../systems/wide.ts';
 import { button, muteButton, notice, tappable, text } from '../ui.ts';
 import { player } from '../save.ts';
 import { loadConnection } from '../profile.ts';
@@ -10,14 +11,15 @@ import { RARITY_COLOR } from '../game/cats.ts';
 import { levelsCleared } from '../game/progress.ts';
 import { canInstall, install, isInstalled, onInstallChange, openInChromeUrl } from '../systems/install.ts';
 import { exitApp } from './menuFrame.ts';
-import { startMusic } from '../systems/audio.ts';
+import { setSong, startMusic } from '../systems/audio.ts';
 
 export class MenuScene extends Phaser.Scene {
   constructor() { super('Menu'); }
 
   create(): void {
-    this.add.image(0, 0, 'bg.menu').setOrigin(0);
-    this.add.rectangle(0, 0, GAME_W, 720, 0x000000, 0.25).setOrigin(0);
+    centreCamera(this);
+    wideBackground(this, 'bg.menu');
+    this.add.rectangle(-BLEED, -BLEED, GAME_W + 2 * BLEED, GAME_H + 2 * BLEED, 0x000000, 0.25).setOrigin(0);
     text(this, GAME_W / 2, 90, 'DEFEND THE', 64, '#ffd02a', 12).setOrigin(0.5);
     text(this, GAME_W / 2, 170, 'ALLEY', 110, '#ff9a2a', 14).setOrigin(0.5);
     text(this, GAME_W / 2, 245, 'Cats hold the street. Zombies want it.', 30, COLORS.text, 6).setOrigin(0.5);
@@ -78,6 +80,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private play(): void {
+    setSong('menu');
     startMusic();
     // On a phone browser tab, play full screen (the installed app already is).
     if (!isInstalled() && this.sys.game.device.input.touch && !this.scale.isFullscreen) {

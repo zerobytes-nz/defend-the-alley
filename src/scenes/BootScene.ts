@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_W, GAME_H, COLORS, FONT } from '../config.ts';
+import { centreCamera } from '../systems/wide.ts';
 import { areaArt, catArt, isAreaArt, preloadAll, setupAssets } from '../assets.ts';
 import { player } from '../save.ts';
 import { levelDef } from '../game/levels.ts';
@@ -8,6 +9,7 @@ export class BootScene extends Phaser.Scene {
   constructor() { super('Boot'); }
 
   preload(): void {
+    centreCamera(this);
     const w = 420, x = (GAME_W - w) / 2, y = GAME_H / 2;
     this.add.rectangle(x, y, w, 16, COLORS.panel).setOrigin(0, 0.5);
     const bar = this.add.rectangle(x, y, 1, 16, COLORS.gold).setOrigin(0, 0.5);

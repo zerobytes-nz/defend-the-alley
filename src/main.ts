@@ -18,7 +18,7 @@ const game = new Phaser.Game({
   width: GAME_W,
   height: GAME_H,
   backgroundColor: COLORS.bg,
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  scale: { mode: Phaser.Scale.EXPAND, autoCenter: Phaser.Scale.CENTER_BOTH },
   render: { antialias: true, powerPreference: 'high-performance', roundPixels: false },
   fps: { target: 60, smoothStep: true },
   input: { activePointers: 2 },

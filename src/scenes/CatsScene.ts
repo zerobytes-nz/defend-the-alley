@@ -2,6 +2,7 @@
 // Tap a row to put that cat in the deck (up to 5) or take it out. Wall and Income rows at the end.
 import Phaser from 'phaser';
 import { COLORS } from '../config.ts';
+import { centreCamera } from '../systems/wide.ts';
 import { player } from '../save.ts';
 import { ATTACKS, AWI_PERK_INFO, COLLECTION_DMG, COLLECTION_RATE, PERK_TEXT, ROLE, roleOf, CAT_STEPS, RARITY_COLOR, catName, guestCat, upgraded, type Defender } from '../game/cats.ts';
 import { checkAchievements } from '../game/achievements.ts';
@@ -28,6 +29,7 @@ export class CatsScene extends Phaser.Scene {
   constructor() { super('Cats'); }
 
   create(): void {
+    centreCamera(this);
     this.frame = drawFrame(this, 'Cats', 'Cats');
     const loading = text(this, PANEL.x + PANEL.w / 2, PANEL.y + PANEL.h / 2, 'Loading cats…', 32).setOrigin(0.5);
     // Portraits need every cat's idle sheet; the ones not in the deck are freed again when leaving.
@@ -53,13 +55,13 @@ export class CatsScene extends Phaser.Scene {
     const minY = () => Math.min(LIST.y, LIST.y + LIST.h - this.contentH);
     const clampY = (y: number) => Phaser.Math.Clamp(y, minY(), LIST.y);
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
-      if (p.x < LIST.x || p.x > LIST.x + LIST.w || p.y < LIST.y || p.y > LIST.y + LIST.h) return;
-      down = true; this.dragged = false; startY = p.y; startList = this.list.y;
+      if (p.worldX < LIST.x || p.worldX > LIST.x + LIST.w || p.worldY < LIST.y || p.worldY > LIST.y + LIST.h) return;
+      down = true; this.dragged = false; startY = p.worldY; startList = this.list.y;
     });
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       if (!down || !p.isDown) return;
-      if (Math.abs(p.y - startY) > 12) this.dragged = true;
-      if (this.dragged) this.list.y = clampY(startList + p.y - startY);
+      if (Math.abs(p.worldY - startY) > 12) this.dragged = true;
+      if (this.dragged) this.list.y = clampY(startList + p.worldY - startY);
     });
     this.input.on('pointerup', () => { down = false; this.time.delayedCall(0, () => { this.dragged = false; }); });
     this.input.on('wheel', (_p: unknown, _o: unknown, _dx: number, dy: number) => { this.list.y = clampY(this.list.y - dy); });

@@ -178,33 +178,81 @@ export const sfx = {
 };
 
 // ───────────────────────────── Music ─────────────────────────────
-// A short chiptune loop: bass + arpeggio + hi-hat, scheduled ahead with a look-ahead timer.
+// Short chiptune loops (bass + arpeggio + drums), scheduled ahead with a look-ahead timer. Each area of the alley has its
+// own song, bosses get a faster one, and the menus keep the original. setSong() switches at the next bar.
 
-const BPM = 132;
-const STEP = 60 / BPM / 4; // 16th notes
-// Am – F – C – G, one bar each.
-const CHORDS = [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]];
+interface Song {
+  bpm: number;
+  /** One chord (3 MIDI notes) per bar. */
+  chords: number[][];
+  /** Arpeggio: note order inside the chord per 8th note, and its wave. */
+  arp: number[];
+  wave: OscillatorType;
+  /** Bass hits on these 16th steps of a bar. */
+  bass: number[];
+  /** Kick and snare steps (empty = none). */
+  kick: number[];
+  snare: number[];
+  /** Hi-hat on every 2nd 16th (true) or only the off-beats. */
+  busyHat: boolean;
+  /** Optional lead line: one MIDI offset (from the chord root, +12) or null per 8th note, repeating every bar. */
+  lead?: (number | null)[];
+}
+
+export type SongName = 'menu' | 'area0' | 'area1' | 'area2' | 'area3' | 'area4' | 'boss';
+const SONGS: Record<SongName, Song> = {
+  // The original loop: Am – F – C – G.
+  menu: { bpm: 132, chords: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]], arp: [0, 1, 2, 0, 1, 2, 0, 1], wave: 'square', bass: [0, 4, 8, 12], kick: [], snare: [], busyHat: false },
+  // Main Street: bright and bouncy, C – G – Am – F.
+  area0: { bpm: 138, chords: [[60, 64, 67], [55, 59, 62], [57, 60, 64], [53, 57, 60]], arp: [0, 2, 1, 2, 0, 2, 1, 2], wave: 'square', bass: [0, 6, 8, 14], kick: [0, 8], snare: [4, 12], busyHat: false },
+  // Sand Lot: a lazy shuffle, Dm – G – Dm – C.
+  area1: { bpm: 116, chords: [[62, 65, 69], [55, 59, 62], [62, 65, 69], [60, 64, 67]], arp: [0, 1, 2, 1, 0, 1, 2, 1], wave: 'triangle', bass: [0, 3, 8, 11], kick: [0, 10], snare: [4, 12], busyHat: false, lead: [0, null, 3, null, 5, 3, null, 0] },
+  // Overpass: driving, Em – C – D – Bm.
+  area2: { bpm: 150, chords: [[64, 67, 71], [60, 64, 67], [62, 66, 69], [59, 62, 66]], arp: [0, 1, 2, 1, 0, 1, 2, 1], wave: 'sawtooth', bass: [0, 2, 4, 6, 8, 10, 12, 14], kick: [0, 4, 8, 12], snare: [4, 12], busyHat: true },
+  // Rush Hour: frantic, Gm – Eb – F – D.
+  area3: { bpm: 164, chords: [[55, 58, 62], [51, 55, 58], [53, 57, 60], [50, 54, 57]], arp: [0, 2, 1, 2, 0, 2, 1, 2], wave: 'square', bass: [0, 3, 6, 8, 11, 14], kick: [0, 6, 8], snare: [4, 12], busyHat: true, lead: [7, null, 5, 7, null, 10, 7, 5] },
+  // Park Lane: spooky, Am – Bb – Am – G.
+  area4: { bpm: 128, chords: [[57, 60, 64], [58, 62, 65], [57, 60, 64], [55, 59, 62]], arp: [0, 1, 2, 1, 2, 1, 0, 1], wave: 'triangle', bass: [0, 8], kick: [0, 8, 11], snare: [4, 12], busyHat: false, lead: [12, null, 11, null, 7, null, 8, null] },
+  // Boss: fast and heavy, Cm – Ab – Bb – G.
+  boss: { bpm: 172, chords: [[48, 51, 55], [44, 48, 51], [46, 50, 53], [43, 47, 50]], arp: [0, 1, 2, 1, 0, 1, 2, 1], wave: 'sawtooth', bass: [0, 2, 4, 6, 8, 10, 12, 14], kick: [0, 4, 8, 10, 12], snare: [4, 12], busyHat: true, lead: [12, 12, 11, null, 12, null, 15, 14] },
+};
+
 const midi = (n: number) => 440 * 2 ** ((n - 69) / 12);
 let timer: number | null = null;
 let nextAt = 0, step = 0;
+let song: Song = SONGS.menu, queued: Song | null = null;
+const stepLen = () => 60 / song.bpm / 4; // 16th notes
 
 function scheduleStep(at: number, s: number): void {
-  const chord = CHORDS[Math.floor(s / 16) % CHORDS.length];
-  const i = s % 16;
+  const chord = song.chords[Math.floor(s / 16) % song.chords.length];
+  const i = s % 16, len = stepLen();
   const rel = at - (ctx?.currentTime ?? 0);
-  if (i % 4 === 0) tone({ f: midi(chord[0] - 24), dur: STEP * 3.2, type: 'triangle', vol: 0.5, at: rel, bus: musicBus });
-  if (i % 2 === 0) tone({ f: midi(chord[(i / 2) % 3] + 12), dur: STEP * 1.6, type: 'square', vol: 0.09, at: rel, bus: musicBus });
-  if (i % 4 === 2) hat(rel);
+  if (song.bass.includes(i)) tone({ f: midi(chord[0] - 24), dur: len * 2.6, type: 'triangle', vol: 0.5, at: rel, bus: musicBus });
+  if (i % 2 === 0) tone({ f: midi(chord[song.arp[i / 2]] + 12), dur: len * 1.6, type: song.wave, vol: song.wave === 'sawtooth' ? 0.05 : 0.08, at: rel, bus: musicBus });
+  const lead = song.lead?.[i / 2];
+  if (i % 2 === 0 && lead != null) tone({ f: midi(chord[0] + 12 + lead), dur: len * 1.8, type: 'triangle', vol: 0.1, at: rel, bus: musicBus });
+  if (song.kick.includes(i)) tone({ f: 150, f2: 45, dur: 0.14, type: 'sine', vol: 0.55, at: rel, bus: musicBus });
+  if (song.snare.includes(i)) drum(rel, 0.12, 1800, 0.3);
+  if (song.busyHat ? i % 2 === 1 : i % 4 === 2) drum(rel, 0.04, 7000, 0.25);
 }
 
-function hat(at: number): void {
+/** A burst of filtered noise on the music bus (hi-hat or snare). */
+function drum(at: number, dur: number, freq: number, vol: number): void {
   if (!ctx || !musicBus || !noiseBuf || muted) return;
   const t = ctx.currentTime + at;
   const s = ctx.createBufferSource(); s.buffer = noiseBuf;
-  const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7000;
-  const g = ctx.createGain(); g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+  const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = freq;
+  const g = ctx.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   s.connect(hp).connect(g).connect(musicBus);
-  s.start(t); s.stop(t + 0.06);
+  s.start(t); s.stop(t + dur + 0.02);
+}
+
+/** Change the song: right away if nothing is playing, else at the start of the next bar. */
+export function setSong(name: SongName): void {
+  const next = SONGS[name];
+  if (timer === null) { song = next; queued = null; return; }
+  if (next !== song) queued = next;
+  else queued = null;
 }
 
 export function startMusic(): void {
@@ -213,7 +261,11 @@ export function startMusic(): void {
   nextAt = c.currentTime + 0.1; step = 0;
   timer = window.setInterval(() => {
     if (!ctx) return;
-    while (nextAt < ctx.currentTime + 0.2) { scheduleStep(nextAt, step++); nextAt += STEP; }
+    while (nextAt < ctx.currentTime + 0.2) {
+      if (queued && step % 16 === 0) { song = queued; queued = null; step = 0; }
+      scheduleStep(nextAt, step++);
+      nextAt += stepLen();
+    }
   }, 50);
 }
 

@@ -2,13 +2,14 @@
 // the dark side menu with tabs and the daily gift, a gem counter, a title ribbon over the grey panel.
 import Phaser from 'phaser';
 import { COLORS, GAME_W, GAME_H } from '../config.ts';
+import { BLEED, wideBackground } from '../systems/wide.ts';
 import { addonArt, areaArt, catArt, ensureLoaded } from '../assets.ts';
 import { player } from '../save.ts';
 import { claimDaily, dailyReady, featureUnlocked } from '../game/progress.ts';
 import { featureLevel } from '../game/unlocks.ts';
 import { notice, tappable, text } from '../ui.ts';
 import { isInstalled, tryCloseApp } from '../systems/install.ts';
-import { sfx } from '../systems/audio.ts';
+import { setSong, sfx } from '../systems/audio.ts';
 
 export type Tab = 'Map' | 'Cats' | 'Addons' | 'Almanac';
 /** The side menu's width, and the grey panels of the two kit screen backgrounds (game px). */
@@ -26,7 +27,8 @@ const TABS: { tab: Tab; icon: string; label: string }[] = [
 export interface Frame { refreshGems(): void; flash(msg: string, bad?: boolean): void }
 
 export function drawFrame(scene: Phaser.Scene, active: Tab, title: string, bg = 'bg.screen'): Frame {
-  scene.add.image(0, 0, bg).setOrigin(0);
+  wideBackground(scene, bg);
+  setSong('menu');
   const cx = active === 'Addons' ? ADDON_PANEL.x + ADDON_PANEL.w / 2 : PANEL.x + PANEL.w / 2;
   scene.add.image(cx, 100, 'ui.ribbon').setScale(0.78);
   text(scene, cx, 88, title, 40).setOrigin(0.5);
@@ -108,7 +110,7 @@ export function exitApp(scene: Phaser.Scene): void {
 export function startFight(scene: Phaser.Scene, level: number): void {
   const f = player.fight(level);
   const keys = [...catArt(f.deck.map((d) => d.cat)), ...areaArt(f.level, f.level.waves[0].area), ...addonArt(f.addons.map((a) => a.id))];
-  const shade = scene.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.6).setOrigin(0).setDepth(4000).setInteractive();
+  const shade = scene.add.rectangle(-BLEED, -BLEED, GAME_W + 2 * BLEED, GAME_H + 2 * BLEED, 0x000000, 0.6).setOrigin(0).setDepth(4000).setInteractive();
   const t = text(scene, GAME_W / 2, GAME_H / 2, 'Loading…', 44).setOrigin(0.5).setDepth(4001);
   void ensureLoaded(scene, keys).then(() => { shade.destroy(); t.destroy(); scene.scene.start('Defense', { level }); });
 }

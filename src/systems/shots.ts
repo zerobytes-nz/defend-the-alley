@@ -101,6 +101,14 @@ export class Shots {
     }
   }
 
+  /** Fire every trail and burst once off-screen, so their first real use doesn't hitch (shaders, blend modes). */
+  warmUp(): void {
+    for (const a of Object.keys(SHOT_KEY) as Attack[]) {
+      this.trail[a].emitParticleAt(-4000, -4000);
+      this.burst[a].explode(1, -4000, -4000);
+    }
+  }
+
   add(id: number, attack: Attack, x: number, y: number, depth: number): Phaser.GameObjects.Image {
     const img = this.scene.add.image(x, y, SHOT_KEY[attack]).setScale(SHOT_SCALE * SIZE[attack]).setDepth(depth);
     if (attack === 'rapid') img.setOrigin(0.8, 0.5);

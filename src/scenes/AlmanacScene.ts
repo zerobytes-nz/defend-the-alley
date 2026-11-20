@@ -2,6 +2,7 @@
 // picture and what they do; the rest are dark until then.
 import Phaser from 'phaser';
 import { COLORS } from '../config.ts';
+import { centreCamera } from '../systems/wide.ts';
 import { player } from '../save.ts';
 import { ATTACKS, ROLE, catName, family, guestCat, roleOf } from '../game/cats.ts';
 import { ADDONS, ADDON_IDS } from '../game/addons.ts';
@@ -27,6 +28,7 @@ export class AlmanacScene extends Phaser.Scene {
   constructor() { super('Almanac'); }
 
   create(): void {
+    centreCamera(this);
     const frame = drawFrame(this, 'Almanac', 'Almanac');
     const got = checkAchievements(player.save);
     if (got.length) { player.persist(); frame.refreshGems(); frame.flash(`🏆 ${got.map((a) => a.name).join(', ')} · +${got.reduce((g, a) => g + a.gems, 0)} gems`); }
@@ -88,10 +90,10 @@ export class AlmanacScene extends Phaser.Scene {
     let startY = 0, startList = 0, down = false;
     const clampY = (v: number) => Phaser.Math.Clamp(v, Math.min(LIST.y, LIST.y + LIST.h - this.contentH), LIST.y);
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
-      if (p.x < LIST.x || p.x > LIST.x + LIST.w || p.y < LIST.y || p.y > LIST.y + LIST.h) return;
-      down = true; startY = p.y; startList = this.list.y;
+      if (p.worldX < LIST.x || p.worldX > LIST.x + LIST.w || p.worldY < LIST.y || p.worldY > LIST.y + LIST.h) return;
+      down = true; startY = p.worldY; startList = this.list.y;
     });
-    this.input.on('pointermove', (p: Phaser.Input.Pointer) => { if (down && p.isDown) this.list.y = clampY(startList + p.y - startY); });
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => { if (down && p.isDown) this.list.y = clampY(startList + p.worldY - startY); });
     this.input.on('pointerup', () => { down = false; });
     this.input.on('wheel', (_p: unknown, _o: unknown, _dx: number, dy: number) => { this.list.y = clampY(this.list.y - dy); });
   }

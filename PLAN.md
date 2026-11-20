@@ -319,9 +319,23 @@ Play-testing on phones in milestone 5 should decide whether level 15 needs softe
   contract and chain first), and the production nginx proxy for the live key (milestone 5).
 
 ### 5. Polish and deploy
-- Fill wide phones (19.5:9) instead of letterboxing (Phaser `Scale.EXPAND`, extend the street art to the sides).
-- Measure FPS and memory on a real Android phone and an iPhone; trim texture sizes if needed.
-- Hit/death juice, coin fly-to-HUD, music per area.
-- Balance with real players.
+- ✅ Fill wide phones (19.5:9) instead of letterboxing: `Scale.EXPAND`. Every scene keeps the 1440×720 design area
+  centred (`src/systems/wide.ts → centreCamera`) and its background is mirrored into the side margins
+  (`wideBackground`); full-screen shades, closed lanes and fog reach into the margins (`BLEED`). Taps use world
+  coordinates. Tablets (4:3) get plain bands above and below.
+- ✅ Juice (`src/systems/juice.ts`, all drawn in code): coins fly from each kill to the coin counter, which bounces as
+  they land; a dust puff where a zombie falls (bigger for bosses); confetti on a win; the screen edges pulse red while
+  the wall is under 30%. Bullets with trails and hit bursts (`src/systems/shots.ts`). Reveal cards land with a bounce.
+- ✅ Music per area (`src/systems/audio.ts → setSong`): menu, one song per street (bright Main Street, lazy Sand Lot,
+  driving Overpass, frantic Rush Hour, spooky Park Lane) and a boss song on boss waves. Songs change at the next bar.
+- ✅ Play-test fixes: hint and tips have a dark backing so they read over the street props; tips are cleared when a
+  fight ends; the lose screen only says "upgrade your cats" once the Cats screen is open; fog covers the whole far
+  street (it used to stop at x 1080 while zombies there were already hidden); long player names shrink to fit.
+- ✅ Measured in the Claude browser pane (desktop CPU, WebGL, 1558×720, Whale on level 15, a whole fight stepped by
+  hand): CPU per frame median 0.3 ms, p99 1.0 ms, max 2.2 ms; JS heap about 32 MB; loaded textures about 94 MB
+  uncompressed. Before the warm-up, about 1.5% of frames took 13–41 ms (first use of each particle effect and effect
+  sheet); fights now fire every effect once off-screen at the start, and that took it to none over 12 ms.
+  Still to do: **FPS and memory on a real Android phone and an iPhone** (texture memory is the one to watch).
+- Balance with real players (level 14–15 may need softening for guests).
 - **Ask first:** GitHub repo (zerobytes-nz/defend-the-alley), Jira epic (THEOS), push; then deploy to
   `games.theoswap.io/defend-the-alley` with the nginx key proxy (same as Arena).

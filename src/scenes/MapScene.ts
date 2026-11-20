@@ -1,6 +1,7 @@
 // Level select: the kit's winding road map, dragged sideways, with the 15 levels on it (and Full Alley after).
 import Phaser from 'phaser';
 import { COLORS, GAME_W } from '../config.ts';
+import { centreCamera } from '../systems/wide.ts';
 import { player } from '../save.ts';
 import { DAILY, ENDLESS, FULL_ALLEY, GOALS, HARD_BASE, LEVEL_COUNT, MAP_MARKERS, RULES, levelDef } from '../game/levels.ts';
 import { challengeToday, featureUnlocked, levelOpen, levelsCleared, starsAt } from '../game/progress.ts';
@@ -31,6 +32,7 @@ export class MapScene extends Phaser.Scene {
   constructor() { super('Map'); }
 
   create(): void {
+    centreCamera(this);
     const s = player.save;
     if (!featureUnlocked(s, player.awis, 'hard')) MapScene.hard = false;
     this.frame = drawFrame(this, 'Map', MapScene.hard ? 'Hard Mode' : 'Level Select');
@@ -71,13 +73,13 @@ export class MapScene extends Phaser.Scene {
     this.children.sendToBack(zone);
     let startX = 0, startMap = 0, down = false;
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
-      if (!Phaser.Geom.Rectangle.Contains(zone.getBounds(), p.x, p.y)) return;
-      down = true; this.dragged = false; startX = p.x; startMap = this.map.x;
+      if (!Phaser.Geom.Rectangle.Contains(zone.getBounds(), p.worldX, p.worldY)) return;
+      down = true; this.dragged = false; startX = p.worldX; startMap = this.map.x;
     });
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       if (!down || !p.isDown) return;
-      if (Math.abs(p.x - startX) > 12) this.dragged = true;
-      if (this.dragged) this.map.x = clampX(startMap + p.x - startX);
+      if (Math.abs(p.worldX - startX) > 12) this.dragged = true;
+      if (this.dragged) this.map.x = clampX(startMap + p.worldX - startX);
     });
     this.input.on('pointerup', () => { down = false; this.time.delayedCall(0, () => { this.dragged = false; }); });
     this.input.on('wheel', (_p: unknown, _o: unknown, dx: number, dy: number) => { this.map.x = clampX(this.map.x - (dx || dy)); });

@@ -2,6 +2,7 @@
 // The sim steps at a fixed 60 Hz; this scene only creates/destroys sprites from sim events and moves them.
 import Phaser from 'phaser';
 import { COLORS, DEBUG, GAME_H, GAME_W, SEED, TRAY_Y } from '../config.ts';
+import { BLEED, centreCamera, wideBackground } from '../systems/wide.ts';
 import { addonArt, areaArt, asset, ensureLoaded, isAreaArt, release } from '../assets.ts';
 import { player } from '../save.ts';
 import { ATTACKS, MAX_LEVEL, RARITY_COLOR, ROLE, catName, family, guestCat, muzzleOffset, roleOf, type Defender } from '../game/cats.ts';
@@ -11,17 +12,21 @@ import { ABILITIES, AREAS, ENEMY_NAMES } from '../game/waves.ts';
 import { DAILY, ENDLESS, FULL_ALLEY, GOALS, HARD_BASE, LEVEL_COUNT, RULES, dayKey, daySeed, isHard, starGoals, type LevelDef } from '../game/levels.ts';
 import { addTotals, checkAchievements } from '../game/achievements.ts';
 import { ADDONS, type Equipped } from '../game/addons.ts';
-import { alleyGems, challengeToday, lossGems, withGemBoost, clearLevel, endlessGems, finishDaily, levelGems, spendAddons } from '../game/progress.ts';
+import { alleyGems, challengeToday, featureUnlocked, lossGems, withGemBoost, clearLevel, endlessGems, finishDaily, levelGems, spendAddons } from '../game/progress.ts';
 import { FEATURES, type Feature, type Unlock } from '../game/unlocks.ts';
 import { think } from '../game/bot.ts';
 import { button, tappable, text } from '../ui.ts';
 import { Shots, shotIcon } from '../systems/shots.ts';
-import { buzz, isMuted, musicOn, sfx, soundOn, toggleMusic, toggleMute, toggleSound, toggleVibra, vibraOn } from '../systems/audio.ts';
+import { Juice } from '../systems/juice.ts';
+import { buzz, isMuted, setSong, musicOn, sfx, soundOn, toggleMusic, toggleMute, toggleSound, toggleVibra, vibraOn, type SongName } from '../systems/audio.ts';
 
 const BOT = new URLSearchParams(location.search).has('bot');
 /** Fog rule: zombies fade out beyond this x. */
 const FOG_X = 860;
 const FEATURE_ICON: Record<Feature, string> = { repair: 'ui.wall', cats: 'ui.icon-cat', addons: 'ui.icon-addon', merge: 'ui.up1', alley: 'ui.icon-home', hard: 'ui.up3', daily: 'ui.daily', endless: 'ui.wavebar' };
+/** Each street has its own song (src/systems/audio.ts). */
+const areaSong = (a: number) => `area${Math.min(4, a)}` as SongName;
+
 const D = { bg: 0, slot: 10, wall: 20, actors: 100, fx: 900, hud: 1000, tray: 1100, bubble: 1200, overlay: 2000 };
 
 interface EnemyView {
@@ -44,10 +49,14 @@ export class DefenseScene extends Phaser.Scene {
   /** True while the current area's art is still downloading: the sim waits. */
   private loadingArea = false;
 
-  private bg!: Phaser.GameObjects.Image;
+  private bg!: Phaser.GameObjects.Container;
   private enemies = new Map<number, EnemyView>();
   private cats = new Map<number, CatView>(); // by slot
   private shots!: Shots;
+  private juice!: Juice;
+  /** Feature tips on screen (cleared when the fight ends). */
+  private tipObjs: Phaser.GameObjects.GameObject[] = [];
+  private coinIcon!: Phaser.GameObjects.Image;
   private fxPool: Phaser.GameObjects.Sprite[] = [];
   private cards: CardView[] = [];
   private selected: Defender | null = null;
@@ -88,6 +97,7 @@ export class DefenseScene extends Phaser.Scene {
   init(data: { level?: number }): void { this.levelN = data?.level ?? 0; }
 
   create(): void {
+    centreCamera(this);
     const f = player.fight(this.levelN);
     this.def = f.level;
     this.startAddons = f.addons.map((a) => ({ ...a }));
@@ -95,16 +105,25 @@ export class DefenseScene extends Phaser.Scene {
     this.acc = 0; this.speed = 1; this.paused = false; this.ended = false; this.armed = -1;
     this.tut = null; this.press = null; this.modal = false;
     this.enemies.clear(); this.cats.clear(); this.units.clear(); this.traps.clear();
-    this.fxPool = []; this.cards = []; this.slotTiles = []; this.addonBtns = []; this.laneZones = []; this.bubble = null;
+    this.fxPool = []; this.tipObjs = []; this.cards = []; this.slotTiles = []; this.addonBtns = []; this.laneZones = []; this.bubble = null;
     this.shown = { coins: -1, wall: -1 };
     this.shots = new Shots(this, D.fx);
+    this.juice = new Juice(this, D.fx + 2);
+    this.shots.warmUp(); this.juice.warmUp();
+    this.fx(-4000, -4000, 0.1); this.fx(-4000, -4000, 0.1, 'fx.muzzle');
+    setSong(areaSong(this.sim.area));
     this.loadingArea = false;
     const area = this.sim.area;
     if (this.def.waves.some((w) => w.area > area)) void ensureLoaded(this, areaArt(this.def, area + 1));
 
-    this.add.rectangle(0, 0, GAME_W, GAME_H, COLORS.bg).setOrigin(0).setDepth(-1);
-    this.bg = this.add.image(0, 0, AREAS[area].bg).setOrigin(0).setDepth(D.bg);
-    if (this.def.rule === 'fog') for (let i = 0; i < 12; i++) this.add.rectangle(FOG_X - 140 + i * 30, LANE_TOP - 30, 30, GAME_H, 0xd8dde4, Math.min(0.9, 0.08 * i)).setOrigin(0).setDepth(D.fx + 4);
+        this.bg = wideBackground(this, AREAS[area].bg).setDepth(D.bg);
+    if (this.def.rule === 'fog') {
+      // A soft edge, then solid fog to the right edge of the screen (and on into a wide phone's margin).
+      const fogH = LANE_H * LANES + 50; // the lanes only: the card tray's sidewalk stays clear
+      for (let i = 0; i < 12; i++) this.add.rectangle(FOG_X - 140 + i * 30, LANE_TOP - 30, 30, fogH, 0xd8dde4, Math.min(0.9, 0.08 * i)).setOrigin(0).setDepth(D.fx + 4);
+      const x = FOG_X - 140 + 12 * 30;
+      this.add.rectangle(x, LANE_TOP - 30, GAME_W + BLEED - x, fogH, 0xd8dde4, 0.9).setOrigin(0).setDepth(D.fx + 4);
+    }
     this.drawSlots();
     this.drawLaneZones();
     this.drawWall();
@@ -160,6 +179,7 @@ export class DefenseScene extends Phaser.Scene {
       case 'wave':
         this.waveText.setText(this.def.n === ENDLESS ? `Wave ${e.wave + 1}` : `Wave ${e.wave + 1}/${e.total}`);
         if (e.boss) { this.banner('BOSS!', `${AREAS[e.area].name} boss incoming`); sfx.bossIn(); this.cameras.main.shake(300, 0.004); }
+        setSong(e.boss ? 'boss' : areaSong(e.area));
         return;
       case 'area': return this.changeArea(e.area);
       case 'end': return this.endRun(e.won);
@@ -232,6 +252,7 @@ export class DefenseScene extends Phaser.Scene {
     if (this.sim.wallHp !== this.shown.wall) {
       this.shown.wall = this.sim.wallHp;
       const f = this.sim.wallHp / this.sim.wallMax;
+      if (!this.ended) this.juice.wall(f);
       this.wallBar.height = (WALL_BAR.h - 4) * f; // the bar empties from the top, like the kit's
       this.wallBar.setFillStyle(f > 0.5 ? COLORS.good : f > 0.25 ? COLORS.gold : COLORS.bad);
       this.wallText.setText(`${this.sim.wallHp}`);
@@ -242,14 +263,14 @@ export class DefenseScene extends Phaser.Scene {
   /** Tap zones on the kit's grid squares (the squares themselves are part of the street art). */
   private drawSlots(): void {
     for (let l = 0; l < LANES; l++) if (!this.sim.laneOpen(l)) {
-      this.add.rectangle(0, laneCenter(l), GAME_W, LANE_H, 0x10141a, 0.62).setOrigin(0, 0.5).setDepth(D.slot - 1);
+      this.add.rectangle(-BLEED, laneCenter(l), GAME_W + 2 * BLEED, LANE_H, 0x10141a, 0.62).setOrigin(0, 0.5).setDepth(D.slot - 1);
     }
     for (let l = 0; l < LANES; l++) for (let c = 0; c < COLS; c++) {
       if (!this.sim.laneOpen(l)) continue;
       const s = slotIndex(l, c);
       const tile = this.add.rectangle(SLOT_X[c], laneCenter(l), SLOT_SIZE + 10, LANE_H - 4, 0xffffff, 0)
         .setStrokeStyle(3, 0xffffff, 0).setDepth(D.slot).setInteractive({ useHandCursor: true });
-      tile.on('pointerdown', (p: Phaser.Input.Pointer) => { this.press = { slot: s, x: p.x, y: p.y, drag: false }; });
+      tile.on('pointerdown', (p: Phaser.Input.Pointer) => { this.press = { slot: s, x: p.worldX, y: p.worldY, drag: false }; });
       tile.setData('slot', s);
       this.slotTiles.push(tile);
     }
@@ -273,11 +294,12 @@ export class DefenseScene extends Phaser.Scene {
       return;
     }
     if (this.def.waves.some((w) => w.area > a)) void ensureLoaded(this, areaArt(this.def, a + 1));
-    const next = this.add.image(0, 0, AREAS[a].bg).setOrigin(0).setDepth(D.bg + 1).setAlpha(0);
+    const next = wideBackground(this, AREAS[a].bg).setDepth(D.bg + 1).setAlpha(0);
     const old = this.bg;
     // Free the previous area's street and bosses once its street is off screen (area 1's street stays for the next run).
     this.tweens.add({ targets: next, alpha: 1, duration: 700, onComplete: () => { old.destroy(); next.setDepth(D.bg); release(this, areaArt(this.def, a - 1).filter((k) => k !== 'bg.area1')); } });
     this.bg = next;
+    setSong(areaSong(a));
     this.areaText.setText(`${this.def.n === FULL_ALLEY ? 'Full Alley' : this.def.title} · ${AREAS[a].name}`);
     this.banner(`Area ${a + 1} · ${AREAS[a].name}`, 'Here they come');
     sfx.finish();
@@ -330,8 +352,8 @@ export class DefenseScene extends Phaser.Scene {
     if (!pr || !p.isDown || this.ended || this.paused) return;
     const v = this.cats.get(pr.slot);
     if (!v) return;
-    if (!pr.drag && Math.hypot(p.x - pr.x, p.y - pr.y) > 18) { pr.drag = true; this.closeBubble(); v.spr.setAlpha(0.75).setDepth(D.bubble - 1); this.markDrops(pr.slot); }
-    if (pr.drag) { v.spr.setPosition(p.x, p.y + 40); v.badge?.setPosition(p.x - 30, p.y - 22); }
+    if (!pr.drag && Math.hypot(p.worldX - pr.x, p.worldY - pr.y) > 18) { pr.drag = true; this.closeBubble(); v.spr.setAlpha(0.75).setDepth(D.bubble - 1); this.markDrops(pr.slot); }
+    if (pr.drag) { v.spr.setPosition(p.worldX, p.worldY + 40); v.badge?.setPosition(p.worldX - 30, p.worldY - 22); }
   }
 
   private dragEnd(p: Phaser.Input.Pointer): void {
@@ -340,7 +362,7 @@ export class DefenseScene extends Phaser.Scene {
     if (!pr) return;
     if (!pr.drag) { this.tapSlot(pr.slot); return; }
     this.markDrops(-1);
-    const to = this.slotTiles.find((t) => t.getBounds().contains(p.x, p.y))?.getData('slot') as number | undefined;
+    const to = this.slotTiles.find((t) => t.getBounds().contains(p.worldX, p.worldY))?.getData('slot') as number | undefined;
     const ok = to !== undefined && (this.sim.canMergeInto(pr.slot, to) ? this.sim.merge(pr.slot, to) : this.sim.move(pr.slot, to));
     if (!ok) {
       if (to !== undefined && to !== pr.slot) {
@@ -451,7 +473,7 @@ export class DefenseScene extends Phaser.Scene {
     this.paused = true; this.modal = true;
     this.anims.pauseAll();
     const cx = GAME_W / 2, cy = 360;
-    const shade = this.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.6).setOrigin(0).setInteractive();
+    const shade = this.add.rectangle(-BLEED, -BLEED, GAME_W + 2 * BLEED, GAME_H + 2 * BLEED, 0x000000, 0.6).setOrigin(0).setInteractive();
     const card = this.add.rectangle(cx, cy, 560, 380, 0xf4e3c3).setStrokeStyle(5, e.type.boss ? 0xff5040 : 0x8cff6a);
     const head = text(this, cx, cy - 214, e.type.boss ? 'NEW BOSS!' : 'NEW ZOMBIE!', 40, e.type.boss ? '#ff6a5a' : '#8cff6a', 7).setOrigin(0.5);
     const pic = this.add.image(cx, cy + 20, `enemy.${key}.walk`, 0).setOrigin(0.5, 1).setScale(asset(`enemy.${key}.walk`).displayScale * (e.type.boss ? 1.3 : 2.4));
@@ -482,7 +504,18 @@ export class DefenseScene extends Phaser.Scene {
     const t = text(this, e.x, laneFeet(e.lane) - 84, `+${coins}`, e.type.boss ? 38 : 26, '#ffd02a', 5).setOrigin(0.5).setDepth(D.fx + 5);
     this.tweens.add({ targets: t, y: t.y - 50, alpha: 0, duration: 700, onComplete: () => t.destroy() });
     if (e.type.boss) { this.fx(e.x, laneFeet(e.lane) - 60, 0.9); this.cameras.main.shake(250, 0.006); sfx.boom(); }
+    this.juice.puff(e.x, laneFeet(e.lane) - 10, e.type.boss);
+    // A few coins fly up to the counter; it bounces as they land.
+    this.juice.coins(e.x, laneFeet(e.lane) - 50, e.type.boss ? 6 : coins >= 12 ? 3 : 2, 44, 46, () => this.bumpCoins());
     sfx.coin();
+  }
+
+  /** The coin counter bounces (a coin just landed in it). */
+  private bumpCoins(): void {
+    this.tweens.killTweensOf([this.coinIcon, this.coinText]);
+    this.coinIcon.setScale(1.05); this.coinText.setScale(1.18);
+    this.tweens.add({ targets: this.coinIcon, scale: 0.85, duration: 160, ease: 'Back.Out' });
+    this.tweens.add({ targets: this.coinText, scale: 1, duration: 160, ease: 'Back.Out' });
   }
 
   private onWallHit(e: Enemy): void {
@@ -505,7 +538,7 @@ export class DefenseScene extends Phaser.Scene {
   /** HUD on the top sidewalk, cards on the bottom one, like the kit's own screens. */
   private drawHud(): void {
     this.add.image(118, 46, 'ui.coinbar').setDepth(D.hud);
-    this.add.image(44, 46, 'ui.coin').setScale(0.85).setDepth(D.hud + 1);
+    this.coinIcon = this.add.image(44, 46, 'ui.coin').setScale(0.85).setDepth(D.hud + 1);
     this.coinText = text(this, 128, 44, '0', 34).setOrigin(0.5).setDepth(D.hud + 2);
     const where = this.def.n === FULL_ALLEY ? 'Full Alley' : this.def.title;
     this.areaText = text(this, 240, 46, `${where} · ${AREAS[this.sim.area].name}`, 30).setOrigin(0, 0.5).setDepth(D.hud);
@@ -516,7 +549,9 @@ export class DefenseScene extends Phaser.Scene {
     tappable(spd, () => { this.speed = this.speed === 1 ? 2 : 1; spd.setText(`×${this.speed}`); });
     const pause = this.add.image(GAME_W - 52, 46, 'ui.settings').setScale(0.62).setDepth(D.hud);
     tappable(pause, () => this.togglePause());
-    this.hint = text(this, GAME_W / 2, 104, 'Pick a cat card, then tap a square by the wall', 26, COLORS.text, 5).setOrigin(0.5).setDepth(D.hud);
+    // A dark band behind the hint so it reads over the cones and bins on the sidewalk.
+    this.hint = text(this, GAME_W / 2, 104, 'Pick a cat card, then tap a square by the wall', 26, COLORS.text, 5).setOrigin(0.5).setDepth(D.hud)
+      .setBackgroundColor('rgba(24,18,32,0.7)').setPadding(18, 4, 18, 6);
   }
 
   private drawTray(deck: Defender[]): void {
@@ -694,9 +729,11 @@ export class DefenseScene extends Phaser.Scene {
     player.persist();
     tips.forEach(([, msg, x, y], i) => this.time.delayedCall(2000 + i * 5500, () => {
       if (this.ended) return;
-      const m = text(this, GAME_W / 2, 168, msg, 26, '#ffd02a', 5).setOrigin(0.5).setDepth(D.bubble + 10);
+      const m = text(this, GAME_W / 2, 168, msg, 26, '#ffd02a', 5).setOrigin(0.5).setDepth(D.bubble + 10)
+        .setBackgroundColor('rgba(24,18,32,0.75)').setPadding(18, 4, 18, 6);
       if (m.width > 1100) m.setScale(1100 / m.width);
       const hand = text(this, x, y, '👇', 56, '#ffffff', 0).setOrigin(0.5, 1).setDepth(D.bubble + 11);
+      this.tipObjs.push(m, hand);
       this.tweens.add({ targets: hand, y: y + 12, yoyo: true, repeat: 6, duration: 380 });
       this.tweens.add({ targets: [m, hand], alpha: 0, delay: 4800, duration: 400, onComplete: () => { m.destroy(); hand.destroy(); } });
     }));
@@ -859,7 +896,7 @@ export class DefenseScene extends Phaser.Scene {
     // The kit's pause screen: a ribbon, the music / sound / vibration bar, and Restart / Resume.
     const cx = GAME_W / 2;
     const items: Phaser.GameObjects.GameObject[] = [
-      this.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.6).setOrigin(0).setInteractive(),
+      this.add.rectangle(-BLEED, -BLEED, GAME_W + 2 * BLEED, GAME_H + 2 * BLEED, 0x000000, 0.6).setOrigin(0).setInteractive(),
       this.add.image(cx, 120, 'ui.ribbon').setScale(0.9), text(this, cx, 106, 'PAUSED GAME', 46).setOrigin(0.5),
       this.add.image(cx, 290, 'ui.pausebar').setScale(0.9),
     ];
@@ -887,6 +924,9 @@ export class DefenseScene extends Phaser.Scene {
 
   private endRun(won: boolean): void {
     this.ended = true;
+    this.juice.calm();
+    for (const o of this.tipObjs) { this.tweens.killTweensOf(o); o.destroy(); }
+    this.tipObjs = [];
     this.endTutorial();
     this.closeBubble();
     this.disarm();
@@ -926,10 +966,11 @@ export class DefenseScene extends Phaser.Scene {
     player.persist();
     (won ? sfx.finish : sfx.die)();
 
+    if (won) this.time.delayedCall(450, () => this.juice.confetti(GAME_W));
     this.time.delayedCall(won ? 300 : 900, () => {
       const cx = GAME_W / 2;
       const items: Phaser.GameObjects.GameObject[] = [
-        this.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.65).setOrigin(0).setInteractive(),
+        this.add.rectangle(-BLEED, -BLEED, GAME_W + 2 * BLEED, GAME_H + 2 * BLEED, 0x000000, 0.65).setOrigin(0).setInteractive(),
         this.add.image(cx, 150, won ? 'ui.win' : 'ui.lose').setScale(0.8),
       ];
       const line = (y: number, s2: string, size = 30, color = '#ffffff') => items.push(text(this, cx, y, s2, size, color, 6).setOrigin(0.5));
@@ -949,7 +990,11 @@ export class DefenseScene extends Phaser.Scene {
           if (l.width > 280) l.setScale(280 / l.width);
           items.push(l);
         });
-      } else line(320, `Wave ${this.sim.wave + 1} of ${this.sim.totalWaves}: upgrade your cats and try again`);
+      } else {
+        // Only point at the Cats screen once it is open (it unlocks after level 3).
+        const tip = featureUnlocked(s, player.awis, 'cats') ? 'upgrade your cats and try again' : 'place more cats and tap them to upgrade';
+        line(320, `Wave ${this.sim.wave + 1} of ${this.sim.totalWaves}: ${tip}`);
+      }
       line(418, `${st.kills} zombies · ${st.bossKills} bosses · ${st.addonsUsed} add-ons`, 26, COLORS.dim);
       if (gems) {
         items.push(this.add.image(cx, 486, 'ui.winbonus').setScale(0.75), this.add.image(cx - 50, 486, 'ui.gem').setScale(0.7));
@@ -980,7 +1025,7 @@ export class DefenseScene extends Phaser.Scene {
     if (!this.scene.isActive()) return;
     const cx = GAME_W / 2, w = 300, gap = 24, x0 = cx - ((got.length - 1) * (w + gap)) / 2;
     const items: Phaser.GameObjects.GameObject[] = [
-      this.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.7).setOrigin(0).setInteractive(),
+      this.add.rectangle(-BLEED, -BLEED, GAME_W + 2 * BLEED, GAME_H + 2 * BLEED, 0x000000, 0.7).setOrigin(0).setInteractive(),
       this.add.image(cx, 110, 'ui.ribbon').setScale(0.8), text(this, cx, 96, got.length > 1 ? 'NEW UNLOCKS!' : 'NEW UNLOCK!', 42).setOrigin(0.5),
     ];
     got.forEach((u, i) => {
@@ -1016,7 +1061,7 @@ export class DefenseScene extends Phaser.Scene {
   private leaveTo(level: number): void {
     const f = player.fight(level);
     const want = new Set([...areaArt(f.level, f.level.waves[0].area), ...addonArt(f.addons.map((a) => a.id))]);
-    const shade = this.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.6).setOrigin(0).setDepth(D.overlay + 10).setInteractive();
+    const shade = this.add.rectangle(-BLEED, -BLEED, GAME_W + 2 * BLEED, GAME_H + 2 * BLEED, 0x000000, 0.6).setOrigin(0).setDepth(D.overlay + 10).setInteractive();
     text(this, GAME_W / 2, GAME_H / 2, 'Loading…', 44).setOrigin(0.5).setDepth(D.overlay + 11);
     void ensureLoaded(this, [...want]).then(() => {
       const drop = Object.keys(this.textures.list).filter((k) => ((isAreaArt(k) && k !== 'bg.area1') || k.startsWith('addon.')) && !want.has(k));

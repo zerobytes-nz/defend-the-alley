@@ -2,6 +2,7 @@
 // bigger fanfare for rarer ones. Tap for the next card; Play goes to the map as the connected player.
 import Phaser from 'phaser';
 import { GAME_W, GAME_H, COLORS } from '../config.ts';
+import { BLEED, centreCamera, wideBackground } from '../systems/wide.ts';
 import { awisFromItems, BOOSTS, type AWI, type BoostId } from '../game/awi.ts';
 import { ATTACKS, AWI_PERK_INFO, RARITIES, RARITY_COLOR, ROLE, family, roleOf } from '../game/cats.ts';
 import { ADDONS, AWI_ADDON_POWER, AWI_ADDON_USES } from '../game/addons.ts';
@@ -30,8 +31,9 @@ export class RevealScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.add.image(0, 0, 'bg.menu').setOrigin(0);
-    this.add.rectangle(0, 0, GAME_W, GAME_H, 0x000000, 0.6).setOrigin(0);
+    centreCamera(this);
+    wideBackground(this, 'bg.menu');
+    this.add.rectangle(-BLEED, -BLEED, GAME_W + 2 * BLEED, GAME_H + 2 * BLEED, 0x000000, 0.6).setOrigin(0);
     const c = this.connection;
     text(this, GAME_W / 2, 40, `Code ${c.code}${c.source === 'cache' ? ' · offline: last saved items' : ''}`, 24, COLORS.dim, 4).setOrigin(0.5);
     this.counter = text(this, GAME_W / 2, 690, '', 22, COLORS.dim, 4).setOrigin(0.5);
@@ -64,7 +66,7 @@ export class RevealScene extends Phaser.Scene {
     let pic: Phaser.GameObjects.Image, title: string, lines: string[];
     if (a.kind === 'cat') {
       const d = a.def, key = `cat.c${d.cat}.idle`;
-      pic = this.add.image(0, 40, key, 0).setOrigin(0.5, 1).setScale(asset(key).displayScale * 2.4);
+      pic = this.add.image(0, 46, key, 0).setOrigin(0.5, 1).setScale(asset(key).displayScale * 3.3);
       title = `${a.rarity} ${d.name.replace(/ #.*$/, '')}`;
       lines = [`${family(d.cat).name} · ${ATTACKS[d.attack].name}: ${ATTACKS[d.attack].blurb.toLowerCase()}`, `${ROLE[roleOf(d.cat)].name}: ${ROLE[roleOf(d.cat)].blurb}`, `${d.dmg} damage · ${d.rate} shots a second`];
       if (d.awiPerk) lines.push(`★ ${AWI_PERK_INFO[d.awiPerk].name}: ${AWI_PERK_INFO[d.awiPerk].blurb}`);
@@ -88,6 +90,10 @@ export class RevealScene extends Phaser.Scene {
     c.add([rays, pic, lead, head, body]);
     this.tweens.add({ targets: c, x: GAME_W / 2, alpha: 1, duration: 280, ease: 'Back.Out' });
     this.tweens.add({ targets: rays, angle: 360, duration: 14000, repeat: -1 });
+    // The item lands with a squash and a bounce.
+    const sx = pic.scaleX, sy = pic.scaleY;
+    pic.setScale(sx * 0.6, sy * 1.25);
+    this.tweens.add({ targets: pic, scaleX: sx, scaleY: sy, delay: 120, duration: 420, ease: 'Back.Out' });
     if (tier === 3) this.cameras.main.flash(250, 255, 220, 120);
     this.card = c;
     sfx.reveal(tier);

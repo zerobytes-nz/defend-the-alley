@@ -2,6 +2,7 @@
 // with your add-on AWIs first (free uses every level), then the 8 bought ones (25 gems each, hold up to 5).
 import Phaser from 'phaser';
 import { COLORS } from '../config.ts';
+import { centreCamera } from '../systems/wide.ts';
 import { player } from '../save.ts';
 import { RARITY_COLOR } from '../game/cats.ts';
 import { ADDONS, ADDON_IDS, ADDON_MAX, ADDON_PRICE, AWI_ADDON_POWER, AWI_ADDON_USES, SLOTS_MAX, type AddonId } from '../game/addons.ts';
@@ -29,6 +30,7 @@ export class AddonsScene extends Phaser.Scene {
   constructor() { super('Addons'); }
 
   create(): void {
+    centreCamera(this);
     this.frame = drawFrame(this, 'Addons', 'Extra', 'bg.screen-addon');
     this.slots = this.add.container(0, 0);
     this.list = this.add.container(LIST.x, LIST.y);
@@ -38,13 +40,13 @@ export class AddonsScene extends Phaser.Scene {
     let startY = 0, startList = 0, down = false;
     const clampY = (y: number) => Phaser.Math.Clamp(y, Math.min(LIST.y, LIST.y + LIST.h - this.contentH), LIST.y);
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
-      if (p.x < LIST.x || p.x > LIST.x + LIST.w || p.y < LIST.y || p.y > LIST.y + LIST.h) return;
-      down = true; this.dragged = false; startY = p.y; startList = this.list.y;
+      if (p.worldX < LIST.x || p.worldX > LIST.x + LIST.w || p.worldY < LIST.y || p.worldY > LIST.y + LIST.h) return;
+      down = true; this.dragged = false; startY = p.worldY; startList = this.list.y;
     });
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       if (!down || !p.isDown) return;
-      if (Math.abs(p.y - startY) > 12) this.dragged = true;
-      if (this.dragged) this.list.y = clampY(startList + p.y - startY);
+      if (Math.abs(p.worldY - startY) > 12) this.dragged = true;
+      if (this.dragged) this.list.y = clampY(startList + p.worldY - startY);
     });
     this.input.on('pointerup', () => { down = false; this.time.delayedCall(0, () => { this.dragged = false; }); });
     this.input.on('wheel', (_p: unknown, _o: unknown, _dx: number, dy: number) => { this.list.y = clampY(this.list.y - dy); });
