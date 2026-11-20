@@ -55,8 +55,8 @@ export function drawFrame(scene: Phaser.Scene, active: Tab, title: string, bg = 
 
   // Daily gift: tap to claim once a day; the streak grows on days in a row.
   const ready = dailyReady(player.save, new Date());
-  const gift = scene.add.image(140, 120, 'ui.daily').setScale(0.62).setAlpha(ready ? 1 : 0.55);
-  const day = text(scene, 140, 160, ready ? 'Gift!' : `Day ${player.save.daily.streak}`, 22, '#ffffff', 4).setOrigin(0.5);
+  const gift = scene.add.image(140, 138, 'ui.daily').setScale(0.62).setAlpha(ready ? 1 : 0.55);
+  const day = text(scene, 140, 178, ready ? 'Gift!' : `Day ${player.save.daily.streak}`, 22, '#ffffff', 4).setOrigin(0.5);
   if (ready) scene.tweens.add({ targets: gift, scale: 0.68, yoyo: true, repeat: -1, duration: 600, ease: 'Sine.InOut' });
   tappable(gift, () => {
     const got = claimDaily(player.save, new Date());
@@ -70,7 +70,14 @@ export function drawFrame(scene: Phaser.Scene, active: Tab, title: string, bg = 
     sfx.finish();
   });
 
-  // Back to the title screen (pick another demo player).
+  // Back: the Map goes back to the title screen, the other tabs go back to the Map.
+  const back = scene.add.container(140, 42, [
+    scene.add.rectangle(0, 0, 150, 48, 0x000000, 0.45).setStrokeStyle(3, 0xffffff, 0.35),
+    text(scene, 0, -2, '← Back', 26, COLORS.text, 4).setOrigin(0.5),
+  ]).setSize(150, 48);
+  tappable(back, () => scene.scene.start(active === 'Map' ? 'Menu' : 'Map'));
+
+  // The player's name: tap to go back to the title screen (pick another demo player).
   const whoLabel = text(scene, 0, -2, `👤 ${player.name}`, 26, COLORS.text, 4).setOrigin(0.5);
   whoLabel.setScale(Math.min(1, 170 / whoLabel.width)); // long names ("Code AAAAAAAA") shrink to fit the box
   const who = scene.add.container(GAME_W - 110, 44, [
