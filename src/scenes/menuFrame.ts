@@ -69,9 +69,11 @@ export function drawFrame(scene: Phaser.Scene, active: Tab, title: string, bg = 
   });
 
   // Back to the title screen (pick another demo player).
+  const whoLabel = text(scene, 0, -2, `👤 ${player.name}`, 26, COLORS.text, 4).setOrigin(0.5);
+  whoLabel.setScale(Math.min(1, 170 / whoLabel.width)); // long names ("Code AAAAAAAA") shrink to fit the box
   const who = scene.add.container(GAME_W - 110, 44, [
     scene.add.rectangle(0, 0, 190, 50, 0x000000, 0.45).setStrokeStyle(3, 0xffffff, 0.35),
-    text(scene, 0, -2, `👤 ${player.name}`, 26, COLORS.text, 4).setOrigin(0.5),
+    whoLabel,
   ]).setSize(190, 50);
   tappable(who, () => scene.scene.start('Menu'));
 
