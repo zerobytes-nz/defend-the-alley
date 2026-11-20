@@ -340,6 +340,11 @@ Softened in milestone 5 (`LATE_EASE`): level 14 now about 2 fights, level 15 abo
 - ✅ Levels 14–15 softened for guests (`LATE_EASE` in `src/game/levels.ts`): the campaign sim went from about 5 and 12
   fights (1 in 10 bot guests stuck) to about 2 and 4 (none of 20 stuck). Collectors win them 93% / 87% (was 88 / 73).
   Hard mode's levels 14–15 are built from the same waves, so they are a little easier too.
+- ✅ Repair refills a quarter of the wall over 8 s (glow, sparks, the button fills up) and can't be tapped again until
+  it finishes.
+- ✅ Cat Guardian and Boxer Cat are placed like Plants vs. Zombies: tap one, then tap the spot in a lane where it should
+  stand (a see-through cat follows the finger). The spot is kept between just past the crosswalk (x 538) and x 1250.
+  The bot still uses the old default spots (790 / 960), so the sims don't change.
 - Balance with real players.
 - **Ask first:** GitHub repo (zerobytes-nz/defend-the-alley), Jira epic (THEOS), push; then deploy to
   `games.theoswap.io/defend-the-alley` with the nginx key proxy (same as Arena).

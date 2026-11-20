@@ -17,9 +17,9 @@ export const ADDONS: Record<AddonId, AddonDef> = {
   coins: { name: 'Coins ×2', blurb: 'Double coins for 30 seconds', lane: false },
   bomb: { name: 'Big Bomb', blurb: 'Hurts every zombie on the street', lane: false },
   timebomb: { name: 'Time Bomb', blurb: 'Big blast in a lane after 3 seconds', lane: true },
-  guard: { name: 'Cat Guardian', blurb: 'Holds a lane by the wall for a while', lane: true },
+  guard: { name: 'Cat Guardian', blurb: 'Tough cat that holds a spot in a lane: tap where it stands', lane: true },
   tnt: { name: 'TNT Crate', blurb: 'Blows up the first zombie to reach it', lane: true },
-  boxer: { name: 'Boxer Cat', blurb: 'Punches zombies mid-street for a while', lane: true },
+  boxer: { name: 'Boxer Cat', blurb: 'Hard-hitting cat for any spot in a lane: tap where it stands', lane: true },
   spikes: { name: 'Spike Trap', blurb: 'Slows and hurts zombies for 20 seconds', lane: true },
 };
 

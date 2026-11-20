@@ -7,7 +7,7 @@ import { addonArt, areaArt, asset, ensureLoaded, isAreaArt, release } from '../a
 import { player } from '../save.ts';
 import { ATTACKS, MAX_LEVEL, RARITY_COLOR, ROLE, catName, family, guestCat, muzzleOffset, roleOf, type Defender } from '../game/cats.ts';
 import { COLS, LANES, SLOT_SIZE, SLOT_X, SPAWN_X, STOP_X, WALL_BAR, WALL_X0, WALL_X1, LANE_H, LANE_TOP, laneCenter, laneFeet, slotIndex, slotLane } from '../game/layout.ts';
-import { Defense, STEP, type Bullet, type Enemy, type Placed, type SimEvent, type Trap, type Unit } from '../game/sim.ts';
+import { Defense, STEP, unitSpot, type Bullet, type Enemy, type Placed, type SimEvent, type Trap, type Unit } from '../game/sim.ts';
 import { ABILITIES, AREAS, ENEMY_NAMES } from '../game/waves.ts';
 import { DAILY, ENDLESS, FULL_ALLEY, GOALS, HARD_BASE, LEVEL_COUNT, RULES, dayKey, daySeed, isHard, starGoals, type LevelDef } from '../game/levels.ts';
 import { addTotals, checkAchievements } from '../game/achievements.ts';
@@ -82,6 +82,8 @@ export class DefenseScene extends Phaser.Scene {
   private addonBtns: AddonButton[] = [];
   /** An add-on waiting for a lane tap. */
   private armed = -1;
+  /** See-through Cat Guardian / Boxer Cat that follows the pointer while choosing where it stands. */
+  private ghost: Phaser.GameObjects.Sprite | null = null;
   private laneZones: Phaser.GameObjects.Rectangle[] = [];
   private repairBtn: {
     c: Phaser.GameObjects.Container; cost: Phaser.GameObjects.Text; shown: string;
@@ -107,7 +109,7 @@ export class DefenseScene extends Phaser.Scene {
     this.def = f.level;
     this.startAddons = f.addons.map((a) => ({ ...a }));
     this.sim = new Defense({ ...f, seed: this.def.n === DAILY ? daySeed(dayKey(new Date())) : SEED || Math.floor(Math.random() * 1e9) });
-    this.acc = 0; this.speed = 1; this.paused = false; this.ended = false; this.armed = -1;
+    this.acc = 0; this.speed = 1; this.paused = false; this.ended = false; this.armed = -1; this.ghost = null;
     this.tut = null; this.press = null; this.modal = false;
     this.enemies.clear(); this.cats.clear(); this.units.clear(); this.traps.clear();
     this.fxPool = []; this.tipObjs = []; this.repairFx = null; this.cards = []; this.slotTiles = []; this.addonBtns = []; this.laneZones = []; this.bubble = null;
@@ -732,7 +734,7 @@ export class DefenseScene extends Phaser.Scene {
     const s = player.save, tips: [string, string, number, number][] = [];
     if (this.repairBtn && !s.tips.includes('repair')) tips.push(['repair', 'New: Repair Wall. Tap it to rebuild a quarter of the wall over 8 seconds (costs coins).', this.repairBtn.c.x, TRAY_Y - 60]);
     const a = this.addonBtns[0];
-    if (a && !s.tips.includes('addons')) tips.push(['addons', 'Add-ons: tap one, then tap a lane. Big Bomb and Coins ×2 go off at once.', a.c.x, TRAY_Y - 60]);
+    if (a && !s.tips.includes('addons')) tips.push(['addons', 'Add-ons: tap one, then tap a lane (cats stand where you tap). Big Bomb and Coins ×2 go off at once.', a.c.x, TRAY_Y - 60]);
     if (!tips.length) return;
     for (const [k] of tips) s.tips.push(k);
     player.persist();
@@ -789,9 +791,10 @@ export class DefenseScene extends Phaser.Scene {
       if (!this.sim.laneOpen(l)) { this.laneZones.push(this.add.rectangle(0, 0, 1, 1).setVisible(false)); continue; }
       const z = this.add.rectangle(x0, laneCenter(l), GAME_W - x0, LANE_H - 6, 0xffee00, 0).setOrigin(0, 0.5)
         .setStrokeStyle(3, 0xffee00, 0).setDepth(D.fx - 1);
-      z.on('pointerover', () => { if (this.armed >= 0) z.setFillStyle(0xffee00, 0.22); });
-      z.on('pointerout', () => { if (this.armed >= 0) z.setFillStyle(0xffee00, 0.08); });
-      z.on('pointerup', () => this.fireAddon(l));
+      z.on('pointerover', (p: Phaser.Input.Pointer) => { if (this.armed >= 0) { z.setFillStyle(0xffee00, 0.22); this.moveGhost(l, p.worldX); } });
+      z.on('pointermove', (p: Phaser.Input.Pointer) => { if (this.armed >= 0) this.moveGhost(l, p.worldX); });
+      z.on('pointerout', () => { if (this.armed >= 0) { z.setFillStyle(0xffee00, 0.08); this.ghost?.setVisible(false); } });
+      z.on('pointerup', (p: Phaser.Input.Pointer) => this.fireAddon(l, p.worldX));
       this.laneZones.push(z);
     }
   }
@@ -807,21 +810,35 @@ export class DefenseScene extends Phaser.Scene {
     this.armed = i;
     this.addonBtns[i].glow.setVisible(true);
     for (const z of this.laneZones.filter((z) => z.visible)) z.setInteractive({ useHandCursor: true }).setFillStyle(0xffee00, 0.08).setStrokeStyle(3, 0xffee00, 0.6);
-    this.hint.setText(`${ADDONS[a.id].name}: tap a lane`).setVisible(true).setAlpha(1).setColor('#ffd02a');
+    if (a.id === 'guard' || a.id === 'boxer') {
+      // A see-through cat shows where it will stand while the finger (or mouse) is over a lane.
+      const key = `addon.${a.id}.idle`;
+      this.ghost = this.add.sprite(0, 0, key).setOrigin(0.5, 1).setScale(asset(key).displayScale).setAlpha(0.55).setTint(0xfff3a0)
+        .setDepth(D.fx).setVisible(false);
+    }
+    const place = this.ghost ? 'tap where it should stand' : 'tap a lane';
+    this.hint.setText(`${ADDONS[a.id].name}: ${place}`).setVisible(true).setAlpha(1).setColor('#ffd02a');
     this.tweens.killTweensOf(this.hint);
   }
 
-  private fireAddon(lane: number): void {
+  private fireAddon(lane: number, x: number): void {
     const i = this.armed;
     if (i < 0) return;
     this.disarm();
-    this.sim.useAddon(i, lane);
+    this.sim.useAddon(i, lane, x);
+  }
+
+  /** Put the placement ghost where the cat would stand in `lane` for a tap at `x`. */
+  private moveGhost(lane: number, x: number): void {
+    this.ghost?.setPosition(unitSpot(x), laneFeet(lane) + 4).setVisible(true);
   }
 
   private disarm(): void {
     if (this.armed < 0) return;
     this.addonBtns[this.armed]?.glow.setVisible(false);
     this.armed = -1;
+    this.ghost?.destroy();
+    this.ghost = null;
     for (const z of this.laneZones) z.disableInteractive().setFillStyle(0xffee00, 0).setStrokeStyle(3, 0xffee00, 0);
     this.hint.setVisible(false);
   }

@@ -22,6 +22,9 @@ export const WALL_HP = 100;
 export const REPAIR_SHARE = 0.25, REPAIR_COST = 40, REPAIR_STEP = 25, REPAIR_TIME = 8;
 /** Melee add-on cats: zombies stop this far in front of them to fight. */
 const UNIT_REACH = 70;
+/** Where a tap-placed add-on cat may stand: just past the crosswalk, up to short of where zombies walk in. */
+export const UNIT_MIN_X = Math.round(STOP_X + 40), UNIT_MAX_X = 1250;
+export const unitSpot = (x: number): number => Math.round(Math.min(UNIT_MAX_X, Math.max(UNIT_MIN_X, x)));
 
 export interface Placed {
   id: number; slot: number; def: Defender; level: number; cooldown: number;
@@ -271,8 +274,11 @@ export class Defense {
     }
   }
 
-  /** Fire the add-on in loadout slot `index`. Lane add-ons need a lane (0–4). */
-  useAddon(index: number, lane = -1): boolean {
+  /**
+   * Fire the add-on in loadout slot `index`. Lane add-ons need a lane (0–4). Cat Guardian and Boxer Cat stand at `x`
+   * (where the player tapped, kept between the crosswalk and the far end), or at their usual spot without one.
+   */
+  useAddon(index: number, lane = -1, x?: number): boolean {
     const a = this.addons[index];
     if (this.state !== 'playing' || !a || a.uses <= 0) return false;
     const needsLane = a.id !== 'coins' && a.id !== 'bomb';
@@ -310,7 +316,7 @@ export class Defense {
         const t = T[a.id];
         const old = this.units.find((u) => u.lane === lane && u.kind === a.id);
         if (old) this.removeUnit(old);
-        const u: Unit = { id: this.ids++, kind: a.id, lane, x: t.x, hp: Math.round(t.hp * p), maxHp: Math.round(t.hp * p), until: this.time + t.time, cooldown: 0.3, dmg: Math.round(t.dmg * p), every: t.every, fighting: false };
+        const u: Unit = { id: this.ids++, kind: a.id, lane, x: unitSpot(x ?? t.x), hp: Math.round(t.hp * p), maxHp: Math.round(t.hp * p), until: this.time + t.time, cooldown: 0.3, dmg: Math.round(t.dmg * p), every: t.every, fighting: false };
         this.units.push(u);
         this.events.push({ t: 'unit', unit: u });
         break;
