@@ -7,7 +7,7 @@ export type Feature = 'repair' | 'cats' | 'addons' | 'merge' | 'alley' | 'hard' 
 export type Unlock = { kind: 'cat'; cat: number } | { kind: 'addon'; id: AddonId } | { kind: 'feature'; id: Feature };
 
 export const FEATURES: Record<Feature, { name: string; blurb: string }> = {
-  repair: { name: 'Repair Wall', blurb: 'Tap the wall button in a fight to fix a quarter of the wall (coins)' },
+  repair: { name: 'Repair Wall', blurb: 'Tap the wall button in a fight to rebuild a quarter of the wall over 8 seconds (coins)' },
   cats: { name: 'Cats screen', blurb: 'Spend gems on cat upgrades and pick your deck' },
   addons: { name: 'Add-ons', blurb: 'Take power-ups into a fight: tap one, then a lane' },
   merge: { name: 'Merging', blurb: 'Drag a cat onto the same cat to make one stronger cat' },

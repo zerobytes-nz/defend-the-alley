@@ -83,7 +83,12 @@ export class DefenseScene extends Phaser.Scene {
   /** An add-on waiting for a lane tap. */
   private armed = -1;
   private laneZones: Phaser.GameObjects.Rectangle[] = [];
-  private repairBtn: { c: Phaser.GameObjects.Container; cost: Phaser.GameObjects.Text; shown: string } | null = null;
+  private repairBtn: {
+    c: Phaser.GameObjects.Container; cost: Phaser.GameObjects.Text; shown: string;
+    fill: Phaser.GameObjects.Rectangle; icon: Phaser.GameObjects.Image; coin: Phaser.GameObjects.Image;
+  } | null = null;
+  /** The running repair's effects (glow over the wall, rising sparks), cleared when it's done. */
+  private repairFx: { glow: Phaser.GameObjects.Rectangle; sparks: Phaser.GameObjects.Particles.ParticleEmitter; bob: Phaser.Tweens.Tween } | null = null;
   private coinsX2!: Phaser.GameObjects.Text;
   /** A finger down on a square: a tap, or a drag of the cat on it (move / merge). */
   /** A card (new zombie) is up: the fight waits for it. */
@@ -105,7 +110,7 @@ export class DefenseScene extends Phaser.Scene {
     this.acc = 0; this.speed = 1; this.paused = false; this.ended = false; this.armed = -1;
     this.tut = null; this.press = null; this.modal = false;
     this.enemies.clear(); this.cats.clear(); this.units.clear(); this.traps.clear();
-    this.fxPool = []; this.tipObjs = []; this.cards = []; this.slotTiles = []; this.addonBtns = []; this.laneZones = []; this.bubble = null;
+    this.fxPool = []; this.tipObjs = []; this.repairFx = null; this.cards = []; this.slotTiles = []; this.addonBtns = []; this.laneZones = []; this.bubble = null;
     this.shown = { coins: -1, wall: -1 };
     this.shots = new Shots(this, D.fx);
     this.juice = new Juice(this, D.fx + 2);
@@ -183,7 +188,8 @@ export class DefenseScene extends Phaser.Scene {
         return;
       case 'area': return this.changeArea(e.area);
       case 'end': return this.endRun(e.won);
-      case 'repair': return this.onRepair();
+      case 'repair': return this.onRepair(e.time);
+      case 'repairDone': return this.onRepairDone();
       case 'addon': return this.onAddon(e.id);
       case 'blast': return this.onBlast(e.lane, e.x, e.r);
       case 'coins': this.coinsX2.setVisible(true); return;
@@ -242,19 +248,22 @@ export class DefenseScene extends Phaser.Scene {
       const n = this.sim.addons[i].uses;
       if (n !== b.shown) { b.shown = n; b.count.setText(String(n)); b.c.setAlpha(n > 0 ? 1 : 0.4); }
     });
-    const rb = this.repairBtn, rc = this.sim.repairCost();
-    const rs = rc === null ? 'full' : `${rc}`;
-    if (rb && (rs !== rb.shown || (rc !== null && (this.sim.coins >= rc) !== (rb.c.alpha === 1)))) {
+    const rb = this.repairBtn, rc = this.sim.repairCost(), rp = this.sim.repairProgress();
+    const rs = rp !== null ? 'busy' : rc === null ? 'full' : `${rc}`;
+    if (rb && rp !== null) rb.fill.height = 84 * rp; // the green fill rises as the wall is repaired
+    if (rb && (rs !== rb.shown || (rp === null && rc !== null && (this.sim.coins >= rc) !== (rb.c.alpha === 1)))) {
       rb.shown = rs;
-      rb.cost.setText(rc === null ? 'Full' : String(rc));
-      rb.c.setAlpha(rc !== null && this.sim.coins >= rc ? 1 : 0.5);
+      rb.fill.setVisible(rp !== null);
+      rb.coin.setVisible(rp === null);
+      rb.cost.setText(rp !== null ? 'Fixing' : rc === null ? 'Full' : String(rc)).setX(rp !== null ? 0 : 8);
+      rb.c.setAlpha(rp !== null || (rc !== null && this.sim.coins >= rc) ? 1 : 0.5);
     }
     if (this.sim.wallHp !== this.shown.wall) {
       this.shown.wall = this.sim.wallHp;
       const f = this.sim.wallHp / this.sim.wallMax;
       if (!this.ended) this.juice.wall(f);
       this.wallBar.height = (WALL_BAR.h - 4) * f; // the bar empties from the top, like the kit's
-      this.wallBar.setFillStyle(f > 0.5 ? COLORS.good : f > 0.25 ? COLORS.gold : COLORS.bad);
+      this.wallBar.setFillStyle(this.sim.repairing ? 0x7dffb0 : f > 0.5 ? COLORS.good : f > 0.25 ? COLORS.gold : COLORS.bad);
       this.wallText.setText(`${this.sim.wallHp}`);
     }
   }
@@ -721,7 +730,7 @@ export class DefenseScene extends Phaser.Scene {
   /** The first fight with Repair or add-ons explains them once. */
   private showTips(): void {
     const s = player.save, tips: [string, string, number, number][] = [];
-    if (this.repairBtn && !s.tips.includes('repair')) tips.push(['repair', 'New: Repair Wall. Tap it to fix a quarter of the wall (costs coins).', this.repairBtn.c.x, TRAY_Y - 60]);
+    if (this.repairBtn && !s.tips.includes('repair')) tips.push(['repair', 'New: Repair Wall. Tap it to rebuild a quarter of the wall over 8 seconds (costs coins).', this.repairBtn.c.x, TRAY_Y - 60]);
     const a = this.addonBtns[0];
     if (a && !s.tips.includes('addons')) tips.push(['addons', 'Add-ons: tap one, then tap a lane. Big Bomb and Coins ×2 go off at once.', a.c.x, TRAY_Y - 60]);
     if (!tips.length) return;
@@ -747,16 +756,17 @@ export class DefenseScene extends Phaser.Scene {
     this.sim.addons.forEach((a, i) => this.addonButton(a, i, x0 + i * 108));
     if (!this.sim.canRepair) return;
     const cost = text(this, 0, 40, '', 22).setOrigin(0.5);
-    const c = this.add.container(80, TRAY_Y, [
-      this.add.image(0, 0, 'ui.addon-slot').setScale(0.62),
-      this.add.image(0, -8, 'ui.wall').setScale(0.8),
-      this.add.image(-20, 40, 'ui.coin').setScale(0.28), cost,
-    ]).setSize(94, 94).setDepth(D.tray);
+    // While a repair runs, a green fill rises inside the button and the wall icon bobs.
+    const fill = this.add.rectangle(0, 42, 80, 84, 0x6aff8a, 0.55).setOrigin(0.5, 1).setVisible(false);
+    const icon = this.add.image(0, -8, 'ui.wall').setScale(0.8);
+    const coin = this.add.image(-20, 40, 'ui.coin').setScale(0.28);
+    const c = this.add.container(80, TRAY_Y, [this.add.image(0, 0, 'ui.addon-slot').setScale(0.62), fill, icon, coin, cost]).setSize(94, 94).setDepth(D.tray);
     cost.setX(8);
-    this.repairBtn = { c, cost, shown: '' };
+    this.repairBtn = { c, cost, shown: '', fill, icon, coin };
     tappable(c, () => {
       this.disarm();
       const rc = this.sim.repairCost();
+      if (this.sim.repairing) { this.flashHint('Repairing… ready again once the wall is fixed'); return; }
       if (rc === null) { this.flashHint('The wall is fine'); return; }
       if (!this.sim.repair()) this.flashHint(`Need ${rc} coins to repair`);
     });
@@ -816,12 +826,49 @@ export class DefenseScene extends Phaser.Scene {
     this.hint.setVisible(false);
   }
 
-  private onRepair(): void {
+  /** A repair starts: the wall glows and sheds green sparks while it refills over `time` seconds. */
+  private onRepair(time: number): void {
     sfx.buff();
-    const g = this.add.rectangle(WALL_X0, LANE_TOP - 20, WALL_X1 - WALL_X0, LANE_H * LANES + 40, 0x6aff6a, 0.4).setOrigin(0).setDepth(D.wall + 3);
-    this.tweens.add({ targets: g, alpha: 0, duration: 450, onComplete: () => g.destroy() });
-    const t = text(this, WALL_BAR.x, LANE_TOP - 10, 'Repaired!', 28, '#8cff6a', 5).setOrigin(0.5).setDepth(D.fx + 5);
-    this.tweens.add({ targets: t, y: t.y - 40, alpha: 0, duration: 900, onComplete: () => t.destroy() });
+    this.endRepairFx();
+    const h = LANE_H * LANES + 40;
+    const glow = this.add.rectangle(WALL_X0, LANE_TOP - 20, WALL_X1 - WALL_X0, h, 0x6aff8a, 0).setOrigin(0).setDepth(D.wall + 3).setBlendMode('ADD');
+    this.tweens.add({ targets: glow, fillAlpha: { from: 0.08, to: 0.3 }, duration: 450, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    const sparks = this.add.particles(0, 0, 'juice.puff', {
+      x: { min: WALL_X0, max: WALL_X1 }, y: { min: LANE_TOP, max: LANE_TOP + h - 40 }, frequency: 45, quantity: 1,
+      lifespan: 800, speedY: { min: -140, max: -60 }, speedX: { min: -12, max: 12 }, scale: { start: 0.45, end: 0 },
+      alpha: { start: 0.9, end: 0 }, tint: [0x8cff6a, 0xc8ffb0, 0x5effc0], blendMode: 'ADD',
+    }).setDepth(D.wall + 4);
+    const icon = this.repairBtn?.icon;
+    const bob = this.tweens.add({ targets: icon ?? glow, y: icon ? -14 : glow.y, duration: 300, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    this.repairFx = { glow, sparks, bob };
+    const t = text(this, WALL_BAR.x, LANE_TOP - 10, `Repairing… ${time} s`, 26, '#8cff6a', 5).setOrigin(0.5).setDepth(D.fx + 5);
+    this.tweens.add({ targets: t, y: t.y - 30, alpha: 0, delay: 600, duration: 700, onComplete: () => t.destroy() });
+    this.shown.wall = -1; // redraw the bar in its repairing colour
+  }
+
+  /** The repair finished: a flash over the wall, "Repaired!", and the button is ready again. */
+  private onRepairDone(): void {
+    this.endRepairFx();
+    sfx.heal();
+    const g = this.add.rectangle(WALL_X0, LANE_TOP - 20, WALL_X1 - WALL_X0, LANE_H * LANES + 40, 0xb0ffc0, 0.55).setOrigin(0).setDepth(D.wall + 3);
+    this.tweens.add({ targets: g, alpha: 0, duration: 500, onComplete: () => g.destroy() });
+    const t = text(this, WALL_BAR.x, LANE_TOP - 10, 'Repaired!', 30, '#8cff6a', 5).setOrigin(0.5).setDepth(D.fx + 5);
+    this.tweens.add({ targets: t, y: t.y - 40, alpha: 0, duration: 1000, onComplete: () => t.destroy() });
+    const rb = this.repairBtn;
+    if (rb) { rb.c.setScale(1.15); this.tweens.add({ targets: rb.c, scale: 1, duration: 250, ease: 'Back.Out' }); }
+    this.shown.wall = -1;
+  }
+
+  private endRepairFx(): void {
+    const f = this.repairFx;
+    if (!f) return;
+    this.repairFx = null;
+    f.bob.stop();
+    this.repairBtn?.icon.setY(-8);
+    f.sparks.stop();
+    this.time.delayedCall(900, () => f.sparks.destroy());
+    this.tweens.killTweensOf(f.glow);
+    this.tweens.add({ targets: f.glow, fillAlpha: 0, duration: 250, onComplete: () => f.glow.destroy() });
   }
 
   private onAddon(id: Equipped['id']): void {
@@ -851,7 +898,7 @@ export class DefenseScene extends Phaser.Scene {
     const key = `addon.${u.kind}`, y = laneFeet(u.lane);
     const spr = this.add.sprite(u.x, y + 4, `${key}.idle`).setOrigin(0.5, 1).setScale(asset(`${key}.idle`).displayScale)
       .setDepth(D.actors + y + 0.2).play(`${key}.idle`);
-    if (u.kind === 'guard') spr.setFlipX(true); // the kit's Cat Guardian faces left
+    // Both add-on cats already face right (towards the zombies) in the kit art: no flip.
     spr.setAlpha(0);
     this.tweens.add({ targets: spr, alpha: 1, duration: 250 });
     const bar = this.add.rectangle(u.x - 28, y - 118, 56, 6, 0x6ad0ff).setOrigin(0, 0.5).setDepth(D.fx + 2);
@@ -925,6 +972,7 @@ export class DefenseScene extends Phaser.Scene {
   private endRun(won: boolean): void {
     this.ended = true;
     this.juice.calm();
+    this.endRepairFx();
     for (const o of this.tipObjs) { this.tweens.killTweensOf(o); o.destroy(); }
     this.tipObjs = [];
     this.endTutorial();

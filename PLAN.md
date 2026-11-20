@@ -24,7 +24,7 @@ all 5 areas in one run.
 | Areas | Main Street, Sand Lot, Overpass, Rush Hour, Park Lane (the kit's Area1–5). Each brings tougher zombie types and its own boss (kit Boss 1–5). |
 | Taps | Tap a cat card, then tap an empty spot to place it (the card stays picked, so placing several is quick). Tap a placed cat for its stats, **Upgrade** (levels 1–4) and **Sell**. Drag a cat to move it, or onto the same cat to merge. |
 | Coins | Reset each fight. Start with 150; +3 a second; zombies drop 8–12, bosses 60. Placing costs 30, +10 for each more copy of the same card. Upgrades cost 35 / 60 / 95. |
-| Wall | 100 HP (+15 per Wall upgrade). Zombies hit it for 1–2, bosses for 5. **Repair** restores 25% for 40 coins, +25 each time. |
+| Wall | 100 HP (+15 per Wall upgrade). Zombies hit it for 1–2, bosses for 5. **Repair** restores 25% over 8 s (it can't be bought again until it's done) for 40 coins, +25 each time. |
 | Zombies | 8 kinds (kit Enemy Reg 1–8): plain, pot helmet, fast granny, red cap, baseball cap, spiked tank, traffic cone, football helmet. Health grows each wave. |
 
 ### AWIs: cat defenders and add-ons

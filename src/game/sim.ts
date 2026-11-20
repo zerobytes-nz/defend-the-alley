@@ -15,8 +15,11 @@ const AREA_BREAK = 2;             // after a boss wave or before a new area
 /** Extra coins for each zombie a Coin Cat AWI stops. */
 export const COIN_PERK = 2;
 export const WALL_HP = 100;
-/** Repair Wall: restores this share of the wall; the price starts at REPAIR_COST and rises by REPAIR_STEP each time. */
-export const REPAIR_SHARE = 0.25, REPAIR_COST = 40, REPAIR_STEP = 25;
+/**
+ * Repair Wall: restores this share of the wall, evenly over REPAIR_TIME seconds (it can't be bought again until it's
+ * done); the price starts at REPAIR_COST and rises by REPAIR_STEP each time.
+ */
+export const REPAIR_SHARE = 0.25, REPAIR_COST = 40, REPAIR_STEP = 25, REPAIR_TIME = 8;
 /** Melee add-on cats: zombies stop this far in front of them to fight. */
 const UNIT_REACH = 70;
 
@@ -70,7 +73,8 @@ export type SimEvent =
   | { t: 'merge'; from: number; cat: Placed }
   | { t: 'move'; from: number; cat: Placed }
   | { t: 'sell'; slot: number; coins: number }
-  | { t: 'repair'; hp: number }
+  | { t: 'repair'; hp: number; time: number }
+  | { t: 'repairDone' }
   | { t: 'addon'; index: number; id: AddonId; lane: number }
   | { t: 'blast'; lane: number; x: number; r: number }
   | { t: 'coins'; until: number }
@@ -158,6 +162,11 @@ export class Defense {
   placeCost(def: Defender): number { return PLACE_COST + PLACE_STEP * (this.copies.get(def.uid) ?? 0); }
   upgradeCost(p: Placed): number | null { return p.level >= MAX_LEVEL ? null : UPGRADE_COST[p.level - 1]; }
   /** null when the wall is full. */
+  /** A repair in progress: wall still to add, the rate (hp/s), when it ends, and the fraction carried between steps. */
+  repairing: { left: number; rate: number; until: number; acc: number } | null = null;
+  /** 0–1 through the current repair, or null when none is running. */
+  repairProgress(): number | null { return this.repairing ? 1 - (this.repairing.until - this.time) / REPAIR_TIME : null; }
+
   repairCost(): number | null { return !this.canRepair || this.wallHp >= this.wallMax ? null : REPAIR_COST + REPAIR_STEP * this.stats.repairs; }
 
   /** A lane is closed on levels that use fewer (the tutorial). */
@@ -239,13 +248,27 @@ export class Defense {
 
   repair(): boolean {
     const cost = this.repairCost();
-    if (this.state !== 'playing' || cost === null || this.coins < cost) return false;
+    if (this.state !== 'playing' || cost === null || this.coins < cost || this.repairing) return false;
     this.coins -= cost;
     const hp = Math.round(this.wallMax * REPAIR_SHARE);
-    this.wallHp = Math.min(this.wallMax, this.wallHp + hp);
+    this.repairing = { left: hp, rate: hp / REPAIR_TIME, until: this.time + REPAIR_TIME, acc: 0 };
     this.stats.repairs++;
-    this.events.push({ t: 'repair', hp });
+    this.events.push({ t: 'repair', hp, time: REPAIR_TIME });
     return true;
+  }
+
+  /** The wall fills a little every step while a repair runs (whole hp; anything past full is lost). */
+  private runRepair(dt: number): void {
+    const r = this.repairing;
+    if (!r) return;
+    r.acc += r.rate * dt;
+    const add = Math.min(r.left, Math.floor(r.acc));
+    if (add > 0) { r.acc -= add; r.left -= add; this.wallHp = Math.min(this.wallMax, this.wallHp + add); }
+    if (this.time >= r.until - 1e-9 || r.left <= 0) {
+      if (r.left > 0) this.wallHp = Math.min(this.wallMax, this.wallHp + r.left);
+      this.repairing = null;
+      this.events.push({ t: 'repairDone' });
+    }
   }
 
   /** Fire the add-on in loadout slot `index`. Lane add-ons need a lane (0–4). */
@@ -309,6 +332,7 @@ export class Defense {
 
     this.runWaves();
     this.abilities();
+    this.runRepair(dt);
     this.moveEnemies(dt);
     this.runUnits(dt);
     this.runTraps();
