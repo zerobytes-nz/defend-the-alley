@@ -3,6 +3,7 @@ import { GAME_W, GAME_H, COLORS, FONT } from '../config.ts';
 import { centreCamera } from '../systems/wide.ts';
 import { areaArt, catArt, isAreaArt, preloadAll, setupAssets } from '../assets.ts';
 import { player } from '../save.ts';
+import { normalizeCode } from '../theoswap.ts';
 import { levelDef } from '../game/levels.ts';
 
 export class BootScene extends Phaser.Scene {
@@ -25,9 +26,12 @@ export class BootScene extends Phaser.Scene {
     setupAssets(this);
     // Passion One is a CSS @font-face (index.html); wait for it so the first texts aren't drawn in the fallback.
     const ready = document.fonts?.load(`40px ${FONT.split(',')[0]}`).catch(() => null) ?? Promise.resolve();
-    // A ?userCode= link (from TheoSwap) connects straight away; the code is taken out of the address afterwards.
-    const q = new URLSearchParams(location.search), code = q.get('userCode');
-    if (code) { q.delete('userCode'); history.replaceState(null, '', `${location.pathname}${q.size ? `?${q}` : ''}${location.hash}`); }
+    // A ?userCode= link connects straight away; the code is taken out of the address afterwards. TheoSwap's
+    // Developer page sets the game's website to …/defend-the-alley/?userCode=$USER_CODE and fills in the player's
+    // code. A link where it wasn't filled in ($USER_CODE) or a code too short to be real is ignored.
+    const q = new URLSearchParams(location.search), raw = q.get('userCode');
+    if (raw !== null) { q.delete('userCode'); history.replaceState(null, '', `${location.pathname}${q.size ? `?${q}` : ''}${location.hash}`); }
+    const clean = normalizeCode(raw ?? ''), code = clean.length >= 4 && clean !== 'USERCODE' ? clean : '';
     Promise.race([ready, new Promise((r) => setTimeout(r, 2500))]).then(() => (code ? this.scene.start('Connect', { code }) : this.scene.start('Menu')));
   }
 }

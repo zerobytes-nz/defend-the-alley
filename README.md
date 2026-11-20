@@ -65,8 +65,11 @@ them. Full details per asset: [ASSETS.md](ASSETS.md).
 
 ## TheoSwap and secrets
 
-TheoSwap game **Defend the Alley** (id 9, hidden) has the free config **Defend the Alley AWIs** (id 18, a draft until
-published). On the title screen, **Connect TheoSwap** takes a player code (or open the game with `?userCode=CODE`);
+TheoSwap game **Defend the Alley** (id 9, released) has the free config **Defend the Alley AWIs** (id 18, published,
+the default) and the private **Theo Swap** config (id 19). On the title screen, **Connect TheoSwap** takes a player
+code (or open the game with `?userCode=CODE`). For TheoSwap to open the game already connected, the game's website on
+the Developer page must be `https://games.theoswap.io/defend-the-alley/?userCode=$USER_CODE`: TheoSwap fills in the
+player's code (a link where `$USER_CODE` wasn't filled in just opens the title screen);
 each NFT becomes an AWI (Altered World Item) and gets a reveal card: a cat defender (with a perk half the time), an
 add-on, or a boost. The connected player has their own save. Demo players keep bundled sample AWIs.
 Test codes (`AAAAAAAA`…) only return items once the config is published.
