@@ -63,6 +63,12 @@ export const ENDLESS = LEVEL_COUNT + 1, ENDLESS_WAVES = 99;
 /** Daily Challenge: one level a day, the same street, rule, goal and zombies (seed) for everyone. */
 export const DAILY = LEVEL_COUNT + 2;
 
+/**
+ * The last two levels were a grind for guests (about 5 and 12 fights in the campaign sim), so their waves are
+ * scaled down. Level 14 also has No Repair and Boss 6; level 15 ends with Boss 5 and Boss 7.
+ */
+export const LATE_EASE: Record<number, number> = { 13: 0.9, 14: 0.85 };
+
 /** Extra bosses on the last levels: level 14 ends with Boss 6, level 15 with Boss 5 and Boss 7. */
 const EXTRA_BOSS: Record<number, number[]> = { 13: [6], 14: [7] };
 
@@ -82,7 +88,7 @@ export function levelDef(n: number): LevelDef {
   const area = Math.floor(n / 3), step = n % 3;
   const count = 4 + Math.round((n * 6) / 14);          // 4 waves on level 1 … 10 on level 15
   // Coins start from scratch every level, so each level ramps from easy waves up to its peak.
-  const peak = PEAK_G0 + PEAK_STEP * n + PEAK_CURVE * n * n, start = peak * START_SHARE;
+  const peak = (PEAK_G0 + PEAK_STEP * n + PEAK_CURVE * n * n) * (LATE_EASE[n] ?? 1), start = peak * START_SHARE;
   const waves: WavePlan[] = Array.from({ length: count }, (_, w) => ({ area, g: start + (peak - start) * (w / (count - 1)) ** 1.3, bosses: [] }));
   const last = waves[count - 1];
   if (step === 2) last.bosses.push(area + 1);            // every area's 3rd level ends with its boss

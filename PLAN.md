@@ -57,13 +57,14 @@ Win % over 40 seeds, **no upgrades or add-ons bought** (after milestone 3's beha
 | Player | L1–4 | L5 | L6–7 | L8 | L9 | L10 | L11 | L12 | L13 | L14–15 | Full Alley |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | Guest (cats unlocked by then) | 93–100 | 75 | 100 | 83 | 57 | 68 | 53 | 10 | 3 | 0 | 0 |
-| Collector (4 cat AWIs, 1 add-on AWI) | 100 | 100 | 100 | 100 | 98 | 100 | 100 | 95 | 100 | 98 / 75 | 95 |
+| Collector (4 cat AWIs, 1 add-on AWI) | 100 | 100 | 100 | 100 | 97 | 100 | 100 | 98 | 100 | 93 / 87 | 93 |
 | Whale (6 Legendary/Epic cat AWIs, 3 add-on AWIs) | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 | 100 |
 
 `npm run sim -- --campaign` plays guests through the levels in order, spending gems on upgrades between fights and
-replaying the last cleared level for gems after a loss: levels 1–13 take 1–2 fights, level 14 about 5, level 15 about
-12. `npm run sim -- --modes` checks the Daily Challenge and Endless. The tuning knobs are
-`src/game/levels.ts → tune()` (`--tune g0,step,curve,share`).
+replaying the last cleared level for gems after a loss: levels 1–13 take 1–2 fights, level 14 about 2, level 15 about
+4 (20 bot guests, none stuck). `npm run sim -- --modes` checks the Daily Challenge and Endless. The tuning knobs are
+`src/game/levels.ts → tune()` (`--tune g0,step,curve,share`), and `LATE_EASE`, which scales down the waves of
+levels 14 (×0.9) and 15 (×0.85).
 
 That is the pitch: guests can clear everything by upgrading; NFTs (AWIs) make the hard levels easy. A human may play
 worse than the bot, so check on a phone with real players in milestone 5.
@@ -287,7 +288,7 @@ balance it.
 Balance after all of it (`npm run sim -- --campaign --seeds 10`): levels 1–13 take 1–2 fights, level 14 about 5,
 level 15 about 12 (the finale is a grind); 1 of 10 bot guests got stuck on level 14 within 40 fights. `--modes`: a
 level 6 guest wins most Daily Challenges; Endless runs reach about 17 (4 upgrade steps) to 25 waves (Collector).
-Play-testing on phones in milestone 5 should decide whether level 15 needs softening.
+Softened in milestone 5 (`LATE_EASE`): level 14 now about 2 fights, level 15 about 4, no bot guest stuck.
 
 ### 4. TheoSwap ✅ (images and real collections still to do)
 - ✅ Hidden game **Defend the Alley** created (id 9, code `jpANeS3Z`) and a free draft config **Defend the Alley AWIs**
@@ -336,6 +337,9 @@ Play-testing on phones in milestone 5 should decide whether level 15 needs softe
   uncompressed. Before the warm-up, about 1.5% of frames took 13–41 ms (first use of each particle effect and effect
   sheet); fights now fire every effect once off-screen at the start, and that took it to none over 12 ms.
   Still to do: **FPS and memory on a real Android phone and an iPhone** (texture memory is the one to watch).
-- Balance with real players (level 14–15 may need softening for guests).
+- ✅ Levels 14–15 softened for guests (`LATE_EASE` in `src/game/levels.ts`): the campaign sim went from about 5 and 12
+  fights (1 in 10 bot guests stuck) to about 2 and 4 (none of 20 stuck). Collectors win them 93% / 87% (was 88 / 73).
+  Hard mode's levels 14–15 are built from the same waves, so they are a little easier too.
+- Balance with real players.
 - **Ask first:** GitHub repo (zerobytes-nz/defend-the-alley), Jira epic (THEOS), push; then deploy to
   `games.theoswap.io/defend-the-alley` with the nginx key proxy (same as Arena).
